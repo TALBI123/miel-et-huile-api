@@ -14,28 +14,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Emp {
-  id    String @id @default(uuid())
-  name  String
-  posts Post[]
-}
+// model Emp {
+//   id    String @id @default(uuid())
+//   name  String
+//   posts Post[]
+// }
 
-model Post {
-  id          String @id @default(uuid())
-  description String
-  emp         Emp    @relation(fields: [postId], references: [id])
-  postId      String
-}
+// model Post {
+//   id          String @id @default(uuid())
+//   description String
+//   emp         Emp    @relation(fields: [postId], references: [id])
+//   postId      String
+// }
 
 model User {
   id            String   @id @default(uuid())
   firstName     String
   lastName      String
   email         String   @unique
-  password      String
+  password      String 
   phoneNumber   String?
-  addressLine1  String?
-  addressLine2  String?
+  address  String?
   city          String?
   state         String?
   postalCode    String?
@@ -43,33 +42,39 @@ model User {
   newsletter    Boolean  @default(false)
   termsAccepted Boolean
   isVerified    Boolean  @default(false)
-  role          String   @default("user")
+  role          Role     @default(USER)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   order         Order[]
   cart          Cart[]
 }
 
-model Product {
-  id         String   @id @default(uuid())
-  name       String
-  desciption String
-  price      Float
-  image      String
-  publicId   String
-  category   Category @relation(fields: [categoryId], references: [id])
-  categoryId String
-  order      Order[]
-  cartItem   CartItem
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  image       String
+  publicId    String
+  description String?
+  slug        String    @unique
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
-model Cart {
-  id        String     @id @default(uuid())
-  userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  image       String
+  stock Int @default(0)
+  publicId    String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  cartItem    CartItem[]
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model CartItem {
@@ -84,20 +89,62 @@ model CartItem {
   @@unique([cartId, productId])
 }
 
-model Category {
-  id       String    @id @default(uuid())
-  name     String
-  image    String
-  publicId String
-  products Product[]
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Order {
-  userId    String
-  productId String
-  quintity  Int
-  user      User    @relation(fields: [userId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+  totalAmount   Float
+  status        OrderStatus   @default(PENDING)
+  paymentMethod String
+  paymentStatus PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
 
-  @@unique([userId, productId])
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+  price     Float // Prix au moment de la commande
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ProductType {
+  HONEY
+  OIL
+  COMBO
+  ACCESSORY
 }
