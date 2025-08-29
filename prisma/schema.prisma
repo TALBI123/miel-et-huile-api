@@ -32,9 +32,9 @@ model User {
   firstName     String
   lastName      String
   email         String   @unique
-  password      String 
+  password      String
   phoneNumber   String?
-  address  String?
+  address       String?
   city          String?
   state         String?
   postalCode    String?
@@ -47,6 +47,7 @@ model User {
   updatedAt     DateTime @updatedAt
   order         Order[]
   cart          Cart[]
+  review        Review[]
 }
 
 model Category {
@@ -67,7 +68,7 @@ model Product {
   description String
   price       Float
   image       String
-  stock Int @default(0)
+  stock       Int         @default(0)
   publicId    String
   category    Category    @relation(fields: [categoryId], references: [id])
   categoryId  String
@@ -75,6 +76,7 @@ model Product {
   orderItems  OrderItem[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  review      Review[]
 }
 
 model CartItem {
@@ -91,7 +93,7 @@ model CartItem {
 
 model Cart {
   id        String     @id @default(uuid())
-  userId    String     
+  userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     CartItem[]
   createdAt DateTime   @default(now())
@@ -119,6 +121,21 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int     @default(1)
   price     Float // Prix au moment de la commande
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  rating     Int
+  title      String?
+  comment    String?
+  isVerified Boolean  @default(false) // Achat vérifié
+  isApproved Boolean  @default(false) // Modération
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum Role {
