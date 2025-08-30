@@ -138,6 +138,17 @@ model Review {
   updatedAt  DateTime @updatedAt
 }
 
+model ShippingMethod {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+  price        Float
+  deliveryTime String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 enum Role {
   USER
   ADMIN
