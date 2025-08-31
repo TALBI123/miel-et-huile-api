@@ -48,6 +48,10 @@ model User {
   order         Order[]
   cart          Cart[]
   review        Review[]
+
+  @@index([createdAt])
+  @@index([email])
+  @@index([isVerified])
 }
 
 model Category {
@@ -77,6 +81,10 @@ model Product {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   review      Review[]
+
+  @@index([categoryId])
+  @@index([price])
+  @@index([createdAt])
 }
 
 model CartItem {
@@ -98,6 +106,8 @@ model Cart {
   items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+
+  @@index([userId])
 }
 
 model Order {
@@ -111,6 +121,11 @@ model Order {
   paymentStatus PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([userId]) // Commandes par utilisateur
+  @@index([status]) // Filtrage par statut
+  @@index([createdAt])
+  @@index([paymentStatus])
 }
 
 model OrderItem {
@@ -121,6 +136,9 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int     @default(1)
   price     Float // Prix au moment de la commande
+
+  @@index([orderId]) // ✅ Recommandé - Items par commande
+  @@index([productId])
 }
 
 model Review {
@@ -136,17 +154,68 @@ model Review {
   isApproved Boolean  @default(false) // Modération
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@index([isApproved])
 }
 
 model ShippingMethod {
-  id          String  @id @default(uuid())
-  name        String
-  description String?
-  isActive    Boolean @default(true)
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  isActive     Boolean  @default(true)
   price        Float
   deliveryTime String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model Promotion {
+  id             String       @id @default(uuid())
+  code           String       @unique
+  discountType   DiscountType @default(PERCENTAGE) // "percentage" ou "fixed"
+  discountValue  Float
+  minOrderAmount Float?
+  maxUses        Int?
+  usedCount      Int          @default(0)
+  validFrom      DateTime
+  validUntil     DateTime
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  @@index([isActive]) // Promotions actives
+  @@index([validUntil]) // Expiration promotions
+}
+
+model Testimonial {
+  id         String   @id @default(uuid())
+  clientName String
+  image      String?
+  publicId   String?
+  content    String
+  rating     Int
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model ShippingZone {
+  id        String   @id @default(uuid())
+  name      String // ex: "France Métropolitaine", "UE"
+  countries String[] // Liste des pays codes ISO: ["FR", "BE", "DE"]
+  price     Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([isActive])
 }
 
 enum Role {
@@ -175,4 +244,9 @@ enum ProductType {
   OIL
   COMBO
   ACCESSORY
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
 }
