@@ -28,26 +28,27 @@ datasource db {
 // }
 
 model User {
-  id            String   @id @default(uuid())
-  firstName     String
-  lastName      String
-  email         String   @unique
-  password      String
-  phoneNumber   String?
-  address       String?
-  city          String?
-  state         String?
-  postalCode    String?
-  country       String?
-  newsletter    Boolean  @default(false)
-  termsAccepted Boolean
-  isVerified    Boolean  @default(false)
-  role          Role     @default(USER)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  order         Order[]
-  cart          Cart[]
-  review        Review[]
+  id                String               @id @default(dbgenerated("gen_random_uuid()"))
+  firstName         String
+  lastName          String
+  email             String               @unique
+  password          String
+  phoneNumber       String?
+  address           String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?
+  newsletter        Boolean              @default(false)
+  termsAccepted     Boolean
+  isVerified        Boolean              @default(false)
+  role              Role                 @default(USER)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  order             Order[]
+  cart              Cart[]
+  review            Review[]
+  verificationToken VerificationTokens[]
 
   @@index([createdAt])
   @@index([email])
@@ -55,7 +56,7 @@ model User {
 }
 
 model Category {
-  id          String    @id @default(uuid())
+  id          String    @id @default(dbgenerated("gen_random_uuid()"))
   name        String
   image       String
   publicId    String
@@ -67,7 +68,7 @@ model Category {
 }
 
 model Product {
-  id          String      @id @default(uuid())
+  id          String      @id @default(dbgenerated("gen_random_uuid()"))
   name        String
   description String
   price       Float
@@ -88,7 +89,7 @@ model Product {
 }
 
 model CartItem {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   cartId    String
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId String
@@ -100,7 +101,7 @@ model CartItem {
 }
 
 model Cart {
-  id        String     @id @default(uuid())
+  id        String     @id @default(dbgenerated("gen_random_uuid()"))
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     CartItem[]
@@ -111,7 +112,7 @@ model Cart {
 }
 
 model Order {
-  id            String        @id @default(uuid())
+  id            String        @id @default(dbgenerated("gen_random_uuid()"))
   userId        String
   user          User          @relation(fields: [userId], references: [id])
   items         OrderItem[]
@@ -129,7 +130,7 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(uuid())
+  id        String  @id @default(dbgenerated("gen_random_uuid()"))
   orderId   String
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
@@ -142,7 +143,7 @@ model OrderItem {
 }
 
 model Review {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
   productId  String
   product    Product  @relation(fields: [productId], references: [id])
   userId     String
@@ -162,7 +163,7 @@ model Review {
 }
 
 model ShippingMethod {
-  id           String   @id @default(uuid())
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
   name         String
   description  String?
   isActive     Boolean  @default(true)
@@ -175,7 +176,7 @@ model ShippingMethod {
 }
 
 model Promotion {
-  id             String       @id @default(uuid())
+  id             String       @id @default(dbgenerated("gen_random_uuid()"))
   code           String       @unique
   discountType   DiscountType @default(PERCENTAGE) // "percentage" ou "fixed"
   discountValue  Float
@@ -192,7 +193,7 @@ model Promotion {
 }
 
 model Testimonial {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
   clientName String
   image      String?
   publicId   String?
@@ -206,7 +207,7 @@ model Testimonial {
 }
 
 model ShippingZone {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   name      String // ex: "France Métropolitaine", "UE"
   countries String[] // Liste des pays codes ISO: ["FR", "BE", "DE"]
   price     Float
@@ -216,6 +217,18 @@ model ShippingZone {
 
   @@index([createdAt])
   @@index([isActive])
+}
+
+model VerificationTokens {
+  id        String                @id @default(dbgenerated("gen_random_uuid()"))
+  token     String                @unique
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id])
+  type      VerificationTokenType
+  expiresAt DateTime
+  createdAt DateTime              @default(now())
+
+  @@index([userId, type])
 }
 
 enum Role {
@@ -249,4 +262,9 @@ enum ProductType {
 enum DiscountType {
   PERCENTAGE
   FIXED
+}
+
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
 }
