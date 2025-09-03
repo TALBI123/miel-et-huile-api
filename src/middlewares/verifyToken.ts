@@ -1,0 +1,29 @@
+import { NextFunction, Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
+import { ApiResponse, UserTokenPayload } from "../types/type";
+import jwt, { JwtPayload } from "jsonwebtoken";
+export const requireAuth = (
+  req: Request,
+  res: Response<ApiResponse>,
+  next: NextFunction
+) => {
+  console.log(req.cookies);
+  const token = req.cookies?.access_token;
+  if (!token)
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      message: "Accès non autorisé - Token manquant",
+    });
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    ) as UserTokenPayload;
+    req.user = decoded // TypeScript reconnaîtra maintenant req.user
+    next();
+  } catch (err) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ success: false, message: "Token invalide ou expiré" });
+  }
+};

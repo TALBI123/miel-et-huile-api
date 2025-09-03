@@ -2,6 +2,8 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
+    "types": ["node", "express"],
+    "typeRoots": ["./src/types", "./node_modules/@types"],
     "rootDir": "./src",
     "outDir": "./dist",
     "strict": true,
@@ -11,13 +13,13 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "lib": ["ES2020"],
-    "types": ["node"],
     "sourceMap": true,
-    "declaration": true,   
+    "declaration": true,
     "baseUrl": "./src",
-    "paths": { "*": ["*"] }
-
+    "paths": {
+      "types/*": ["types/*"]
+    }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/types/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
