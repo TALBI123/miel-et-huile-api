@@ -32,7 +32,7 @@ const register = async (
   req: Request<{}, {}, RegisterBodyRequest>,
   res: Response<ApiResponse>
 ) => {
-  console.log("est deja")
+  console.log("est deja");
   const { firstName, lastName, email, password } = req.body;
   try {
     const data = await prisma.user.findUnique({
@@ -43,7 +43,6 @@ const register = async (
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: "l email deja existe", success: false });
-    console.log(process.env.SALT_ROUND);
     const hash = await bcrypt.hash(password, +process.env.SALT_ROUND! || 10);
     const token = crypto.randomBytes(16).toString("hex");
     const link = `http://localhost:${process.env.PORT}/auth/verification-email?token=${token}`;
@@ -57,17 +56,10 @@ const register = async (
       },
       select: { id: true },
     });
-    await prisma.verificationTokens.create({
-      data: {
-        token,
-        userId: user.id,
-        type: VerificationTokenType.EMAIL_VERIFICATION,
-        expiresAt: getExpirationDate(15),
-      },
-    });
     await createVerificationToken(
       user.id,
-      VerificationTokenType.EMAIL_VERIFICATION
+      VerificationTokenType.EMAIL_VERIFICATION,
+      15
     );
     const emailOptions: MailOptions<{ link: string }> = {
       to: email,
@@ -76,6 +68,8 @@ const register = async (
       context: { link },
     };
     await sendEmail(emailOptions);
+    
+    console.log(user.id, token, new Date());
     res.status(StatusCodes.CREATED).json({
       message: "Inscription réussie. Veuillez vérifier votre email",
       success: true,
@@ -105,11 +99,11 @@ const login = async (
       success: false,
       message: "email ou mot de passe est incorrecte",
     });
-  // if (!data.isVerified)
-  //   return res.status(StatusCodes.FORBIDDEN).json({
-  //     success: false,
-  //     message: "Veuillez confirmer votre email avant de vous connecter.",
-  //   });
+  if (!data.isVerified)
+    return res.status(StatusCodes.FORBIDDEN).json({
+      success: false,
+      message: "Veuillez confirmer votre email avant de vous connecter.",
+    });
 
   try {
     const isPasswordValid = await bcrypt.compare(password, data?.password);

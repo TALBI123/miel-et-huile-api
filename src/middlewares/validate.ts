@@ -6,6 +6,7 @@ export const validate =
   (req: Request, res: Response, next: NextFunction) => {
     try {
       shcema.parse(req.body);
+      next()
     } catch (err: any) {
       if (err instanceof ZodError) {
         const FormatedErrors = err.issues.map((e: ZodIssue) => ({

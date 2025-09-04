@@ -23,7 +23,7 @@ export const sendEmail = async <T extends PlainObject>({
   try {
     if (Array.isArray(context))
       throw new Error("Le contexte ne peut pas être un tableau");
-    const templateFile = path.join(__dirname, `../views/${htmlFileName}`);
+    const templateFile = path.join(__dirname, `../../views/${htmlFileName}`);
     const html = await ejs.renderFile(templateFile, context);
     const info = transporter.sendMail({
       from: `"Mon App" <${process.env.EMAIL_USER}>`,

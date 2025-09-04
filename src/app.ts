@@ -1,4 +1,5 @@
 import loginRegister from "./routes/auth/auth.route";
+import verifyEmail from "./routes/auth/verifiy-email";
 import { transporter } from "./utils/mailer";
 import cookieParser from "cookie-parser";
 import { config } from "dotenv";
@@ -14,6 +15,7 @@ transporter
   .then(() => console.log("✅ Server nodemailer ready to take our messages"))
   .catch((err) => console.error("❌ Server not ready:", err));
 app.use("/", loginRegister);
+app.use("/", verifyEmail);
 app.get("/", (req, res) => {
   console.log("5raaaaaaa")
   res.json({ message: "Server is running" })

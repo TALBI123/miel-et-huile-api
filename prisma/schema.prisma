@@ -221,8 +221,8 @@ model ShippingZone {
 model VerificationTokens {
   id        String                @id @default(dbgenerated("gen_random_uuid()"))
   token     String                @unique
-  userId    String?
-  user      User?                  @relation(fields: [userId], references: [id])
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id])
   type      VerificationTokenType
   expiresAt DateTime
   createdAt DateTime              @default(now())

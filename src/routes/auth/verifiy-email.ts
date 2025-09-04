@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {verifyEmail} from "../../controllers/auth/verify-email";
+import {verifyEmail} from "../../controller/auth/verifyEmail.controller";
 const route = Router();
-route.post("/verification-email",verifyEmail);
+route.get("/verification-email",verifyEmail);
 export default route;
