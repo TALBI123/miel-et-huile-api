@@ -45,6 +45,3 @@ export const handleServerError = (res: Response, error: unknown) => {
     .status(StatusCodes.INTERNAL_SERVER_ERROR)
     .json({ success: false, message: "Erreur serveur" });
 };
-// const UniquerErors = (arr: ValidationError[]) => {
-// };
-// export {UniquerErors}
