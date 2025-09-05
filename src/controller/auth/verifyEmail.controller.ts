@@ -11,7 +11,7 @@ export const verifyEmail = async (
 ) => {
   try {
     const { token } = req.query;
-    console.log("Token reçu :", token)
+    console.log("Token reçu :", token);
     if (!token) {
       return res
         .status(StatusCodes.BAD_REQUEST)
@@ -21,11 +21,11 @@ export const verifyEmail = async (
     const verificationToken = await prisma.verificationTokens.findUnique({
       where: { token },
     });
-    if (!verificationToken) {
+    if (!verificationToken)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ message: "Token invalide" });
-    }
+      
     if (verificationToken.expiresAt < new Date()) {
       await prisma.user.delete({ where: { id: verificationToken.userId } });
       return res
