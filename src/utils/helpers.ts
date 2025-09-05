@@ -1,10 +1,11 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient(); // Assurez-vous que cette ligne est correcte
-import crypto from "crypto";
-import { Response } from "express";
+import { VerificationTokenType } from "../types/enums";
 import { StatusCodes } from "http-status-codes";
-import { VerificationTokenType } from "types/enums";
+import { PrismaClient } from "@prisma/client";
+import { Response } from "express";
+import slugify from "slugify";
+import crypto from "crypto";
+const prisma = new PrismaClient(); // Assurez-vous que cette ligne est correcte
+
 // interface ValidationError {
 //   type: "field" | "alternative" | "alternative-grouped" | "unknown";
 //   value: any;
@@ -44,4 +45,7 @@ export const handleServerError = (res: Response, error: unknown) => {
   res
     .status(StatusCodes.INTERNAL_SERVER_ERROR)
     .json({ success: false, message: "Erreur serveur" });
+};
+export const generateSlug = (name: string): string => {
+  return slugify(name, { lower: true, strict: true });
 };

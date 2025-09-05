@@ -1,5 +1,6 @@
-import { ALLOWED_MIMES } from "data/allowedNames";
-import { Request, Response } from "express";
+import { ALLOWED_MIMES } from "../data/allowedNames";
+import { NextFunction, Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 import multer from "multer";
 
 const fileFilter = (
@@ -16,4 +17,12 @@ const uploadMemoryStorage = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter,
 });
-export { uploadMemoryStorage };
+
+const uploadHandler = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.file)
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: "Aucun fichier téléchargé !" });
+  next();
+};
+export { uploadMemoryStorage, uploadHandler };
