@@ -22,7 +22,7 @@ const uploadHandler = (req: Request, res: Response, next: NextFunction) => {
   if (!req.file)
     return res
       .status(StatusCodes.BAD_REQUEST)
-      .json({ message: "Aucun fichier téléchargé !" });
+      .json({ message: "Aucun fichier n’a été uploadé" });
   next();
 };
 export { uploadMemoryStorage, uploadHandler };

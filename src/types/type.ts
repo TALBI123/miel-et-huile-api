@@ -14,7 +14,12 @@ export interface ApiResponse<T = any> {
 }
 
 export interface UserTokenPayload {
-  id:string
-  role : Role
-  email:string
-} 
+  id: string;
+  role: Role;
+  email: string;
+}
+
+export interface UploadResult {
+  secure_url: string;
+  public_id: string;
+}
