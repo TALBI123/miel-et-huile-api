@@ -7,6 +7,7 @@ import {
   deleteFromCloudinary,
   uploadBufferToCloudinary,
 } from "../services/upload.service";
+import { success } from "zod";
 const prisma = new PrismaClient();
 interface CategoryData {
   name: string;
@@ -76,12 +77,38 @@ export const createCategory = async (
   }
 };
 export const updateCategory = async (req: Request, res: Response) => {
-  let  imageInfo :  UploadResult |undefined;
+  let imageInfo: UploadResult | undefined;
   try {
     const { slug } = req.params;
     const { name, description } = req.body;
-    // if()
+    const existingCategory = await prisma.category.findUnique({
+      where: { slug },
+      select: {name:true,description:true,  publicId: true },
+    });
+    if (!existingCategory)
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ success: false, message: "Catégorie non trouvée" });
+    let updatedData: Partial<CategoryData> = {
+      name,
+      description: description ?? existingCategory.description,
+      slug: generateSlug(name),
+    };
+    if (req.file) {
+      imageInfo = await uploadBufferToCloudinary(
+        req.file!.buffer,
+        "categories"
+      );
+    }
   } catch (err) {
+    try {
+      if (imageInfo?.public_id) await deleteFromCloudinary(imageInfo.public_id);
+    } catch (err) {
+      console.error(
+        "Erreur lors de la suppression de l'image Cloudinary :",
+        err
+      );
+    }
     handleServerError(res, err);
   }
 };
