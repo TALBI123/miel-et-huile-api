@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { handleServerError } from "utils/helpers";
 import { PaginationInput } from "schema/validation.shema";
+import { success } from "zod";
 const prisma = new PrismaClient();
 interface ProductData {
   name: string;
@@ -25,13 +26,26 @@ export const getAllProducts = async (
     const { page, limit } = req.query;
     const products = await prisma.product.findMany({
       skip: (page - 1) * limit,
+      take: limit,
     });
+    if (products.length)
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ success: false, message: "Aucun produit trouvé" });
+    res.status(StatusCodes.OK).json({ success: true, data: products });
   } catch (err) {
     handleServerError(res, err);
   }
 };
 export const getProductById = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (product)
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ success: false, message: "Produit non trouvé" });
+    res.status(StatusCodes.OK).json({ success: true, data: product });
   } catch (err) {
     handleServerError(res, err);
   }
@@ -41,18 +55,27 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
+    res
+      .status(StatusCodes.CREATED)
+      .json({ success: true, message: "Produit créé avec succès" });
   } catch (err) {
     handleServerError(res, err);
   }
 };
 export const updateProduct = async (req: Request, res: Response) => {
   try {
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, message: "Produit mis à jour avec succès" });
   } catch (err) {
     handleServerError(res, err);
   }
 };
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, message: "Produit supprimé avec succès" });
   } catch (err) {
     handleServerError(res, err);
   }
