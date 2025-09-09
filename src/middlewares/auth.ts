@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, UserTokenPayload } from "../types/type";
 import jwt, { JwtPayload } from "jsonwebtoken";
-export const requireAuth = (
+export const verifyToken = (
   req: Request,
   res: Response<ApiResponse>,
   next: NextFunction
@@ -19,11 +19,24 @@ export const requireAuth = (
       token,
       process.env.JWT_SECRET!
     ) as UserTokenPayload;
-    req.user = decoded // TypeScript reconnaîtra maintenant req.user
+    req.user = decoded; // TypeScript reconnaîtra maintenant req.user
     next();
   } catch (err) {
     return res
       .status(StatusCodes.UNAUTHORIZED)
       .json({ success: false, message: "Token invalide ou expiré" });
   }
+};
+export const verifyAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (req.user?.role !== "admin") {
+    return res.status(StatusCodes.FORBIDDEN).json({
+      success: false,
+      message: "Accès refusé - Vous n'êtes pas administrateur",
+    });
+  }
+  next();
 };

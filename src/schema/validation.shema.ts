@@ -7,7 +7,7 @@ export const CreateCatgegorySchema = z.object({
     .min(2, "Le nom doit contenir au moins 2 caractères"),
   description: z.string().optional(),
 });
-export const ValidationIdCategory = z.object({
+export const ValidationId = z.object({
   id: z.string().uuid({ message: "L'ID doit être un UUID valide" }),
 });
 export const PaginationSchema = z.object({

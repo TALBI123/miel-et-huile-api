@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { requireAuth } from "../middlewares/verifyToken";
 import {
   uploadHandler,
   uploadMemoryStorage,
@@ -12,16 +11,19 @@ import {
   getProductById,
   updateProduct,
 } from "controller/product.controller";
+import { PaginationSchema, ValidationId } from "schema/validation.shema";
+import { verifyAdmin, verifyToken } from "middlewares/auth";
 const router = Router();
 // --- PUBLIC CATEGORY ROUTES
 
-router.get("/", getAllProducts);
-router.get("/:id", getProductById);
+router.get("/", validate(PaginationSchema, "query"), getAllProducts);
+router.get("/:id", validate(ValidationId, "params"), getProductById);
 
 // --- Private CATEGORY Routes
 router.post(
   "/",
-  requireAuth,
+  verifyToken,
+  verifyAdmin,
   uploadMemoryStorage.single("image"),
   uploadHandler,
   createProduct
@@ -29,10 +31,11 @@ router.post(
 
 router.post(
   "/:id",
-  requireAuth,
+  verifyToken,
+  verifyAdmin,
   uploadMemoryStorage.single("image"),
   updateProduct
 );
-router.delete("/:id", requireAuth, deleteProduct);
+router.delete("/:id", verifyToken,  verifyAdmin, deleteProduct);
 
 export default router;

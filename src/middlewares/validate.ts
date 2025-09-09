@@ -3,13 +3,14 @@ import { StatusCodes } from "http-status-codes";
 import { ZodError, ZodObject, ZodRawShape, ZodIssue } from "zod";
 type RequestSource = "body" | "query" | "params";
 export const validate =
-  (
-    shcema: ZodObject<ZodRawShape>,
+  <T extends ZodObject<ZodRawShape>>(
+    schema: T,
     key: RequestSource = "body"
   ): RequestHandler =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
-      shcema.parse(req[key] ?? {});
+      const parsed = schema.parse(req[key] ?? {});
+      req[key] = parsed;
       next();
     } catch (err: any) {
       if (err instanceof ZodError) {

@@ -6,6 +6,7 @@ import {
   filterObjectByKeys,
   generateSlug,
   handleServerError,
+  paginate,
 } from "../utils/helpers";
 import {
   deleteFromCloudinary,
@@ -25,15 +26,12 @@ interface CategoryData {
 
 // --- PUBLIC CATEGORY Controller
 export const getAllCategorys = async (
-  req: Request<{}, {}, {}, PaginationInput>,
+  req: Request ,
   res: Response<ApiResponse<CategoryData[] | null>>
 ) => {
   try {
-    const { page, limit } = req.query;
-    const data = await prisma.category.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const { page, limit } = req.query as unknown as PaginationInput;
+    const data = await prisma.category.findMany(paginate({ page, limit }));
     if (!data)
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -47,8 +45,8 @@ export const getAllCategorys = async (
 // ---  AdMIN CATEGORY CRUD OPERATIONS
 export const getCategoryById = async (req: Request, res: Response) => {
   try {
-    const { slug } = req.params;
-    const data = await prisma.category.findUnique({ where: { slug } });
+    const { id } = req.params;
+    const data = await prisma.category.findUnique({ where: { id } });
     if (!data)
       return res
         .status(StatusCodes.NOT_FOUND)

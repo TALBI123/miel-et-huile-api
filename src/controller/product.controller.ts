@@ -2,7 +2,7 @@ import { ApiResponse, UploadResult } from "types/type";
 import { StatusCodes } from "http-status-codes";
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import { handleServerError } from "utils/helpers";
+import { handleServerError, paginate } from "utils/helpers";
 import { PaginationInput } from "schema/validation.shema";
 import { success } from "zod";
 const prisma = new PrismaClient();
@@ -11,24 +11,22 @@ interface ProductData {
   description?: string | null;
   price: number;
   categoryId: string;
-  image?: string;
-  publicId?: string;
+  image: string;
+  publicId: string;
   slug?: string;
-  stock?: number;
+  stock: number;
 }
 // --- PUBLIC CATEGORY Controller
 
 export const getAllProducts = async (
-  req: Request<{}, {}, {}, PaginationInput>,
+  req: Request,
   res: Response<ApiResponse<ProductData[] | null>>
 ) => {
   try {
-    const { page, limit } = req.query;
-    const products = await prisma.product.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-    if (products.length)
+    const { page, limit } = req.query as unknown as PaginationInput;
+    const products = await prisma.product.findMany(paginate({ page, limit }));
+
+    if (!products.length)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });

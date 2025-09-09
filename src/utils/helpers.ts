@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { Response } from "express";
 import slugify from "slugify";
 import crypto from "crypto";
+import { PaginationInput } from "schema/validation.shema";
 const prisma = new PrismaClient(); // Assurez-vous que cette ligne est correcte
 
 // interface ValidationError {
@@ -50,6 +51,10 @@ export const generateSlug = (name: string): string => {
   return slugify(name, { lower: true, strict: true });
 };
 
+export const paginate = ({ page, limit }: PaginationInput) => {
+  const offset = (page - 1) * limit;
+  return { skip: offset, take: limit };
+};
 export const filterObjectByKeys = <T>(
   obj: Partial<T>,
   list: readonly (keyof T)[]
@@ -58,4 +63,4 @@ export const filterObjectByKeys = <T>(
   const objFilterd: Partial<T> = {};
   for (const key in obj) if (SetList.has(key)) objFilterd[key] = obj[key];
   return objFilterd;
-}
+};

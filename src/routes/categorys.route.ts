@@ -6,7 +6,7 @@ import {
   updateCategory,
 } from "../controller/categorys.controller";
 import { Router } from "express";
-import { requireAuth } from "../middlewares/verifyToken";
+import { verifyAdmin, verifyToken } from "../middlewares/auth";
 import {
   uploadHandler,
   uploadMemoryStorage,
@@ -14,17 +14,20 @@ import {
 import { validate } from "../middlewares/validate";
 import {
   CreateCatgegorySchema,
-  ValidationIdCategory,
+  PaginationSchema,
+  ValidationId,
 } from "../schema/validation.shema";
 const router = Router();
 
 // --- PUBLIC CATEGORY ROUTES
-router.get("/", getAllCategorys);
-router.get("/:id", getCategoryById);
+router.get("/", validate(PaginationSchema, "query"), getAllCategorys);
+router.get("/:id", validate(ValidationId, "params"), getCategoryById);
+
 // --- AdMIN CATEGORY CRUD OPERATIONS
 router.post(
   "/",
-  requireAuth,
+  verifyToken,
+  verifyAdmin,
   uploadMemoryStorage.single("image"),
   uploadHandler,
   validate(CreateCatgegorySchema),
@@ -33,17 +36,19 @@ router.post(
 
 router.put(
   "/:id",
-  requireAuth,
+  verifyToken,
+  verifyAdmin,
   uploadMemoryStorage.single("image"),
   validate(CreateCatgegorySchema.partial()),
-  validate(ValidationIdCategory, "params"),
+  validate(ValidationId, "params"),
   updateCategory
 );
 
 router.delete(
   "/:id",
-  requireAuth,
-  validate(ValidationIdCategory, "params"),
+  verifyToken,
+  verifyAdmin,
+  validate(ValidationId, "params"),
   deleteCategory
 );
 
