@@ -4,16 +4,9 @@ import { PrismaClient } from "@prisma/client";
 import { Response } from "express";
 import slugify from "slugify";
 import crypto from "crypto";
-import { PaginationInput } from "schema/validation.shema";
-const prisma = new PrismaClient(); // Assurez-vous que cette ligne est correcte
+import { PaginationInput } from "../schema/validation.shema";
+const prisma = new PrismaClient();
 
-// interface ValidationError {
-//   type: "field" | "alternative" | "alternative-grouped" | "unknown";
-//   value: any;
-//   msg: string;
-//   path: string;
-//   location: "body" | "cookies" | "headers" | "params" | "query";
-// }
 export const getExpirationDate = (minutes: number): Date => {
   return new Date(Date.now() + minutes * 60 * 1000);
 };
@@ -55,12 +48,14 @@ export const paginate = ({ page, limit }: PaginationInput) => {
   const offset = (page - 1) * limit;
   return { skip: offset, take: limit };
 };
-export const filterObjectByKeys = <T>(
-  obj: Partial<T>,
-  list: readonly (keyof T)[]
-): Partial<T> => {
+export const filterObjectByKeys = <T, K extends keyof T>(
+  obj: T,
+  list: readonly K[]
+): Pick<T, K> => {
   const SetList = new Set(list);
-  const objFilterd: Partial<T> = {};
-  for (const key in obj) if (SetList.has(key)) objFilterd[key] = obj[key];
+  const objFilterd = {} as Pick<T, K>;
+  list.forEach((key) => {
+    if (SetList.has(key)) objFilterd[key] = obj[key];
+  });
   return objFilterd;
 };
