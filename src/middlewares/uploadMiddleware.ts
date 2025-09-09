@@ -2,13 +2,15 @@ import { ALLOWED_MIMES } from "../data/allowedNames";
 import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import multer from "multer";
+import { TypeOf } from "zod";
 
 const fileFilter = (
   req: Request,
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
-  if (ALLOWED_MIMES.includes(file.mimetype)) cb(null, true);
+  if (ALLOWED_MIMES.includes(file.mimetype as (typeof ALLOWED_MIMES)[number]))
+    cb(null, true);
   else cb(new Error("Seuls les fichiers images sont autorisés !"));
 };
 

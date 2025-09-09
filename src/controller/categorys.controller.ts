@@ -2,14 +2,19 @@ import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, UploadResult } from "types/type";
-import { generateSlug, handleServerError } from "../utils/helpers";
+import {
+  filterObjectByKeys,
+  generateSlug,
+  handleServerError,
+} from "../utils/helpers";
 import {
   deleteFromCloudinary,
   uploadBufferToCloudinary,
 } from "../services/upload.service";
-import { success } from "zod";
-
+import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
+import { PaginationInput } from "schema/validation.shema";
 const prisma = new PrismaClient();
+
 interface CategoryData {
   name: string;
   description?: string | null;
@@ -18,12 +23,36 @@ interface CategoryData {
   publicId?: string;
 }
 
+// --- PUBLIC CATEGORY Controller
 export const getAllCategorys = async (
-  req: Request<{}, {}>,
+  req: Request<{}, {}, {}, PaginationInput>,
   res: Response<ApiResponse<CategoryData[] | null>>
 ) => {
   try {
-    const data = await prisma.category.findMany();
+    const { page, limit } = req.query;
+    const data = await prisma.category.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    if (!data)
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ success: false, message: "Catégorie non trouvée" });
+    res.status(StatusCodes.OK).json({ success: true, data });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+};
+
+// ---  AdMIN CATEGORY CRUD OPERATIONS
+export const getCategoryById = async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const data = await prisma.category.findUnique({ where: { slug } });
+    if (!data)
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ success: false, message: "Catégorie non trouvée" });
     res.status(StatusCodes.OK).json({ success: true, data });
   } catch (err) {
     handleServerError(res, err);
@@ -60,7 +89,6 @@ export const createCategory = async (
         slug: generateSlug(name),
       },
     });
-
     return res.status(StatusCodes.CREATED).json({
       success: true,
       message: "Catégorie créée avec succès",
@@ -79,14 +107,16 @@ export const createCategory = async (
   }
 };
 
-export const updateCategory = async (req: Request, res: Response) => {
+export const updateCategory = async (
+  req: Request<{ id: string }, {}, CategoryData>,
+  res: Response
+) => {
   let imageInfo: UploadResult | undefined;
   try {
-    const { slug } = req.params;
-    const { name, description } = req.body;
-
+    const { id } = req.params;
+    const { name, description } = req.body ?? {};
     const existingCategory = await prisma.category.findUnique({
-      where: { slug },
+      where: { id },
       select: { name: true, description: true, publicId: true },
     });
 
@@ -94,13 +124,13 @@ export const updateCategory = async (req: Request, res: Response) => {
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Catégorie non trouvée" });
-
-    let updatedData: Partial<CategoryData> = {
-      name,
-      description: description ?? existingCategory.description,
-      slug: generateSlug(name),
+    const updatedData: Partial<CategoryData> = {
+      ...filterObjectByKeys<Pick<CategoryData, "name" | "description">>(
+        req.body,
+        ALLOWED_CATEGORY_PROPERTIES
+      ),
     };
-
+    if (name) updatedData.slug = generateSlug(name);
     // 🔹 Upload de la nouvelle image
     if (req.file) {
       imageInfo = await uploadBufferToCloudinary(
@@ -110,9 +140,17 @@ export const updateCategory = async (req: Request, res: Response) => {
       updatedData.image = imageInfo.secure_url;
       updatedData.publicId = imageInfo.public_id;
     }
+
+    console.log(updatedData);
+
+    if (!Object.keys(updatedData).length)
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Aucune donnée valide fournie pour la mise à jour",
+      });
     const updateCategory = await prisma.category.update({
       data: updatedData,
-      where: { slug },
+      where: { id },
       select: { id: true },
     });
     // 🔹 Supprimer l’ancienne image seulement si tout a réussi
@@ -143,9 +181,9 @@ export const updateCategory = async (req: Request, res: Response) => {
 
 export const deleteCategory = async (req: Request, res: Response) => {
   try {
-    const { slug } = req.params;
+    const { id } = req.params;
     const existingCategory = await prisma.category.findUnique({
-      where: { slug },
+      where: { id },
       select: { publicId: true },
     });
     if (!existingCategory)
@@ -153,7 +191,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Category n'existe pas" });
 
-    await prisma.category.delete({ where: { slug } });
+    await prisma.category.delete({ where: { id } });
 
     if (existingCategory.publicId) {
       try {
@@ -163,9 +201,10 @@ export const deleteCategory = async (req: Request, res: Response) => {
       }
     }
 
-    return res
-      .status(StatusCodes.OK)
-      .json({ success: true, message: "La catégorie a été supprimée avec succès" });
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "La catégorie a été supprimée avec succès",
+    });
   } catch (err) {
     handleServerError(res, err);
   }

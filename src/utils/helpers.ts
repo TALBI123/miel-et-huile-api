@@ -49,3 +49,13 @@ export const handleServerError = (res: Response, error: unknown) => {
 export const generateSlug = (name: string): string => {
   return slugify(name, { lower: true, strict: true });
 };
+
+export const filterObjectByKeys = <T>(
+  obj: Partial<T>,
+  list: readonly (keyof T)[]
+): Partial<T> => {
+  const SetList = new Set(list);
+  const objFilterd: Partial<T> = {};
+  for (const key in obj) if (SetList.has(key)) objFilterd[key] = obj[key];
+  return objFilterd;
+}
