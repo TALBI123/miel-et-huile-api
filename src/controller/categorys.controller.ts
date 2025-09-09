@@ -113,7 +113,6 @@ export const updateCategory = async (
   let imageInfo: UploadResult | undefined;
   try {
     const { id } = req.params;
-    const { name, description } = req.body ?? {};
     const existingCategory = await prisma.category.findUnique({
       where: { id },
       select: { name: true, description: true, publicId: true },
@@ -129,7 +128,7 @@ export const updateCategory = async (
         ALLOWED_CATEGORY_PROPERTIES
       ),
     };
-    if (name) updatedData.slug = generateSlug(name);
+    if (req.body.name) updatedData.slug = generateSlug(req.body.name);
     // 🔹 Upload de la nouvelle image
     if (req.file) {
       imageInfo = await uploadBufferToCloudinary(

@@ -10,11 +10,11 @@ export const validate =
   (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = schema.parse(req[key] ?? {});
-      req[key] = parsed;
+      if (key === "query" || key === "body") res.locals.validated = parsed;
       next();
     } catch (err: any) {
       if (err instanceof ZodError) {
-        console.log(req[key]," error")
+        console.log(err.issues);
         const FormatedErrors = err.issues.map((e: ZodIssue) => ({
           fielde: e.path.join("."),
           message: e.message,
@@ -23,6 +23,7 @@ export const validate =
           .status(StatusCodes.BAD_REQUEST)
           .json({ errors: FormatedErrors });
       }
+      console.error(err);
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: "Une erreur serveur est survenue" });

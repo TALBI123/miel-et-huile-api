@@ -3,6 +3,7 @@ import verifyEmail from "./routes/auth/verifiy-email";
 import categoryRoute from "./routes/categorys.route";
 import { transporter } from "./utils/mailer";
 import cookieParser from "cookie-parser";
+import productRoute from "./routes/product.route";
 import { config } from "dotenv";
 import express from "express";
 const app = express();
@@ -18,6 +19,7 @@ transporter
 app.use("/", loginRegister);
 app.use("/", verifyEmail);
 app.use("/categorys", categoryRoute);
+app.use("/products", productRoute);
 app.get("/", (req, res) => {
   console.log("5raaaaaaa")
   res.json({ message: "Server is running" })

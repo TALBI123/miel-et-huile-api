@@ -10,9 +10,9 @@ import {
   getAllProducts,
   getProductById,
   updateProduct,
-} from "controller/product.controller";
-import { PaginationSchema, ValidationId } from "schema/validation.shema";
-import { verifyAdmin, verifyToken } from "middlewares/auth";
+} from "../controller/product.controller";
+import { createProductShema, PaginationSchema, ValidationId } from "../schema/validation.shema";
+import { verifyAdmin, verifyToken } from "../middlewares/auth";
 const router = Router();
 // --- PUBLIC CATEGORY ROUTES
 
@@ -23,9 +23,10 @@ router.get("/:id", validate(ValidationId, "params"), getProductById);
 router.post(
   "/",
   verifyToken,
-  verifyAdmin,
+  // verifyAdmin,
   uploadMemoryStorage.single("image"),
   uploadHandler,
+  validate(createProductShema),
   createProduct
 );
 
@@ -36,6 +37,6 @@ router.post(
   uploadMemoryStorage.single("image"),
   updateProduct
 );
-router.delete("/:id", verifyToken,  verifyAdmin, deleteProduct);
+router.delete("/:id", verifyToken, verifyAdmin, deleteProduct);
 
 export default router;

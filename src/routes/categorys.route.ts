@@ -27,7 +27,7 @@ router.get("/:id", validate(ValidationId, "params"), getCategoryById);
 router.post(
   "/",
   verifyToken,
-  verifyAdmin,
+  // verifyAdmin,
   uploadMemoryStorage.single("image"),
   uploadHandler,
   validate(CreateCatgegorySchema),
@@ -47,7 +47,7 @@ router.put(
 router.delete(
   "/:id",
   verifyToken,
-  verifyAdmin,
+  // verifyAdmin,
   validate(ValidationId, "params"),
   deleteCategory
 );
