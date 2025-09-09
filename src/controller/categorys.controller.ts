@@ -30,7 +30,8 @@ export const getAllCategorys = async (
   res: Response<ApiResponse<CategoryData[] | null>>
 ) => {
   try {
-    const { page, limit } = req.query as unknown as PaginationInput;
+    const { page, limit } = res.locals.validated ;
+    console.log(res.locals)
     const data = await prisma.category.findMany(paginate({ page, limit }));
     if (!data)
       return res
@@ -123,7 +124,7 @@ export const updateCategory = async (
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Catégorie non trouvée" });
     const updatedData: Partial<CategoryData> = {
-      ...filterObjectByKeys<Pick<CategoryData, "name" | "description">>(
+      ...filterObjectByKeys<Pick<CategoryData, "name" | "description">, typeof ALLOWED_CATEGORY_PROPERTIES[number]>(
         req.body,
         ALLOWED_CATEGORY_PROPERTIES
       ),
