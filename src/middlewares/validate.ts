@@ -2,16 +2,22 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ZodError, ZodObject, ZodRawShape, ZodIssue } from "zod";
 type RequestSource = "body" | "query" | "params";
+interface ValidateOptions<T extends ZodObject<ZodRawShape>> {
+  schema: T;
+  key?: RequestSource;
+  skipSave?: boolean;
+}
+
 export const validate =
-  <T extends ZodObject<ZodRawShape>>(
-    schema: T,
-    key: RequestSource = "body",
-    skipSave: boolean = false
-  ): RequestHandler =>
+  <T extends ZodObject<ZodRawShape>>({
+    schema,
+    key = "body",
+    skipSave = false,
+  }: ValidateOptions<T>): RequestHandler =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = schema.parse(req[key] ?? {});
-      if (skipSave) res.locals.validated = parsed;
+      if (skipSave) res.locals.validated = parsed ?? {};
       next();
     } catch (err: any) {
       if (err instanceof ZodError) {
