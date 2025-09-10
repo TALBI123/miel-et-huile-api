@@ -5,12 +5,13 @@ type RequestSource = "body" | "query" | "params";
 export const validate =
   <T extends ZodObject<ZodRawShape>>(
     schema: T,
-    key: RequestSource = "body"
+    key: RequestSource = "body",
+    skipSave: boolean = false
   ): RequestHandler =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = schema.parse(req[key] ?? {});
-      if (key === "query" || key === "body") res.locals.validated = parsed;
+      if (skipSave) res.locals.validated = parsed;
       next();
     } catch (err: any) {
       if (err instanceof ZodError) {
