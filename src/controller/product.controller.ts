@@ -1,4 +1,4 @@
-import { ApiResponse, UploadResult } from "types/type";
+import { ApiResponse, UploadResult } from "../types/type";
 import { StatusCodes } from "http-status-codes";
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
@@ -13,6 +13,7 @@ import {
   uploadBufferToCloudinary,
 } from "../services/upload.service";
 import { ALLOWED_PRODUCT_PROPERTIES } from "../data/allowedNames";
+import { isEmptyObject } from "../utils/object";
 const prisma = new PrismaClient();
 interface ProductData {
   name: string;
@@ -25,12 +26,13 @@ interface ProductData {
 }
 // --- PUBLIC PRODUCT Controller
 
-export const getAllProducts = async (
+export const getProducts = async (
   req: Request,
   res: Response<ApiResponse<ProductData[] | null>>
 ) => {
   try {
     const { page, limit } = res.locals.validated;
+    const {} = req.query;
     const products = await prisma.product.findMany(paginate({ page, limit }));
 
     if (!products.length)
@@ -42,6 +44,7 @@ export const getAllProducts = async (
     handleServerError(res, err);
   }
 };
+
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -64,6 +67,7 @@ export const createProduct = async (
 ) => {
   let imageInfo: UploadResult | null = null;
   try {
+    console.log(req.body, res.locals);
     const existingProduct = await prisma.product.findFirst({
       where: { name: req.body.name },
       select: { id: true },
@@ -81,7 +85,7 @@ export const createProduct = async (
         ...filterObjectByKeys<
           ProductData,
           (typeof ALLOWED_PRODUCT_PROPERTIES)[number]
-        >(req.body, ALLOWED_PRODUCT_PROPERTIES),
+        >(res.locals.validated, ALLOWED_PRODUCT_PROPERTIES),
         image: imageInfo.secure_url,
         publicId: imageInfo.public_id,
       },
@@ -104,8 +108,67 @@ export const createProduct = async (
     handleServerError(res, err);
   }
 };
+export const updateProduct = async (
+  req: Request<{ id: string }, {}, ProductData>,
+  res: Response
+) => {
+  let imageInfo: UploadResult | null = null;
+  try {
+    const { id } = req.params;
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+      select: { publicId: true },
+    });
 
-export const updateProduct = async (req: Request, res: Response) => {
+    if (!existingProduct)
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ success: false, message: "Produit non trouvé" });
+    const updatedData: Partial<ProductData> = {
+      ...filterObjectByKeys<
+        Partial<Omit<ProductData, "image" | "publicId">>,
+        (typeof ALLOWED_PRODUCT_PROPERTIES)[number]
+      >(res.locals.validated, ALLOWED_PRODUCT_PROPERTIES),
+    };
+    if (req.file) {
+      imageInfo = await uploadBufferToCloudinary(req.file!.buffer, "products");
+      updatedData.image = imageInfo.secure_url;
+      updatedData.publicId = imageInfo.public_id;
+    }
+
+    if (!isEmptyObject(updatedData))
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Aucune donnée valide fournie pour la mise à jour",
+      });
+
+    const updateProduct = await prisma.product.update({
+      where: { id },
+      data: updatedData,
+      select: { id: true, name: true },
+    });
+    if (req.file && existingProduct.publicId)
+      await deleteFromCloudinary(existingProduct.publicId).catch((err) =>
+        console.error(`existing image deletion error: ${err}`)
+      );
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Produit mis à jour avec succès",
+      data: updateProduct,
+    });
+  } catch (err) {
+    try {
+      if (imageInfo?.public_id) await deleteFromCloudinary(imageInfo.public_id);
+    } catch (err) {
+      console.warn("Erreur lors de la suppression de l'image Cloudinary");
+    }
+
+    handleServerError(res, err);
+  }
+};
+
+export const deleteProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const existingProduct = await prisma.product.findUnique({
@@ -113,22 +176,16 @@ export const updateProduct = async (req: Request, res: Response) => {
       select: { publicId: true },
     });
     if (!existingProduct)
-      return res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ success: false, message: "Produit non trouvé" });
-    if(req.file){
-      
-    }
-    res
-      .status(StatusCodes.OK)
-      .json({ success: true, message: "Produit mis à jour avec succès" });
-  } catch (err) {
-    handleServerError(res, err);
-  }
-};
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Produit non trouvé",
+      });
+    await prisma.product.delete({ where: { id } });
+    if (existingProduct.publicId)
+      await deleteFromCloudinary(existingProduct.publicId).catch((err) =>
+        console.error(`existing image deletion error: ${err}`)
+      );
 
-export const deleteProduct = async (req: Request, res: Response) => {
-  try {
     res
       .status(StatusCodes.OK)
       .json({ success: true, message: "Produit supprimé avec succès" });

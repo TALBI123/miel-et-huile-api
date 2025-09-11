@@ -20,8 +20,16 @@ import {
 const router = Router();
 
 // --- PUBLIC CATEGORY ROUTES
-router.get("/", validate(PaginationSchema, "query"), getAllCategorys);
-router.get("/:id", validate(ValidationId, "params"), getCategoryById);
+router.get(
+  "/",
+  validate({ schema: PaginationSchema, key: "query",skipSave:true }),
+  getAllCategorys
+);
+router.get(
+  "/:id",
+  validate({ schema: ValidationId, key: "params" }),
+  getCategoryById
+);
 
 // --- AdMIN CATEGORY CRUD OPERATIONS
 router.post(
@@ -30,7 +38,7 @@ router.post(
   // verifyAdmin,
   uploadMemoryStorage.single("image"),
   uploadHandler,
-  validate(CreateCatgegorySchema),
+  validate({ schema: CreateCatgegorySchema }),
   createCategory
 );
 
@@ -39,8 +47,8 @@ router.put(
   verifyToken,
   verifyAdmin,
   uploadMemoryStorage.single("image"),
-  validate(CreateCatgegorySchema.partial()),
-  validate(ValidationId, "params"),
+  validate({ schema: CreateCatgegorySchema.partial() }),
+  validate({ schema: ValidationId, key: "params" }),
   updateCategory
 );
 
@@ -48,7 +56,7 @@ router.delete(
   "/:id",
   verifyToken,
   // verifyAdmin,
-  validate(ValidationId, "params"),
+  validate({ schema: ValidationId, key: "params" }),
   deleteCategory
 );
 

@@ -59,3 +59,7 @@ export const filterObjectByKeys = <T, K extends keyof T>(
   });
   return objFilterd;
 };
+
+export const stringToNumber = (value: string | number): number => {
+  return typeof value === "string" ? parseInt(value, 10) : value;
+};

@@ -14,6 +14,7 @@ import {
 } from "../services/upload.service";
 import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
 import { PaginationInput } from "schema/validation.shema";
+import { isEmptyObject } from "../utils/object";
 const prisma = new PrismaClient();
 
 interface CategoryData {
@@ -115,7 +116,7 @@ export const updateCategory = async (
     const { id } = req.params;
     const existingCategory = await prisma.category.findUnique({
       where: { id },
-      select: { name: true, description: true, publicId: true },
+      select: { publicId: true },
     });
 
     if (!existingCategory)
@@ -141,7 +142,7 @@ export const updateCategory = async (
 
     console.log(updatedData);
 
-    if (!Object.keys(updatedData).length)
+    if (!isEmptyObject(updatedData))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Aucune donnée valide fournie pour la mise à jour",

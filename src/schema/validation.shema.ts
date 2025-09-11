@@ -1,5 +1,13 @@
+import { stringToNumber } from "../utils/helpers";
 import { z } from "zod";
-
+export const parsePositiveNumber = (key: string) =>
+  z.preprocess(
+    stringToNumber,
+    z
+      .number()
+      .min(0, { message: `La valeur de ${key} doit être un nombre positif` })
+  );
+// --- SHEMAS CATEGORY
 export const CreateCatgegorySchema = z.object({
   name: z
     .string()
@@ -7,6 +15,7 @@ export const CreateCatgegorySchema = z.object({
     .min(2, "Le nom doit contenir au moins 2 caractères"),
   description: z.string().optional(),
 });
+// --- SHEMAS PRODUCT
 
 export const createProductShema = z.object({
   name: z
@@ -14,15 +23,19 @@ export const createProductShema = z.object({
     .min(1, { message: "Le nom est obligatoire" })
     .min(2, "Le nom doit contenir au moins 2 caractères"),
   description: z.string().optional(),
-  price: z.number().min(0, { message: "Le prix doit être un nombre positif" }),
-  categoryId: z.string().uuid({ message: "L'ID de la catégorie doit être un UUID valide" }),
-  image: z.string().url({ message: "L'URL de l'image doit être valide" }),
-  stock: z.number().min(0, { message: "Le stock doit être un nombre positif" }),
+  price: parsePositiveNumber("prix"),
+  categoryId: z
+    .string()
+    .uuid({ message: "L'ID de la catégorie doit être un UUID valide" }),
+  stock: parsePositiveNumber("stock"),
 });
 
+// --- SHEMAS VALIDATION ID
 export const ValidationId = z.object({
   id: z.string().uuid({ message: "L'ID doit être un UUID valide" }),
 });
+
+// --- SHEMAS VALIDATION PAGINATION
 export const PaginationSchema = z.object({
   page: z
     .string()
