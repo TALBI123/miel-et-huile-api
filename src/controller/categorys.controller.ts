@@ -65,7 +65,7 @@ export const createCategory = async (
 ) => {
   let imageInfo: UploadResult | undefined;
   try {
-    console.log(req.file);
+    console.log(req.file,"jjj");
     const { name, description } = req.body;
     const existingCategory = await prisma.category.findUnique({
       where: { name },
