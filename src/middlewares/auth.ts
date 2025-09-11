@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, UserTokenPayload } from "../types/type";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { ROLE } from "../types/enums";
 export const verifyToken = (
   req: Request,
   res: Response<ApiResponse>,
@@ -32,7 +33,7 @@ export const verifyAdmin = (
   res: Response,
   next: NextFunction
 ) => {
-  if (req.user?.role !== "admin") {
+  if (req.user?.role !== ROLE.ADMIN) {
     return res.status(StatusCodes.FORBIDDEN).json({
       success: false,
       message: "Accès refusé - Vous n'êtes pas administrateur",
