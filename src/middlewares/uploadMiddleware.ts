@@ -21,6 +21,7 @@ const uploadMemoryStorage = multer({
 });
 
 const uploadHandler = (req: Request, res: Response, next: NextFunction) => {
+  console.log(req.file,"jj ")
   if (!req.file)
     return res
       .status(StatusCodes.BAD_REQUEST)
