@@ -8,7 +8,7 @@ import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
 const app = express();
-app.use(cors({ origin: "http://127.0.0.1:5500/", credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 config();
 const PORT = process.env.PORT;
 app.use(express.static("view"));
@@ -23,8 +23,8 @@ app.use("/", verifyEmail);
 app.use("/categorys", categoryRoute);
 app.use("/products", productRoute);
 app.get("/", (req, res) => {
-  console.log("5raaaaaaa")
-  res.json({ message: "Server is running" })
+  console.log("5raaaaaaa");
+  res.json({ message: "Server is running" });
 });
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);

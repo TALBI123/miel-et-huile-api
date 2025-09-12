@@ -1,5 +1,7 @@
 import { stringToNumber } from "../utils/helpers";
+import { isString } from "../types/type";
 import { z } from "zod";
+
 export const parsePositiveNumber = (key: string) =>
   z.preprocess(
     stringToNumber,
@@ -7,8 +9,19 @@ export const parsePositiveNumber = (key: string) =>
       .number()
       .min(0, { message: `La valeur de ${key} doit être un nombre positif` })
   );
-// --- SHEMAS CATEGORY
-export const CreateCatgegorySchema = z.object({
+
+const regexValidateNumber = <T extends string | number>(
+  value: T,
+  message: string
+) =>
+  (typeof value === "string"
+    ? z.string().regex(/^\d+$/, { message }).default(value)
+    : z.number().default(value)
+  )
+    .transform(Number)
+    .optional();
+
+export const CreateCategorySchema = z.object({
   name: z
     .string()
     .min(1, { message: "Le nom est obligatoire" })
@@ -28,6 +41,15 @@ export const createProductShema = z.object({
     .string()
     .uuid({ message: "L'ID de la catégorie doit être un UUID valide" }),
   stock: parsePositiveNumber("stock"),
+  discountPrice: z
+    .string()
+    .min(0, { message: "Le prix de réduction doit être positif" })
+    .transform(Number)
+    .optional(),
+  discountPercentage: regexValidateNumber(
+    "0",
+    "Le pourcentage de réduction doit être positif"
+  ),
 });
 
 // --- SHEMAS VALIDATION ID

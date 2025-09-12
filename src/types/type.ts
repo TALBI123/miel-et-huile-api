@@ -1,4 +1,5 @@
 type Role = "USER" | "ADMIN";
+export type isString<T> = T extends string ? "string" : "number";
 export interface MailOptions<T> {
   to: string;
   subject: string;
@@ -21,4 +22,23 @@ export interface UserTokenPayload {
 export interface UploadResult {
   secure_url: string;
   public_id: string;
+}
+export interface IntCategory {
+  name: string;
+  description?: string | null;
+  slug?: string;
+  image?: string;
+  publicId?: string;
+}
+export interface IntProduct {
+  name: string;
+  description: string;
+  isOnSale: boolean;
+  price: number;
+  discountPrice?: number;
+  discountPercentage?: number;
+  categoryId: string;
+  image: string;
+  publicId: string;
+  stock: number;
 }

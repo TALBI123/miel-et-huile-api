@@ -1,10 +1,9 @@
-import { ApiResponse, UploadResult } from "../types/type";
+import { ApiResponse, IntProduct, UploadResult } from "../types/type";
 import { StatusCodes } from "http-status-codes";
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import {
   filterObjectByKeys,
-  generateSlug,
   handleServerError,
   paginate,
 } from "../utils/helpers";
@@ -15,20 +14,12 @@ import {
 import { ALLOWED_PRODUCT_PROPERTIES } from "../data/allowedNames";
 import { isEmptyObject } from "../utils/object";
 const prisma = new PrismaClient();
-interface ProductData {
-  name: string;
-  description: string;
-  price: number;
-  categoryId: string;
-  image: string;
-  publicId: string;
-  stock: number;
-}
+
 // --- PUBLIC PRODUCT Controller
 
 export const getProducts = async (
   req: Request,
-  res: Response<ApiResponse<ProductData[] | null>>
+  res: Response<ApiResponse<IntProduct[] | null>>
 ) => {
   try {
     const { page, limit } = res.locals.validated;
@@ -39,7 +30,9 @@ export const getProducts = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });
-    res.status(StatusCodes.OK).json({ success: true, data: products });
+    res
+      .status(StatusCodes.OK)
+      .json({ success: true, data: products as IntProduct[] });
   } catch (err) {
     handleServerError(res, err);
   }
@@ -62,7 +55,7 @@ export const getProductById = async (req: Request, res: Response) => {
 // --- AdMIN PRODUCT CRUD OPERATIONS
 
 export const createProduct = async (
-  req: Request<{}, {}, ProductData>,
+  req: Request<{}, {}, IntProduct>,
   res: Response
 ) => {
   let imageInfo: UploadResult | null = null;
@@ -76,6 +69,23 @@ export const createProduct = async (
       return res
         .status(StatusCodes.CONFLICT)
         .json({ success: false, message: "Ce produit existe déjà" });
+    if (
+      res.locals.validated.discountPrice &&
+      res.locals.validated.discountPrice >= res.locals.validated.price
+    )
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Le prix de réduction doit être inférieur au prix initial",
+      });
+    if (
+      res.locals.validated.discountPercentage &&
+      res.locals.validated.discountPercentage >= 100
+    ) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Le pourcentage de réduction doit être inférieur à 100",
+      });
+    }
     // ✅ Upload Cloudinary (pas besoin de vérifier req.file, middleware garantit sa présence)
     imageInfo = await uploadBufferToCloudinary(req.file!.buffer, "products");
 
@@ -83,7 +93,7 @@ export const createProduct = async (
     const data = await prisma.product.create({
       data: {
         ...filterObjectByKeys<
-          ProductData,
+          Omit<IntProduct, "image" | "publicId" | "isOnSale">,
           (typeof ALLOWED_PRODUCT_PROPERTIES)[number]
         >(res.locals.validated, ALLOWED_PRODUCT_PROPERTIES),
         image: imageInfo.secure_url,
@@ -109,7 +119,7 @@ export const createProduct = async (
   }
 };
 export const updateProduct = async (
-  req: Request<{ id: string }, {}, ProductData>,
+  req: Request<{ id: string }, {}, IntProduct>,
   res: Response
 ) => {
   let imageInfo: UploadResult | null = null;
@@ -124,9 +134,9 @@ export const updateProduct = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
-    const updatedData: Partial<ProductData> = {
+    const updatedData: Partial<IntProduct> = {
       ...filterObjectByKeys<
-        Partial<Omit<ProductData, "image" | "publicId">>,
+        Partial<Omit<IntProduct, "image" | "publicId" | "isOnSale">>,
         (typeof ALLOWED_PRODUCT_PROPERTIES)[number]
       >(res.locals.validated, ALLOWED_PRODUCT_PROPERTIES),
     };

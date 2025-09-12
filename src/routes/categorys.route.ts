@@ -13,7 +13,7 @@ import {
 } from "../middlewares/uploadMiddleware";
 import { validate } from "../middlewares/validate";
 import {
-  CreateCatgegorySchema,
+  CreateCategorySchema,
   PaginationSchema,
   ValidationId,
 } from "../schema/validation.shema";
@@ -38,7 +38,7 @@ router.post(
   // verifyAdmin,
   uploadMemoryStorage.single("image"),
   uploadHandler,
-  validate({ schema: CreateCatgegorySchema }),
+  validate({ schema: CreateCategorySchema }),
   createCategory
 );
 
@@ -47,7 +47,7 @@ router.put(
   verifyToken,
   verifyAdmin,
   uploadMemoryStorage.single("image"),
-  validate({ schema: CreateCatgegorySchema.partial() }),
+  validate({ schema: CreateCategorySchema.partial() }),
   validate({ schema: ValidationId, key: "params" }),
   updateCategory
 );
