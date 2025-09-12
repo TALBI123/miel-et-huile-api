@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import {  PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, UploadResult } from "types/type";
+import { ApiResponse, IntCategory, UploadResult } from "../types/type";
 import {
   filterObjectByKeys,
   generateSlug,
@@ -13,22 +13,13 @@ import {
   uploadBufferToCloudinary,
 } from "../services/upload.service";
 import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
-import { PaginationInput } from "schema/validation.shema";
 import { isEmptyObject } from "../utils/object";
 const prisma = new PrismaClient();
-
-interface CategoryData {
-  name: string;
-  description?: string | null;
-  slug?: string;
-  image?: string;
-  publicId?: string;
-}
 
 // --- PUBLIC CATEGORY Controller
 export const getAllCategorys = async (
   req: Request ,
-  res: Response<ApiResponse<CategoryData[] | null>>
+  res: Response<ApiResponse<IntCategory[] | null>>
 ) => {
   try {
     const { page, limit } = res.locals.validated ;
@@ -60,7 +51,7 @@ export const getCategoryById = async (req: Request, res: Response) => {
 };
 
 export const createCategory = async (
-  req: Request<{}, {}, CategoryData>,
+  req: Request<{}, {}, IntCategory>,
   res: Response
 ) => {
   let imageInfo: UploadResult | undefined;
@@ -108,7 +99,7 @@ export const createCategory = async (
 };
 
 export const updateCategory = async (
-  req: Request<{ id: string }, {}, CategoryData>,
+  req: Request<{ id: string }, {}, IntCategory>,
   res: Response
 ) => {
   let imageInfo: UploadResult | undefined;
@@ -123,8 +114,8 @@ export const updateCategory = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Catégorie non trouvée" });
-    const updatedData: Partial<CategoryData> = {
-      ...filterObjectByKeys<Pick<CategoryData, "name" | "description">, typeof ALLOWED_CATEGORY_PROPERTIES[number]>(
+    const updatedData: Partial<IntCategory> = {
+      ...filterObjectByKeys<Pick<IntCategory, "name" | "description">, typeof ALLOWED_CATEGORY_PROPERTIES[number]>(
         req.body,
         ALLOWED_CATEGORY_PROPERTIES
       ),
