@@ -73,7 +73,7 @@ model Product {
   description        String
   discountPrice      Float?      @default(0)
   discountPercentage Int?        @default(0)
-  isOnSale           Boolean     @default(false)
+  isOnSale           Boolean?     @default(false)
   price              Float
   image              String
   stock              Int         @default(0)

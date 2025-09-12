@@ -46,10 +46,13 @@ export const createProductShema = z.object({
     .min(0, { message: "Le prix de réduction doit être positif" })
     .transform(Number)
     .optional(),
-  discountPercentage: regexValidateNumber(
-    "0",
-    "Le pourcentage de réduction doit être positif"
-  ),
+  discountPercentage: z
+    .string()
+    // .regex(/^\d+$/, {
+    //   message: "Le pourcentage de réduction doit être positif",
+    // })
+    // .transform(Number)
+    .optional(),
 });
 
 // --- SHEMAS VALIDATION ID

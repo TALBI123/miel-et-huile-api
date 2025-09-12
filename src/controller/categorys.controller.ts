@@ -80,7 +80,6 @@ export const createCategory = async (
         slug: generateSlug(name),
       },
     });
-    
     return res.status(StatusCodes.CREATED).json({
       success: true,
       message: "Catégorie créée avec succès",

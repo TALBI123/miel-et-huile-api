@@ -13,7 +13,6 @@ import {
 } from "../services/upload.service";
 import { ALLOWED_PRODUCT_PROPERTIES } from "../data/allowedNames";
 import { isEmptyObject } from "../utils/object";
-import { fi } from "zod/v4/locales/index.cjs";
 const prisma = new PrismaClient();
 
 // --- PUBLIC PRODUCT Controller
@@ -23,8 +22,7 @@ export const getProducts = async (
   res: Response<ApiResponse<IntProduct[] | null>>
 ) => {
   try {
-    const { page, limit } = res.locals.validated;
-    const { categoryId } = req.query;
+    const { page, limit, category } = res.locals.validated;
     const products = await prisma.product.findMany(paginate({ page, limit }));
 
     if (!products.length)
@@ -58,7 +56,7 @@ export const createProduct = async (
   req: Request<{}, {}, IntProduct>,
   res: Response
 ) => {
-  let imageInfo: UploadResult | null = null;
+  let imageInfo: UploadResult | undefined;
   try {
     const existingProduct = await prisma.product.findFirst({
       where: { name: req.body.name },
@@ -71,6 +69,7 @@ export const createProduct = async (
 
     // Validation des prix de remise
     const { discountPrice, discountPercentage, price } = res.locals.validated;
+    console.log(discountPrice, discountPercentage);
     if (discountPrice !== undefined && discountPercentage !== undefined) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
@@ -78,7 +77,6 @@ export const createProduct = async (
           "Choisissez soit un prix de remise, soit un pourcentage, mais pas les deux.",
       });
     }
-
     // Construire l'objet Produit
     const product: IntProduct = {
       ...filterObjectByKeys<
@@ -114,9 +112,12 @@ export const createProduct = async (
         finalDiscountPercentage = discountPercentage;
       }
     }
-
+    if (finalDiscountPrice !== undefined) {
+      product.discountPercentage = finalDiscountPercentage as number;
+      product.discountPrice = finalDiscountPrice as number;
+    }
+    console.log(finalDiscountPrice, "jqsdjsjd");
     product.isOnSale = finalDiscountPrice !== undefined;
-
     // ✅ Upload Cloudinary (pas besoin de vérifier req.file, middleware garantit sa présence)
     imageInfo = await uploadBufferToCloudinary(req.file!.buffer, "products");
     product.image = imageInfo.secure_url;
