@@ -1,5 +1,4 @@
-import { Role } from "./enums";
-
+type Role = "USER" | "ADMIN";
 export interface MailOptions<T> {
   to: string;
   subject: string;
