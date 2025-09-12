@@ -13,6 +13,7 @@ import {
 } from "../services/upload.service";
 import { ALLOWED_PRODUCT_PROPERTIES } from "../data/allowedNames";
 import { isEmptyObject } from "../utils/object";
+import { fi } from "zod/v4/locales/index.cjs";
 const prisma = new PrismaClient();
 
 // --- PUBLIC PRODUCT Controller
@@ -23,7 +24,7 @@ export const getProducts = async (
 ) => {
   try {
     const { page, limit } = res.locals.validated;
-    const {} = req.query;
+    const { categoryId } = req.query;
     const products = await prisma.product.findMany(paginate({ page, limit }));
 
     if (!products.length)
@@ -51,7 +52,6 @@ export const getProductById = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
-
 // --- AdMIN PRODUCT CRUD OPERATIONS
 
 export const createProduct = async (
@@ -60,7 +60,6 @@ export const createProduct = async (
 ) => {
   let imageInfo: UploadResult | null = null;
   try {
-    console.log(req.body, res.locals);
     const existingProduct = await prisma.product.findFirst({
       where: { name: req.body.name },
       select: { id: true },
@@ -69,36 +68,63 @@ export const createProduct = async (
       return res
         .status(StatusCodes.CONFLICT)
         .json({ success: false, message: "Ce produit existe déjà" });
-    if (
-      res.locals.validated.discountPrice &&
-      res.locals.validated.discountPrice >= res.locals.validated.price
-    )
+
+    // Validation des prix de remise
+    const { discountPrice, discountPercentage, price } = res.locals.validated;
+    if (discountPrice !== undefined && discountPercentage !== undefined) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
-        message: "Le prix de réduction doit être inférieur au prix initial",
-      });
-    if (
-      res.locals.validated.discountPercentage &&
-      res.locals.validated.discountPercentage >= 100
-    ) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: "Le pourcentage de réduction doit être inférieur à 100",
+        message:
+          "Choisissez soit un prix de remise, soit un pourcentage, mais pas les deux.",
       });
     }
+
+    // Construire l'objet Produit
+    const product: IntProduct = {
+      ...filterObjectByKeys<
+        Omit<IntProduct, "image" | "publicId" | "isOnSale">,
+        (typeof ALLOWED_PRODUCT_PROPERTIES)[number]
+      >(res.locals.validated, ALLOWED_PRODUCT_PROPERTIES),
+      isOnSale: false,
+      image: "",
+      publicId: "",
+    };
+
+    let finalDiscountPrice: number | undefined;
+    let finalDiscountPercentage: number | undefined;
+
+    if (discountPrice !== undefined) {
+      if (discountPrice >= price)
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Le prix de réduction doit être inférieur au prix initial",
+        });
+      finalDiscountPrice = discountPrice;
+      finalDiscountPercentage = 100 - (100 * discountPrice) / price;
+    }
+
+    if (discountPercentage != undefined) {
+      if (discountPercentage >= 100)
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Le pourcentage de réduction doit être inférieur à 100",
+        });
+      if (finalDiscountPrice === undefined) {
+        finalDiscountPrice = price * (1 - discountPercentage / 100);
+        finalDiscountPercentage = discountPercentage;
+      }
+    }
+
+    product.isOnSale = finalDiscountPrice !== undefined;
+
     // ✅ Upload Cloudinary (pas besoin de vérifier req.file, middleware garantit sa présence)
     imageInfo = await uploadBufferToCloudinary(req.file!.buffer, "products");
+    product.image = imageInfo.secure_url;
+    product.publicId = imageInfo.public_id;
 
     // Enregistrer la Produit dans la base de données
     const data = await prisma.product.create({
-      data: {
-        ...filterObjectByKeys<
-          Omit<IntProduct, "image" | "publicId" | "isOnSale">,
-          (typeof ALLOWED_PRODUCT_PROPERTIES)[number]
-        >(res.locals.validated, ALLOWED_PRODUCT_PROPERTIES),
-        image: imageInfo.secure_url,
-        publicId: imageInfo.public_id,
-      },
+      data: product,
     });
 
     res
@@ -118,6 +144,7 @@ export const createProduct = async (
     handleServerError(res, err);
   }
 };
+
 export const updateProduct = async (
   req: Request<{ id: string }, {}, IntProduct>,
   res: Response
@@ -134,19 +161,63 @@ export const updateProduct = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
+
+    // Validation des prix de remise
+    const { discountPrice, discountPercentage, price } = res.locals.validated;
+    if (discountPrice !== undefined && discountPercentage !== undefined) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message:
+          "Choisissez soit un prix de remise, soit un pourcentage, mais pas les deux.",
+      });
+    }
+
+    let finalDiscountPrice: number | undefined;
+    let finalDiscountPercentage: number | undefined;
+
+    // Construire l'objet Produit mis à jour
     const updatedData: Partial<IntProduct> = {
       ...filterObjectByKeys<
         Partial<Omit<IntProduct, "image" | "publicId" | "isOnSale">>,
         (typeof ALLOWED_PRODUCT_PROPERTIES)[number]
       >(res.locals.validated, ALLOWED_PRODUCT_PROPERTIES),
     };
+
+    if (discountPrice !== undefined) {
+      if (discountPrice >= price)
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Le prix de réduction doit être inférieur au prix initial",
+        });
+      finalDiscountPrice = discountPrice;
+      finalDiscountPercentage = 100 - (100 * discountPrice) / price;
+    }
+    if (discountPercentage !== undefined) {
+      if (discountPercentage >= 100)
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Le pourcentage de réduction doit être inférieur à 100",
+        });
+      if (finalDiscountPrice === undefined) {
+        finalDiscountPrice = price * (1 - discountPercentage / 100);
+        finalDiscountPercentage = discountPercentage;
+      }
+    }
+
+    if (finalDiscountPrice !== undefined) {
+      updatedData.discountPercentage = finalDiscountPercentage;
+      updatedData.discountPrice = finalDiscountPrice;
+      updatedData.isOnSale = true;
+    }
+
+    // 🔹 Upload de la nouvelle image
     if (req.file) {
       imageInfo = await uploadBufferToCloudinary(req.file!.buffer, "products");
       updatedData.image = imageInfo.secure_url;
       updatedData.publicId = imageInfo.public_id;
     }
 
-    if (!isEmptyObject(updatedData))
+    if (isEmptyObject(updatedData))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Aucune donnée valide fournie pour la mise à jour",
