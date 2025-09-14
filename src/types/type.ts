@@ -23,6 +23,7 @@ export interface UploadResult {
   secure_url: string;
   public_id: string;
 }
+
 export interface IntCategory {
   name: string;
   description?: string | null;
@@ -30,6 +31,7 @@ export interface IntCategory {
   image?: string;
   publicId?: string;
 }
+
 export interface IntProduct {
   name: string;
   description: string;
@@ -41,4 +43,16 @@ export interface IntProduct {
   image: string;
   publicId: string;
   stock: number;
+}
+
+interface IntUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  email: string;
+  role: "USER" | "ADMIN";
+  image: string;
+  publicId: string;
+
 }

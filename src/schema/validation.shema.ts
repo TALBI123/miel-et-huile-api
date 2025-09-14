@@ -21,6 +21,17 @@ const regexValidateNumber = <T extends string | number>(
     .transform(Number)
     .optional();
 
+const booleanFromString = (message: string) =>
+  z.preprocess(
+    (val) => {
+      if (val === "true") return true;
+      if (val === "false") return false;
+      return val;
+    },
+    z.boolean({
+      message,
+    })
+  );
 export const CreateCategorySchema = z.object({
   name: z
     .string()
@@ -48,16 +59,11 @@ export const createProductShema = z.object({
     .optional(),
   discountPercentage: z
     .string()
-    // .regex(/^\d+$/, {
-    //   message: "Le pourcentage de réduction doit être positif",
-    // })
-    // .transform(Number)
+    .regex(/^\d+$/, {
+      message: "Le pourcentage de réduction doit être positif",
+    })
+    .transform(Number)
     .optional(),
-});
-
-// --- SHEMAS VALIDATION ID
-export const ValidationId = z.object({
-  id: z.string().uuid({ message: "L'ID doit être un UUID valide" }),
 });
 
 // --- SHEMAS VALIDATION PAGINATION
@@ -72,6 +78,42 @@ export const PaginationSchema = z.object({
     .regex(/^\d+$/, { message: "La limite doit être un nombre entier positif" })
     .default("5")
     .transform(Number),
+});
+
+// --- SHEMAS VALIDATION QUERY
+
+export const QuerySchema = z
+  .object({
+    category: z
+      .string()
+      .min(1, { message: "La catégorie ne peut pas être vide" })
+      .optional(),
+    search: z.string().optional(),
+
+    onSale: booleanFromString(
+      "La valeur de onSale doit être true ou false"
+    ).optional(),
+    minPrice: z
+      .string()
+      .regex(/^\d+$/, { message: "Le prix minimum doit être un nombre" })
+      .transform(Number)
+      .optional(),
+
+    maxPrice: z
+      .string()
+      .regex(/^\d+$/, { message: "Le prix maximum doit être un nombre" })
+      .transform(Number)
+      .optional(),
+
+    inStock: booleanFromString(
+      "La valeur de inStock doit être true ou false"
+    ).optional(),
+  })
+  .merge(PaginationSchema);
+
+// --- SHEMAS VALIDATION ID
+export const ValidationId = z.object({
+  id: z.string().uuid({ message: "L'ID doit être un UUID valide" }),
 });
 
 export type PaginationInput = z.infer<typeof PaginationSchema>;

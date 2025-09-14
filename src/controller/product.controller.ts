@@ -22,9 +22,41 @@ export const getProducts = async (
   res: Response<ApiResponse<IntProduct[] | null>>
 ) => {
   try {
-    const { page, limit, category } = res.locals.validated;
-    const products = await prisma.product.findMany(paginate({ page, limit }));
+    const {
+      page,
+      limit,
+      category,
+      search,
+      onSale,
+      minPrice,
+      maxPrice,
+      inStock,
+    } = res.locals.validated;
 
+    if (minPrice && maxPrice && minPrice > maxPrice) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Le prix minimum ne peut pas être supérieur au prix maximum",
+      });
+    }
+    const where: any = {
+      ...(category ? { category: { name: category } } : {}),
+      ...(inStock !== undefined ? { stock: { gt: 0 } } : {}),
+      ...(onSale !== undefined ? { onSale } : {}),
+      ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
+      ...(minPrice || maxPrice
+        ? {
+            price: {
+              ...(minPrice && { gte: minPrice }),
+              ...(maxPrice && { lte: maxPrice }),
+            },
+          }
+        : {}),
+    };
+    const products = await prisma.product.findMany({
+      where,
+      ...paginate({ page, limit }),
+    });
     if (!products.length)
       return res
         .status(StatusCodes.NOT_FOUND)

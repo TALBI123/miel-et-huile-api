@@ -106,7 +106,7 @@ const login = async (
     });
 
   try {
-    const isPasswordValid = await bcrypt.compare(password, data?.password);
+    const isPasswordValid = await bcrypt.compare(password, data.password!);
     if (!isPasswordValid)
       return res.status(StatusCodes.UNAUTHORIZED).json({
         success: false,

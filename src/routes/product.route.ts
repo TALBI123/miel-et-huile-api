@@ -13,7 +13,7 @@ import {
 } from "../controller/product.controller";
 import {
   createProductShema,
-  PaginationSchema,
+  QuerySchema,
   ValidationId,
 } from "../schema/validation.shema";
 import { verifyAdmin, verifyToken } from "../middlewares/auth";
@@ -22,7 +22,7 @@ const router = Router();
 
 router.get(
   "/",
-  validate({ schema: PaginationSchema, key: "query", skipSave: true }),
+  validate({ schema: QuerySchema, key: "query", skipSave: true }),
   getProducts
 );
 
