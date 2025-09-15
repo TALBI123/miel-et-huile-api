@@ -3,12 +3,13 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { UserTokenPayload } from "../types/type";
 import { PrismaClient, User } from "@prisma/client";
 const prisma = new PrismaClient();
-interface GoogleProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  image: string;
-  isVerified: boolean;
+interface GoogleAccountInfo {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  googleId?: string;
+  image?: string;
+  isVerified?: boolean;
 }
 passport.use(
   new GoogleStrategy(
@@ -26,38 +27,62 @@ passport.use(
             undefined
           );
         }
+
         const email = profile.emails[0].value;
+        const googleId = profile.id;
+        const firstName = profile.name?.givenName;
+        const lastName = profile.name?.familyName;
+        const image = profile.photos?.[0]?.value;
+        const isVerified = profile.emails[0].verified;
         // Create a user object based on the Google profile
-        console.log(profile);
-        const createUser: GoogleProfile = {
-          firstName: profile.name?.givenName || "",
-          lastName: profile.name?.familyName || "",
-          email,
-          image: profile.photos?.[0]?.value || "",
-          isVerified: profile.emails?.[0]?.verified || false,
-        };
-        const existingUser = await prisma.user.findUnique({
-          where: { email },
-          select: { id: true },
+        let existingUser = await prisma.user.findFirst({
+          where: { OR: [{ email: email }, { googleId: googleId }] },
+          select: { id: true, googleId: true },
         });
+        //🚨 2. GESTION DES CONFLITS
         if (existingUser) {
-          await prisma.user.update({
-            where: { email },
-            data: { ...createUser },
+          // Cas 2: Utilisateur trouvé par email mais googleId différent
+
+          if (existingUser.googleId && existingUser.googleId !== googleId)
+            return done(
+              new Error("Ce compte Google est déjà lié à un autre utilisateur"),
+              undefined
+            );
+          const updateUser: GoogleAccountInfo = {
+            ...(firstName && { firstName }),
+            ...(lastName && { lastName }),
+            ...(!existingUser?.googleId && { googleId }),
+            ...(image && { image }),
+            isVerified: isVerified,
+          };
+          // Cas 2: Utilisateur trouvé par email mais googleId différent
+          existingUser = await prisma.user.update({
+            where: { id: existingUser.id },
+            data: updateUser,
           });
         } else {
-          await prisma.user.create({
-            data: { ...createUser, role: "USER", password: null },
+          // Cas 4: Nouvel utilisateur → CRÉATION
+          existingUser = await prisma.user.create({
+            data: {
+              email: email,
+              googleId: googleId,
+              firstName: firstName || email.split("@")[0] || "Utilisateur",
+              lastName: lastName || "",
+              image: image || null,
+              role: "USER",
+              password: null,
+            },
           });
         }
         // Simulate user retrieval/creation
         const user: UserTokenPayload = {
-          id: profile.id,
+          id: existingUser.id,
           email,
           role: "USER",
         };
         done(null, user as UserTokenPayload);
       } catch (error) {
+        console.error(error);
         done(error);
       }
     }
