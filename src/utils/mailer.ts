@@ -13,10 +13,6 @@ export const transporter = nodemailer.createTransport({
     pass: process.env.SENDGRID_API_KEY, // ta clé API SendGrid
   },
 });
-// transporter
-//   .verify()
-//   .then(() => console.log("✅ Server ready to take our messages"))
-//   .catch((err) => console.error("❌ Server not ready:", err));
 export const sendEmail = async <T extends PlainObject>({
   to,
   subject,
