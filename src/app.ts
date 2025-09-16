@@ -11,7 +11,7 @@ import { PrismaClient } from "@prisma/client";
 import express from "express";
 import cors from "cors";
 import "./config/passport";
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 4000;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 if (process.env.NODE_ENV !== "production") {
