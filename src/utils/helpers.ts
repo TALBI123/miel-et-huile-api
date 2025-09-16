@@ -38,7 +38,7 @@ export const handleServerError = (res: Response, error: unknown) => {
     console.error(`Server error: ${StatusCodes.INTERNAL_SERVER_ERROR}`, error);
   res
     .status(StatusCodes.INTERNAL_SERVER_ERROR)
-    .json({ success: false, message: "Erreur serveur",error });
+    .json({ success: false, message: "Erreur serveur" });
 };
 export const generateSlug = (name: string): string => {
   return slugify(name, { lower: true, strict: true });

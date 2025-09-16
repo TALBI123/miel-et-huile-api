@@ -6,7 +6,7 @@ import { config } from "dotenv";
 config();
 type PlainObject = { [key: string]: any };
 export const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE,
+  service: "gmail",
   auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
   pool: true,
   maxConnections: 5, // max connexions simultanées
@@ -23,6 +23,9 @@ export const sendEmail = async <T extends PlainObject>({
   context,
 }: MailOptions<T>) => {
   try {
+    console.log(process.env.EMAIL_USER);
+    console.log(process.env.EMAIL_PASS);
+    console.log(process.env.EMAIL_SERVICE);
     if (Array.isArray(context))
       throw new Error("Le contexte ne peut pas être un tableau");
     const templateFile = path.join(__dirname, `../../views/${htmlFileName}`);

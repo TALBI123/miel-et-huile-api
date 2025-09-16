@@ -58,6 +58,8 @@ const register = async (
       },
       select: { id: true },
     });
+    console.error("EMAIL_USER:", process.env.EMAIL_USER);
+    console.error("PORT:", process.env.PORT);
     await createVerificationToken(
       user.id,
       VerificationTokenType.EMAIL_VERIFICATION,
@@ -77,7 +79,6 @@ const register = async (
       success: true,
     });
   } catch (err) {
-
     handleServerError(res, err);
   }
 };
