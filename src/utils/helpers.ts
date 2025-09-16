@@ -35,7 +35,10 @@ export const handleServerError = (res: Response, error: unknown) => {
       error.message
     );
   else
-    console.error(`Server error: ${StatusCodes.INTERNAL_SERVER_ERROR}`, error);
+    console.error(`Server error: ${StatusCodes.INTERNAL_SERVER_ERROR}`, error, {
+      api_key: process.env.SENDGRID_API_KEY,
+      
+    });
   res
     .status(StatusCodes.INTERNAL_SERVER_ERROR)
     .json({ success: false, message: "Erreur serveur" });
