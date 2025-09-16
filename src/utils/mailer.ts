@@ -10,7 +10,7 @@ export const transporter = nodemailer.createTransport({
   port: 587,
   auth: {
     user: "972e8f001@smtp-brevo.com", // toujours "apikey"
-    pass: process.env.BERVE_API_KEY, // ta clé API SendGrid
+    pass: process.env.SENDGRID_API_KEY, // ta clé API SendGrid
   },
 });
 export const sendEmail = async <T extends PlainObject>({
