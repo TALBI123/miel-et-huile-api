@@ -4,7 +4,7 @@ import loginRegister from "./routes/auth/auth.route";
 import categoryRoute from "./routes/categorys.route";
 import productRoute from "./routes/product.route";
 import { transporter } from "./utils/mailer";
-import { connectRedis } from "./config/cache";
+// import { connectRedis } from "./config/cache";
 import cookieParser from "cookie-parser";
 import { config } from "dotenv";
 import { PrismaClient } from "@prisma/client";
@@ -28,9 +28,11 @@ transporter
   .catch((err) => console.error("❌ Server not ready:", err));
 
 // Connect to Redis
-connectRedis().catch((err) => {
-  console.error("❌ Unable to connect to Redis:", err);
-});
+// connectRedis().catch((err) => {
+//   console.error("❌ Unable to connect to Redis:", err);
+// });
+
+// Routes 
 app.use("/", googleAuth);
 app.use("/", loginRegister);
 app.use("/", verifyEmail);
@@ -39,7 +41,7 @@ app.use("/products", productRoute);
 
 app.get("/", async (req, res) => {
   const prisma = new PrismaClient();
-  
+
   res.json({ message: "Server is running" });
 });
 app.listen(PORT, () => {
