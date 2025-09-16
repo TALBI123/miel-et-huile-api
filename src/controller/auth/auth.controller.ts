@@ -68,7 +68,7 @@ const register = async (
       context: { link },
     };
     await sendEmail(emailOptions);
-    
+
     console.log(user.id, token, new Date());
     res.status(StatusCodes.CREATED).json({
       message: "Inscription réussie. Veuillez vérifier votre email",
@@ -127,7 +127,7 @@ const login = async (
     res.cookie("access_token", token, {
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
     return res
       .status(StatusCodes.OK)
@@ -139,7 +139,13 @@ const login = async (
 
 const logout = async (req: Request, res: Response) => {
   try {
-    console.log("logout");
+  res.clearCookie('access_token', {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      domain: process.env.COOKIE_DOMAIN || undefined
+    });
     res.status(StatusCodes.OK).json({ message: "Logout" });
   } catch (err) {
     handleServerError(res, err);

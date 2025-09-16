@@ -7,5 +7,5 @@ const router = Router();
 
 router.post("/login", validate({ schema: authSchema.pick({ email: true, password: true }) }), login);
 router.post("/register", validate({ schema: authSchema }), register);
-router.get("/logout", verifyToken, logout);
+router.get("/logout", logout);
 export default router;

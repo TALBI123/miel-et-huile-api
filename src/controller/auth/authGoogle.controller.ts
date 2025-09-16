@@ -1,34 +1,25 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { handleServerError } from "../../utils/helpers";
-import { success } from "zod";
-
 export const googleCallback = (req: Request, res: Response) => {
   try {
     const googleUser = req.user;
     if (!googleUser)
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    const token = jwt.sign(
-      { userId: req.user?.id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1h" }
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=unauthorized`);
+    const token = jwt.sign(googleUser, process.env.JWT_SECRET as string, {
+      expiresIn: "24h",
+    });
+    res.cookie("access_token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    // ✅ Redirection avec token dans l'URL (hash ou query)
+    res.redirect(
+      `${process.env.CLIENT_URL}/auth/success?token=${encodeURIComponent(
+        token
+      )}`
     );
-
-    // Renvoyer une page HTML qui envoie le token au parent
-    res.send(`
-      <html>
-        <body>
-          <script>
-            window.opener.postMessage({
-              token: '${token}',
-              message: 'Authentication successful'
-            }, 'http://localhost:3000');
-            window.close();
-          </script>
-          <p>Connexion réussie! Vous pouvez fermer cette fenêtre.</p>
-        </body>
-      </html>
-    `);
   } catch (err) {
     console.error(err);
     handleServerError(res, err);
