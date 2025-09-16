@@ -45,9 +45,9 @@ app.get("/", async (req, res) => {
 
   res.json({
     message: "Server is running",
-    sendGrind: process.env.SENDGRID_API_KEY,
-    port: process.env.PORT,
-    user: process.env.EMAIL_USER,
+    // sendGrind: process.env.SENDGRID_API_KEY,
+    // port: process.env.PORT,
+    // user: process.env.EMAIL_USER,
   });
 });
 app.listen(Number(PORT), () => {
