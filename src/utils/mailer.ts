@@ -2,8 +2,6 @@ import nodemailer from "nodemailer";
 import ejs from "ejs";
 import path from "path";
 import { MailOptions } from "../types/type";
-import { config } from "dotenv";
-config();
 type PlainObject = { [key: string]: any };
 export const transporter = nodemailer.createTransport({
   host: "smtp.sendgrid.net",

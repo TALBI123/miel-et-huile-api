@@ -14,7 +14,9 @@ import "./config/passport";
 const PORT = process.env.PORT;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
-config();
+if (process.env.NODE_ENV !== "production") {
+  config(); // seulement en dev
+}
 
 // middleware pckages
 app.use(express.static("view"));
@@ -32,7 +34,7 @@ transporter
 //   console.error("❌ Unable to connect to Redis:", err);
 // });
 
-// Routes 
+// Routes
 app.use("/", googleAuth);
 app.use("/", loginRegister);
 app.use("/", verifyEmail);

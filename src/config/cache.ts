@@ -1,6 +1,5 @@
 // import { createClient } from "redis";
 import memoryCache from "node-cache";
-import "dotenv/config";
 export const cache = new memoryCache({ stdTTL: 100, checkperiod: 120 });
 // const redisClient = createClient({ url: process.env.REDIS_URL });
 // redisClient.on("connect", () => {
