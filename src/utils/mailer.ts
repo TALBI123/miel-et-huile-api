@@ -1,7 +1,9 @@
 import nodemailer from "nodemailer";
 import ejs from "ejs";
 import path from "path";
-import { MailOptions } from "../types/type"
+import { MailOptions } from "../types/type";
+import { config } from "dotenv";
+config();
 type PlainObject = { [key: string]: any };
 export const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE,
@@ -24,7 +26,7 @@ export const sendEmail = async <T extends PlainObject>({
     if (Array.isArray(context))
       throw new Error("Le contexte ne peut pas être un tableau");
     const templateFile = path.join(__dirname, `../../views/${htmlFileName}`);
-    const html = await ejs.renderFile(templateFile, context);
+    const html = await ejs.renderFile(templateFile, context || {});
     const info = await transporter.sendMail({
       from: `"Mon App" <${process.env.EMAIL_USER}>`,
       to,
