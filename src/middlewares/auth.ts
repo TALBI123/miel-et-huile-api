@@ -1,8 +1,10 @@
+import { BlacklistService } from "../services/blacklistService.service";
+import { ApiResponse, UserTokenPayload } from "../types/type";
 import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, UserTokenPayload } from "../types/type";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import { ROLE } from "../types/enums";
+import jwt from "jsonwebtoken";
+const blacklistService = new BlacklistService();
 export const verifyToken = (
   req: Request,
   res: Response<ApiResponse>,
@@ -16,6 +18,11 @@ export const verifyToken = (
       message: "Accès non autorisé - Token manquant",
     });
   try {
+    if (blacklistService.isTokenBlacklisted(token))
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        message: "Accès non autorisé - Token blacklisté",
+      });
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET!

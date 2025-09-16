@@ -1,6 +1,7 @@
 import { createClient } from "redis";
+import memoryCache from "node-cache";
 const redisClient = createClient({ url: process.env.REDIS_URL });
-
+export const cache = new memoryCache({ stdTTL: 100, checkperiod: 120 });
 redisClient.on("connect", () => {
   console.log("✅ Redis connected successfully");
 });

@@ -4,9 +4,10 @@ import loginRegister from "./routes/auth/auth.route";
 import categoryRoute from "./routes/categorys.route";
 import productRoute from "./routes/product.route";
 import { transporter } from "./utils/mailer";
-import { connectRedis } from "./config/redis";
+import { connectRedis } from "./config/cache";
 import cookieParser from "cookie-parser";
 import { config } from "dotenv";
+import { PrismaClient } from "@prisma/client";
 import express from "express";
 import cors from "cors";
 import "./config/passport";
@@ -36,8 +37,9 @@ app.use("/", verifyEmail);
 app.use("/categorys", categoryRoute);
 app.use("/products", productRoute);
 
-app.get("/", (req, res) => {
-  console.log("5raaaaaaa");
+app.get("/", async (req, res) => {
+  const prisma = new PrismaClient();
+  
   res.json({ message: "Server is running" });
 });
 app.listen(PORT, () => {

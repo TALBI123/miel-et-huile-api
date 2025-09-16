@@ -1,19 +1,21 @@
-import { PrismaClient } from "@prisma/client";
-import { StatusCodes } from "http-status-codes";
+import { BlacklistService } from "../../services/blacklistService.service";
 import { MailOptions, UserTokenPayload } from "../../types/type";
+import { VerificationTokenType } from "../../types/enums";
+import { StatusCodes } from "http-status-codes";
+import { ApiResponse } from "../../types/type";
 import { sendEmail } from "../../utils/mailer";
+import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
+import { config } from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { config } from "dotenv";
+const blacklistService = new BlacklistService();
 import {
   createVerificationToken,
   getExpirationDate,
   handleServerError,
 } from "../../utils/helpers";
-import { ApiResponse } from "../../types/type";
-import { VerificationTokenType } from "../../types/enums";
 config();
 const prisma = new PrismaClient();
 interface LoginBodyRequest {
@@ -139,14 +141,26 @@ const login = async (
 
 const logout = async (req: Request, res: Response) => {
   try {
-  res.clearCookie('access_token', {
+    const token = req.cookies["access_token"];
+    if (token) {
+      try {
+        blacklistService.addToBlacklist(token);
+      } catch (err) {
+        console.error("Erreur lors de l'ajout du token à la blacklist:", err);
+      }
+    }
+    res.clearCookie("access_token", {
       path: "/",
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      domain: process.env.COOKIE_DOMAIN || undefined
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      domain: process.env.COOKIE_DOMAIN || undefined,
     });
-    res.status(StatusCodes.OK).json({ message: "Logout" });
+    
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Déconnexion réussie",
+    });
   } catch (err) {
     handleServerError(res, err);
   }
