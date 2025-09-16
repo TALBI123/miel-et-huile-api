@@ -6,11 +6,12 @@ import { config } from "dotenv";
 config();
 type PlainObject = { [key: string]: any };
 export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  pool: true,
-  maxConnections: 5, // max connexions simultanées
-  maxMessages: 100,
+ host: "smtp.sendgrid.net",
+  port: 587,
+  auth: {
+    user: "apikey", // toujours "apikey"
+    pass: process.env.SENDGRID_API_KEY, // ta clé API SendGrid
+  },
 });
 // transporter
 //   .verify()
