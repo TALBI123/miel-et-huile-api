@@ -63,13 +63,13 @@ const register = async (
       VerificationTokenType.EMAIL_VERIFICATION,
       15
     );
-    const emailOptions: MailOptions<{ link: string }> = {
-      to: email,
-      subject: "verifacation de l'eamil",
-      htmlFileName: "verification.email.ejs",
-      context: { link },
-    };
-    await sendEmail(emailOptions);
+    // const emailOptions: MailOptions<{ link: string }> = {
+    //   to: email,
+    //   subject: "verifacation de l'eamil",
+    //   htmlFileName: "verification.email.ejs",
+    //   context: { link },
+    // };
+    // await sendEmail(emailOptions);
 
     console.log(user.id, token, new Date());
     res.status(StatusCodes.CREATED).json({
@@ -77,6 +77,7 @@ const register = async (
       success: true,
     });
   } catch (err) {
+
     handleServerError(res, err);
   }
 };
@@ -156,7 +157,7 @@ const logout = async (req: Request, res: Response) => {
       sameSite: "strict",
       domain: process.env.COOKIE_DOMAIN || undefined,
     });
-    
+
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Déconnexion réussie",
