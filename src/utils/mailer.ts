@@ -6,11 +6,11 @@ import { config } from "dotenv";
 config();
 type PlainObject = { [key: string]: any };
 export const transporter = nodemailer.createTransport({
- host: "smtp.sendgrid.net",
+  host: "smtp-relay.brevo.com",
   port: 587,
   auth: {
-    user: "apikey", // toujours "apikey"
-    pass: process.env.SENDGRID_API_KEY, // ta clé API SendGrid
+    user: "972e8f001@smtp-brevo.com", // toujours "apikey"
+    pass: process.env.BERVE_API_KEY, // ta clé API SendGrid
   },
 });
 // transporter
