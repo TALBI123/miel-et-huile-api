@@ -42,10 +42,14 @@ app.use("/categorys", categoryRoute);
 app.use("/products", productRoute);
 
 app.get("/", async (req, res) => {
-  const prisma = new PrismaClient();
 
-  res.json({ message: "Server is running" });
+  res.json({
+    message: "Server is running",
+    sendGrind: process.env.SENDGRID_API_KEY,
+    port: process.env.PORT,
+    user: process.env.EMAIL_USER,
+  });
 });
-app.listen(PORT, () => {
+app.listen(Number(PORT), () => {
   console.log(`http://localhost:${PORT}`);
 });
