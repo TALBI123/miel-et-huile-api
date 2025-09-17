@@ -1,6 +1,6 @@
 import { BlacklistService } from "../../services/blacklistService.service";
 import { MailOptions, UserTokenPayload } from "../../types/type";
-import { sendEmail } from "../../services/test.service";
+import { sendEmail } from "../../services/emailService.service";
 import { VerificationTokenType } from "../../types/enums";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../types/type";
