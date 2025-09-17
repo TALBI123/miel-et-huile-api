@@ -22,8 +22,8 @@ export const sendEmail = async <T extends PlainObject>({
 }: MailOptions<T>) => {
   try {
     console.log(context);
-    if (Array.isArray(context))
-      throw new Error("Le contexte ne peut pas être un tableau");
+    // if (Array.isArray(context))
+    //   throw new Error("Le contexte ne peut pas être un tableau");
     const templateFile = path.join(__dirname, `../../views/${htmlFileName}`);
     const html = await ejs.renderFile(templateFile, context || {});
     const info = await transporter.sendMail({
