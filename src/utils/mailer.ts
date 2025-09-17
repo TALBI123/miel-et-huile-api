@@ -8,7 +8,7 @@ export const transporter = nodemailer.createTransport({
   port: 587,
   auth: {
     user: "apikey", // toujours "apikey"
-    pass: process.env.SENDGRID_API_KEY, // ta clé API SendGrid
+    pass: "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", // ta clé API SendGrid
   },
 });
 export const sendEmail = async <T extends PlainObject>({
