@@ -10,9 +10,14 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
+  // Utilisez la variable d'environnement qui contient votre URL
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  // Nouveau : nécessaire pour les migrations avec SSL
+  directUrl = env("DIRECT_DATABASE_URL")
+  // Nouveau : paramètre crucial pour SSL
+  relationMode = "prisma"
 }
+
 
 // model Emp {
 //   id    String @id @default(uuid())

@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 4000;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 import fs from "fs"; // Importez le module 'fs' pour vérifier si le fichier existe
+import { PrismaClient } from "@prisma/client";
 // Création dynamique du .env en production
 if (process.env.NODE_ENV === "production" && !fs.existsSync(".env")) {
   try {
@@ -77,14 +78,39 @@ app.use("/", loginRegister);
 app.use("/", verifyEmail);
 app.use("/categorys", categoryRoute);
 app.use("/products", productRoute);
-
+async function checkConnection() {
+  try {
+    const prisma = new PrismaClient();
+    await prisma.$connect();
+    console.log("✅ Connexion à la base de données réussie");
+    await prisma.$disconnect();
+    return true;
+  } catch (error) {
+    console.error("❌ Erreur de connexion Prisma:", error);
+    return false;
+  }
+}
+checkConnection().then((success) => {
+  if (!success) {
+    console.log("❌ Arrêt du serveur - Base de données inaccessible");
+    process.exit(1);
+  }
+});
 app.get("/", async (req, res) => {
   res.json({
     message: "Server is running updated",
     env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
 
     allEnv: Object.keys(process.env)
-      .filter((k) => ["SENDGRID_API_KEY", "EMAIL_USER", "PORT","DATABASE_URL","DIRECT_URL"].includes(k))
+      .filter((k) =>
+        [
+          "SENDGRID_API_KEY",
+          "EMAIL_USER",
+          "PORT",
+          "DATABASE_URL",
+          "DIRECT_URL",
+        ].includes(k)
+      )
       .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
   });
 });
