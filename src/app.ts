@@ -46,7 +46,7 @@ REDIS_URL=${process.env.REDIS_URL || ""}
   }
 }
 
-if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
+if (fs.existsSync(".env") ) {
   config();
   console.log("Variables .env chargées pour le développement local");
 } else {
