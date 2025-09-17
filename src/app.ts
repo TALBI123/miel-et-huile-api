@@ -105,15 +105,7 @@ app.get("/", async (req, res) => {
     env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
 
     allEnv: Object.keys(process.env)
-      .filter((k) =>
-        [
-          "SENDGRID_API_KEY",
-          "EMAIL_USER",
-          "PORT",
-          "DATABASE_URL",
-          "DIRECT_URL",
-        ].includes(k)
-      )
+      .filter((k) => ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"].includes(k))
       .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
   });
 });
