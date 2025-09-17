@@ -13,15 +13,16 @@ import cors from "cors";
 const PORT = process.env.PORT || 4000;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
-import fs from 'fs'; // Importez le module 'fs' pour vérifier si le fichier existe
+import fs from "fs"; // Importez le module 'fs' pour vérifier si le fichier existe
 
-if (fs.existsSync('.env') && process.env.NODE_ENV !== 'production') {
+if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
   config();
   console.log("Variables .env chargées pour le développement local");
 } else {
-  console.log("Mode Production: Les variables d'environnement système sont utilisées");
+  console.log(
+    "Mode Production: Les variables d'environnement système sont utilisées"
+  );
 }
-
 
 // middleware pckages
 app.use(express.static("view"));
@@ -47,12 +48,11 @@ app.use("/categorys", categoryRoute);
 app.use("/products", productRoute);
 
 app.get("/", async (req, res) => {
-
   res.json({
     message: "Server is running updated",
-    sendGrind: process.env.SENDGRID_API_KEY,
+    sendGrind: process.env.SENDGRID_API_KEY ? "✅ trouvé" : "❌ manquant",
     port: process.env.PORT,
-    user: process.env.EMAIL_USER,
+    user: process.env.EMAIL_USER ? "✅ trouvé" : "❌ manquant",
   });
 });
 app.listen(Number(PORT), () => {
