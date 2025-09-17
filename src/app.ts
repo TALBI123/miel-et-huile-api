@@ -17,7 +17,7 @@ import { PrismaClient } from "@prisma/client";
 import {
   verifyEmailConfig,
   verifySendGridConnection,
-} from "./services/emailService.service";
+} from "./services/test.service";
 const prisma = new PrismaClient();
 // Création dynamique du .env en production
 if (process.env.NODE_ENV === "production" && !fs.existsSync(".env")) {

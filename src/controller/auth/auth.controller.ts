@@ -1,6 +1,6 @@
 import { BlacklistService } from "../../services/blacklistService.service";
 import { MailOptions, UserTokenPayload } from "../../types/type";
-import { sendEmail } from "../../services/emailService.service";
+import { sendEmail } from "../../services/test.service";
 import { VerificationTokenType } from "../../types/enums";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../types/type";
@@ -58,8 +58,6 @@ const register = async (
     //   },
     //   select: { id: true },
     // });
-    console.error("EMAIL_USER:", process.env.EMAIL_USER);
-    console.error("PORT:", process.env.PORT);
     // await createVerificationToken(
     //   user.id,
     //   VerificationTokenType.EMAIL_VERIFICATION,
