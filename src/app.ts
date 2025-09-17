@@ -9,7 +9,7 @@ import cookieParser from "cookie-parser";
 import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
-import "./config/passport";
+// import "./config/passport";
 const PORT = process.env.PORT || 4000;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
