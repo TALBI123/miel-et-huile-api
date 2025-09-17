@@ -15,6 +15,7 @@ const app = express();
 app.use(cors({ origin: true, credentials: true }));
 import fs from "fs"; // Importez le module 'fs' pour vérifier si le fichier existe
 import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 // Création dynamique du .env en production
 if (process.env.NODE_ENV === "production" && !fs.existsSync(".env")) {
   try {
@@ -95,6 +96,10 @@ checkConnection().then((success) => {
     console.log("❌ Arrêt du serveur - Base de données inaccessible");
     process.exit(1);
   }
+});
+app.get("/db", async (req, res) => {
+  const data = await prisma.user.findMany();
+  res.status(200).json({ message: "db connected", data });
 });
 app.get("/", async (req, res) => {
   res.json({
