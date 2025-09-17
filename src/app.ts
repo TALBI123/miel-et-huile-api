@@ -50,9 +50,11 @@ app.use("/products", productRoute);
 app.get("/", async (req, res) => {
   res.json({
     message: "Server is running updated",
-    sendGrind: process.env.SENDGRID_API_KEY ? "✅ trouvé" : "❌ manquant",
-    port: process.env.PORT,
-    user: process.env.EMAIL_USER ? "✅ trouvé" : "❌ manquant",
+    env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
+
+    allEnv: Object.keys(process.env)
+      .filter((k) => ["SENDGRID_API_KEY", "EMAIL_USER", "PORT"].includes(k))
+      .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
   });
 });
 app.listen(Number(PORT), () => {
