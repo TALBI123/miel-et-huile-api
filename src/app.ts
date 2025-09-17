@@ -66,7 +66,7 @@ app.use(cookieParser());
 transporter
   .verify()
   .then(() => console.log("✅ Server nodemailer ready to take our messages"))
-  .catch((err) => console.error("❌ Server not ready:", err));
+  .catch((err) => console.error("❌ Server not ready transport sendEmail:", err));
 
 // Connect to Redis
 // connectRedis().catch((err) => {
