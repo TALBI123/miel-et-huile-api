@@ -119,6 +119,9 @@ app.get("/", async (req, res) => {
       .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
   });
 });
-app.listen(PORT, () => {
-  console.log(`http://localhost:${PORT}`);
+// ✅ NOUVEAU CODE (POUR RAILWAY) :
+
+const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+app.listen(Number(PORT), HOST, () => {
+  console.log(`✅ Server running on http://${HOST}:${PORT}`);
 });
