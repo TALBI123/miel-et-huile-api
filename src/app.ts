@@ -46,7 +46,7 @@ REDIS_URL=${process.env.REDIS_URL || ""}
   }
 }
 
-if (fs.existsSync(".env")) {
+if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
   config();
   console.log("Variables .env chargées pour le développement local");
 } else {
@@ -81,13 +81,11 @@ app.use("/products", productRoute);
 app.get("/", async (req, res) => {
   res.json({
     message: "Server is running updated",
-    env: process.env.NODE_ENV,
-    // Utilisez directement les variables système
-    emailUser: process.env.EMAIL_USER || "NON DÉFINI",
-    sendgridKey: process.env.SENDGRID_API_KEY ? "DÉFINI" : "NON DÉFINI",
-    port: process.env.PORT,
-    // Vérifiez d'autres variables importantes
-    databaseUrl: process.env.DATABASE_URL ? "DÉFINI" : "NON DÉFINI",
+    env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
+
+    allEnv: Object.keys(process.env)
+      .filter((k) => ["SENDGRID_API_KEY", "EMAIL_USER", "PORT"].includes(k))
+      .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
   });
 });
 app.listen(Number(PORT), () => {
