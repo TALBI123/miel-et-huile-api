@@ -13,9 +13,15 @@ import "./config/passport";
 const PORT = process.env.PORT || 4000;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
-if (process.env.NODE_ENV !== "production") {
-  config(); // seulement en dev
+import fs from 'fs'; // Importez le module 'fs' pour vérifier si le fichier existe
+
+if (fs.existsSync('.env') && process.env.NODE_ENV !== 'production') {
+  config();
+  console.log("Variables .env chargées pour le développement local");
+} else {
+  console.log("Mode Production: Les variables d'environnement système sont utilisées");
 }
+
 
 // middleware pckages
 app.use(express.static("view"));
