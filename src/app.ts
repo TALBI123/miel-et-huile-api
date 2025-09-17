@@ -88,6 +88,6 @@ app.get("/", async (req, res) => {
       .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
   });
 });
-app.listen(Number(PORT), () => {
+app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);
 });
