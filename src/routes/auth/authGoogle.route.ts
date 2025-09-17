@@ -2,6 +2,8 @@ import { googleCallback } from "../../controller/auth/authGoogle.controller";
 import { Router } from "express";
 import passport from "passport";
 const router = Router();
+router.use(passport.initialize());
+// Route pour démarrer l'authentification Google
 
 router.get(
   "/auth/google",

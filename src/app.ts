@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
-// import "./config/passport";
+import "./config/passport";
 const PORT = process.env.PORT || 4000;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -19,38 +19,6 @@ import {
   verifySendGridConnection,
 } from "./services/emailService.service";
 const prisma = new PrismaClient();
-// Création dynamique du .env en production
-// if (process.env.NODE_ENV === "production" && !fs.existsSync(".env")) {
-//   try {
-//     const envContent = `
-// NODE_ENV=production
-// PORT=${process.env.PORT || 4000}
-// EMAIL_USER=${process.env.EMAIL_USER || ""}
-// EMAIL_PASS=${process.env.EMAIL_PASS || ""}
-// JWT_SECRET=${process.env.JWT_SECRET || "json_web_token_jwt"}
-// JWT_EXPIRES_IN=${process.env.JWT_EXPIRES_IN || "1h"}
-// DATABASE_URL=${process.env.DATABASE_URL || ""}
-// DIRECT_URL=${process.env.DIRECT_URL || ""}
-// SALT_ROUND=${process.env.SALT_ROUND || "11"}
-// FRONTEND_URL=${process.env.FRONTEND_URL || "http://localhost:5173"}
-// CLOUDINARY_CLOUD_NAME=${process.env.CLOUDINARY_CLOUD_NAME || ""}
-// CLOUDINARY_API_KEY=${process.env.CLOUDINARY_API_KEY || ""}
-// CLOUDINARY_API_SECRET=${process.env.CLOUDINARY_API_SECRET || ""}
-// GOOGLE_CLIENT_ID=${process.env.GOOGLE_CLIENT_ID || ""}
-// GOOGLE_CLIENT_SECRET=${process.env.GOOGLE_CLIENT_SECRET || ""}
-// CLIENT_URL=${process.env.CLIENT_URL || "http://localhost:5473"}
-// SENDGRID_API_KEY=${process.env.SENDGRID_API_KEY || ""}
-// BERVE_API_KEY=${process.env.BERVE_API_KEY || ""}
-// REDIS_URL=${process.env.REDIS_URL || ""}
-//     `.trim();
-
-//     fs.writeFileSync(".env", envContent);
-//     console.log("✅ Fichier .env créé dynamiquement pour la production");
-//   } catch (error) {
-//     console.error("❌ Erreur lors de la création du .env:", error);
-//   }
-// }
-
 if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
   config();
   console.log("Variables .env chargées pour le développement local");
@@ -105,10 +73,31 @@ app.get("/", async (req, res) => {
     env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
 
     allEnv: Object.keys(process.env)
-      .filter((k) => ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"].includes(k))
+      .filter((k) =>
+        [
+          "GOOGLE_CLIENT_ID",
+          "GOOGLE_CLIENT_SECRET",
+          "GOOGLE_CALLBACK_URL",
+        ].includes(k)
+      )
       .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
   });
 });
+
+app.get("/auth/google/debug", (req, res) => {
+  res.json({
+    clientId: process.env.GOOGLE_CLIENT_ID ? "✅ Défini" : "❌ Manquant",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET
+      ? "✅ Défini"
+      : "❌ Manquant",
+    callbackURL:process.env.GOOGLE_CALLBACK_URL
+      ? "✅ Défini"
+      : "❌ Manquant",
+    environment: process.env.NODE_ENV,
+    domain: process.env.DOMAIN,
+  });
+});
+
 // ✅ NOUVEAU CODE (POUR RAILWAY) :
 const checkEmailConnection = async () => {
   if (verifyEmailConfig()) {
@@ -130,3 +119,39 @@ app.listen(Number(PORT), HOST, () => {
   console.log(process.env.NODE_ENV || "❌ NODE_ENV non défini");
   console.log(`✅ Server running on http://${HOST}:${PORT}`);
 });
+
+
+
+
+
+// Création dynamique du .env en production
+// if (process.env.NODE_ENV === "production" && !fs.existsSync(".env")) {
+//   try {
+//     const envContent = `
+// NODE_ENV=production
+// PORT=${process.env.PORT || 4000}
+// EMAIL_USER=${process.env.EMAIL_USER || ""}
+// EMAIL_PASS=${process.env.EMAIL_PASS || ""}
+// JWT_SECRET=${process.env.JWT_SECRET || "json_web_token_jwt"}
+// JWT_EXPIRES_IN=${process.env.JWT_EXPIRES_IN || "1h"}
+// DATABASE_URL=${process.env.DATABASE_URL || ""}
+// DIRECT_URL=${process.env.DIRECT_URL || ""}
+// SALT_ROUND=${process.env.SALT_ROUND || "11"}
+// FRONTEND_URL=${process.env.FRONTEND_URL || "http://localhost:5173"}
+// CLOUDINARY_CLOUD_NAME=${process.env.CLOUDINARY_CLOUD_NAME || ""}
+// CLOUDINARY_API_KEY=${process.env.CLOUDINARY_API_KEY || ""}
+// CLOUDINARY_API_SECRET=${process.env.CLOUDINARY_API_SECRET || ""}
+// GOOGLE_CLIENT_ID=${process.env.GOOGLE_CLIENT_ID || ""}
+// GOOGLE_CLIENT_SECRET=${process.env.GOOGLE_CLIENT_SECRET || ""}
+// CLIENT_URL=${process.env.CLIENT_URL || "http://localhost:5473"}
+// SENDGRID_API_KEY=${process.env.SENDGRID_API_KEY || ""}
+// BERVE_API_KEY=${process.env.BERVE_API_KEY || ""}
+// REDIS_URL=${process.env.REDIS_URL || ""}
+//     `.trim();
+
+//     fs.writeFileSync(".env", envContent);
+//     console.log("✅ Fichier .env créé dynamiquement pour la production");
+//   } catch (error) {
+//     console.error("❌ Erreur lors de la création du .env:", error);
+//   }
+// }
