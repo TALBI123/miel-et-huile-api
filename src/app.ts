@@ -123,5 +123,6 @@ app.get("/", async (req, res) => {
 
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
 app.listen(Number(PORT), HOST, () => {
+  console.log(process.env.NODE_ENV || "❌ NODE_ENV non défini");
   console.log(`✅ Server running on http://${HOST}:${PORT}`);
 });
