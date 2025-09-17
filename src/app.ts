@@ -3,7 +3,7 @@ import verifyEmail from "./routes/auth/verifiy-email";
 import loginRegister from "./routes/auth/auth.route";
 import categoryRoute from "./routes/categorys.route";
 import productRoute from "./routes/product.route";
-import { transporter } from "./utils/mailer";
+// import { transporter } from "./utils/mailer";
 // import { connectRedis } from "./config/cache";
 import cookieParser from "cookie-parser";
 import { config } from "dotenv";
@@ -23,10 +23,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Connect to nodeMailer
-transporter
-  .verify()
-  .then(() => console.log("✅ Server nodemailer ready to take our messages"))
-  .catch((err) => console.error("❌ Server not ready:", err));
+// transporter
+//   .verify()
+//   .then(() => console.log("✅ Server nodemailer ready to take our messages"))
+//   .catch((err) => console.error("❌ Server not ready:", err));
 
 // Connect to Redis
 // connectRedis().catch((err) => {
