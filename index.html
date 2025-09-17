@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+          const fetchData = async()  => {
+              const data = await fetch("https://proactive-rebirth-production-f345.up.railway.app/register",{
+                  method: "POST",
+                  headers: {
+                      "Content-Type": "application/json"
+                  },
+                  body:JSON.stringify({
+   email:"morocostudent@gmail.com",
+      password:"mhayeb",
+      firstName:"mohamed",
+      lastName:"ettalbi"
+                  })
+              });
+              const json = await data.json();
+              console.log(json);
+          }
+          fetchData()
+    </script>
+  </body>
+</html>

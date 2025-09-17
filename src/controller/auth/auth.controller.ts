@@ -71,7 +71,7 @@ const register = async (
       htmlFileName: "verification.email.ejs",
       context: { link },
     };
-    // await sendEmail(emailOptions);
+    await sendEmail(emailOptions);
 
     console.log(user.id, token, new Date());
     res.status(StatusCodes.CREATED).json({
