@@ -5,11 +5,14 @@ import { MailOptions } from "../types/type";
 type PlainObject = { [key: string]: any };
 export const transporter = nodemailer.createTransport({
   host: "smtp.sendgrid.net",
-  port: 587,
+  port: 465, // Port SSL au lieu de 587
+  secure: true, // SSL required
   auth: {
     user: "apikey", // toujours "apikey"
     pass: "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", // ta clé API SendGrid
   },
+  connectionTimeout: 10000,
+  socketTimeout: 10000,
 });
 export const sendEmail = async <T extends PlainObject>({
   to,
@@ -18,6 +21,7 @@ export const sendEmail = async <T extends PlainObject>({
   context,
 }: MailOptions<T>) => {
   try {
+    console.log(context);
     if (Array.isArray(context))
       throw new Error("Le contexte ne peut pas être un tableau");
     const templateFile = path.join(__dirname, `../../views/${htmlFileName}`);
