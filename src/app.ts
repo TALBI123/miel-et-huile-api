@@ -44,7 +44,7 @@ app.use("/products", productRoute);
 app.get("/", async (req, res) => {
 
   res.json({
-    message: "Server is running hhh",
+    message: "Server is running updated",
     sendGrind: process.env.SENDGRID_API_KEY,
     port: process.env.PORT,
     user: process.env.EMAIL_USER,
