@@ -1,9 +1,9 @@
 import { BlacklistService } from "../../services/blacklistService.service";
 import { MailOptions, UserTokenPayload } from "../../types/type";
+import { sendEmail } from "../../services/emailService.service";
 import { VerificationTokenType } from "../../types/enums";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../types/type";
-import { sendEmail } from "../../utils/mailer";
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { config } from "dotenv";
@@ -48,23 +48,23 @@ const register = async (
     const hash = await bcrypt.hash(password, +process.env.SALT_ROUND! || 10);
     const token = crypto.randomBytes(16).toString("hex");
     const link = `http://localhost:${process.env.PORT}/auth/verification-email?token=${token}`;
-    const user = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        password: hash,
-        termsAccepted: true,
-      },
-      select: { id: true },
-    });
+    // const user = await prisma.user.create({
+    //   data: {
+    //     firstName,
+    //     lastName,
+    //     email,
+    //     password: hash,
+    //     termsAccepted: true,
+    //   },
+    //   select: { id: true },
+    // });
     console.error("EMAIL_USER:", process.env.EMAIL_USER);
     console.error("PORT:", process.env.PORT);
-    await createVerificationToken(
-      user.id,
-      VerificationTokenType.EMAIL_VERIFICATION,
-      15
-    );
+    // await createVerificationToken(
+    //   user.id,
+    //   VerificationTokenType.EMAIL_VERIFICATION,
+    //   15
+    // );
     const emailOptions: MailOptions<{ link: string }> = {
       to: email,
       subject: "verifacation de l'eamil",
@@ -73,7 +73,7 @@ const register = async (
     };
     await sendEmail(emailOptions);
 
-    console.log(user.id, token, new Date());
+    console.log(token, new Date());
     res.status(StatusCodes.CREATED).json({
       message: "Inscription réussie. Veuillez vérifier votre email",
       success: true,

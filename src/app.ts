@@ -3,7 +3,6 @@ import verifyEmail from "./routes/auth/verifiy-email";
 import loginRegister from "./routes/auth/auth.route";
 import categoryRoute from "./routes/categorys.route";
 import productRoute from "./routes/product.route";
-import { transporter } from "./utils/mailer";
 // import { connectRedis } from "./config/cache";
 import cookieParser from "cookie-parser";
 import { config } from "dotenv";
@@ -15,6 +14,10 @@ const app = express();
 app.use(cors({ origin: true, credentials: true }));
 import fs from "fs"; // Importez le module 'fs' pour vérifier si le fichier existe
 import { PrismaClient } from "@prisma/client";
+import {
+  verifyEmailConfig,
+  verifySendGridConnection,
+} from "./services/emailService.service";
 const prisma = new PrismaClient();
 // Création dynamique du .env en production
 if (process.env.NODE_ENV === "production" && !fs.existsSync(".env")) {
@@ -62,12 +65,6 @@ app.use(express.static("view"));
 app.use(express.json());
 app.use(cookieParser());
 
-// Connect to nodeMailer
-transporter
-  .verify()
-  .then(() => console.log("✅ Server nodemailer ready to take our messages"))
-  .catch((err) => console.error("❌ Server not ready transport sendEmail:", err));
-
 // Connect to Redis
 // connectRedis().catch((err) => {
 //   console.error("❌ Unable to connect to Redis:", err);
@@ -101,6 +98,7 @@ app.get("/db", async (req, res) => {
   const data = await prisma.user.findMany();
   res.status(200).json({ message: "db connected", data });
 });
+
 app.get("/", async (req, res) => {
   res.json({
     message: "Server is running updated",
@@ -120,8 +118,22 @@ app.get("/", async (req, res) => {
   });
 });
 // ✅ NOUVEAU CODE (POUR RAILWAY) :
+const checkEmailConnection = async () => {
+  if (verifyEmailConfig()) {
+    console.log("🔄 Checking SendGrid connection...");
+    const isConnected = await verifySendGridConnection();
 
-const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+    if (isConnected) {
+      console.log("🎉 SendGrid is properly configured and connected!");
+    } else {
+      console.warn("⚠️  SendGrid connection failed. Emails may not be sent.");
+    }
+  } else {
+    console.warn("⚠️  Email service not configured - skipping connection test");
+  }
+};
+checkEmailConnection();
+const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
 app.listen(Number(PORT), HOST, () => {
   console.log(process.env.NODE_ENV || "❌ NODE_ENV non défini");
   console.log(`✅ Server running on http://${HOST}:${PORT}`);
