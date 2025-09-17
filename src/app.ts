@@ -7,7 +7,6 @@ import { transporter } from "./utils/mailer";
 // import { connectRedis } from "./config/cache";
 import cookieParser from "cookie-parser";
 import { config } from "dotenv";
-import { PrismaClient } from "@prisma/client";
 import express from "express";
 import cors from "cors";
 import "./config/passport";
