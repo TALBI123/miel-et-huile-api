@@ -17,8 +17,10 @@ import { PrismaClient } from "@prisma/client";
 import {
   verifyEmailConfig,
   verifySendGridConnection,
+
 } from "./services/emailService.service";
 const prisma = new PrismaClient();
+
 if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
   config();
   console.log("Variables .env chargées pour le développement local");
