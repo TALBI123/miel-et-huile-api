@@ -47,7 +47,7 @@ const register = async (
         .json({ message: "l email deja existe", success: false });
     const hash = await bcrypt.hash(password, +process.env.SALT_ROUND! || 10);
     const token = crypto.randomBytes(16).toString("hex");
-    const link = `http://localhost:${process.env.PORT}/auth/verification-email?token=${token}`;
+    const link = `${process.env.VERIFICATION_URL}?token=${token}`;
     const user = await prisma.user.create({
       data: {
         firstName,
