@@ -48,21 +48,21 @@ const register = async (
     const hash = await bcrypt.hash(password, +process.env.SALT_ROUND! || 10);
     const token = crypto.randomBytes(16).toString("hex");
     const link = `http://localhost:${process.env.PORT}/auth/verification-email?token=${token}`;
-    // const user = await prisma.user.create({
-    //   data: {
-    //     firstName,
-    //     lastName,
-    //     email,
-    //     password: hash,
-    //     termsAccepted: true,
-    //   },
-    //   select: { id: true },
-    // });
-    // await createVerificationToken(
-    //   user.id,
-    //   VerificationTokenType.EMAIL_VERIFICATION,
-    //   15
-    // );
+    const user = await prisma.user.create({
+      data: {
+        firstName,
+        lastName,
+        email,
+        password: hash,
+        termsAccepted: true,
+      },
+      select: { id: true },
+    });
+    await createVerificationToken(
+      user.id,
+      VerificationTokenType.EMAIL_VERIFICATION,
+      15
+    );
     const emailOptions: MailOptions<{ link: string }> = {
       to: email,
       subject: "verifacation de l'eamil",
@@ -127,8 +127,8 @@ const login = async (
 
     // Configeration du cookie
     res.cookie("access_token", token, {
-      httpOnly: true,
-      sameSite: "lax",
+      httpOnly: false,
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     });
     return res
@@ -160,6 +160,7 @@ const logout = async (req: Request, res: Response) => {
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Déconnexion réussie",
+      toeknExpiration: getExpirationDate(token),
     });
   } catch (err) {
     handleServerError(res, err);
