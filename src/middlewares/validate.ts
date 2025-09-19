@@ -21,14 +21,21 @@ export const validate =
       next();
     } catch (err: any) {
       if (err instanceof ZodError) {
+        const errorsMap: Record<string, boolean> = {};
+        const errors = err.issues.reduce<{ field: string; message: string }[]>(
+          (acc, err) => {
+            const field = err.path.join(".");
+            if (!errorsMap[field]) {
+              errorsMap[field] = true;
+              acc.push({ field, message: err.message });
+            }
+            return acc;
+          },
+          []
+        );
         console.log(err.issues);
-        const FormatedErrors = err.issues.map((e: ZodIssue) => ({
-          fielde: e.path.join("."),
-          message: e.message,
-        }));
-        return res
-          .status(StatusCodes.BAD_REQUEST)
-          .json({ errors: FormatedErrors });
+
+        return res.status(StatusCodes.BAD_REQUEST).json({ errors });
       }
       console.error(err);
       return res
