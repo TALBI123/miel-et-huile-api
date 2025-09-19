@@ -43,7 +43,7 @@ export const getProducts = async (
       ...(category ? { category: { name: category } } : {}),
       ...(inStock !== undefined ? { stock: { gt: 0 } } : {}),
       ...(onSale !== undefined ? { onSale } : {}),
-      ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
+      ...(search ? { title: { contains: search, mode: "insensitive" } } : {}),
       ...(minPrice || maxPrice
         ? {
             price: {
@@ -91,7 +91,7 @@ export const createProduct = async (
   let imageInfo: UploadResult | undefined;
   try {
     const existingProduct = await prisma.product.findFirst({
-      where: { name: req.body.name },
+      where: { title: req.body.title },
       select: { id: true },
     });
     if (existingProduct)
@@ -259,7 +259,7 @@ export const updateProduct = async (
     const updateProduct = await prisma.product.update({
       where: { id },
       data: updatedData,
-      select: { id: true, name: true },
+      select: { id: true, title: true },
     });
     if (req.file && existingProduct.publicId)
       await deleteFromCloudinary(existingProduct.publicId).catch((err) =>

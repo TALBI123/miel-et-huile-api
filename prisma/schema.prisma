@@ -13,7 +13,7 @@ datasource db {
   // Utilisez la variable d'environnement qui contient votre URL
   url       = env("DATABASE_URL")
   // Nouveau : nécessaire pour les migrations avec SSL
-  directUrl = env("DIRECT_DATABASE_URL")
+  directUrl = env("DIRECT_URL")
   // Nouveau : paramètre crucial pour SSL
   relationMode = "prisma"
 }
@@ -76,7 +76,7 @@ model Category {
 
 model Product {
   id                 String      @id @default(dbgenerated("gen_random_uuid()"))
-  name               String
+  title               String
   description        String
   discountPrice      Float?      @default(0)
   discountPercentage Int?        @default(0)

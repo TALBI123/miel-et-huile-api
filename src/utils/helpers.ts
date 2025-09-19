@@ -12,10 +12,10 @@ export const getExpirationDate = (minutes: number): Date => {
 };
 export const createVerificationToken = async (
   userId: string,
+  token : string,
   type: VerificationTokenType,
-  expiresInMinutes = 3
+  expiresInMinutes = 17
 ): Promise<string> => {
-  const token = crypto.randomBytes(16).toString("hex");
   const expiresAt = getExpirationDate(expiresInMinutes);
   await prisma.verificationTokens.create({
     data: {

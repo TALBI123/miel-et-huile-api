@@ -48,6 +48,7 @@ const register = async (
     const hash = await bcrypt.hash(password, +process.env.SALT_ROUND! || 10);
     const token = crypto.randomBytes(16).toString("hex");
     const link = `${process.env.VERIFICATION_URL}?token=${token}`;
+    console.log(link)
     const user = await prisma.user.create({
       data: {
         firstName,
@@ -59,7 +60,7 @@ const register = async (
       select: { id: true },
     });
     await createVerificationToken(
-      user.id,
+      user.id,token,
       VerificationTokenType.EMAIL_VERIFICATION,
       15
     );

@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import path from "path";
+import { PassThrough } from "nodemailer/lib/xoauth2";
 interface VerifyEmailQuery {
   token: string;
 }
@@ -17,15 +19,16 @@ export const verifyEmail = async (
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: "Le token est requis" });
     }
-
+    console.log("Recherche du token dans la base de données...");
     const verificationToken = await prisma.verificationTokens.findUnique({
       where: { token },
     });
+    console.log(verificationToken,token)
     if (!verificationToken)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ message: "Token invalide" });
-      
+
     if (verificationToken.expiresAt < new Date()) {
       await prisma.user.delete({ where: { id: verificationToken.userId } });
       return res
@@ -41,6 +44,7 @@ export const verifyEmail = async (
         where: { token: verificationToken.token },
       }),
     ]);
+    res.sendFile(path.join(__dirname, "../../../views/verified-email.html"));
   } catch (err) {
     console.error("Erreur lors de la vérification de l'email :", err);
     return res

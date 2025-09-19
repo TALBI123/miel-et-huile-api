@@ -33,7 +33,7 @@ export interface IntCategory {
 }
 
 export interface IntProduct {
-  name: string;
+  title: string;
   description: string;
   isOnSale: boolean;
   price: number;
