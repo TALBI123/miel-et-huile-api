@@ -32,11 +32,11 @@ router.get(
   getProductById
 );
 
-// --- Private CATEGORY Routes
+// --- Private Product Routes
 router.post(
   "/",
   verifyToken,
-  // verifyAdmin,
+  verifyAdmin,
   uploadMemoryStorage.single("image"),
   uploadHandler,
   validate({ schema: createProductShema, skipSave: true }),

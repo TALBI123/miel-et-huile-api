@@ -119,7 +119,7 @@ export const createProduct = async (
       image: "",
       publicId: "",
     };
-
+    console.log(product, "produit");
     let finalDiscountPrice: number | undefined;
     let finalDiscountPercentage: number | undefined;
 

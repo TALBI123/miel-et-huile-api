@@ -12,7 +12,7 @@ export const getExpirationDate = (minutes: number): Date => {
 };
 export const createVerificationToken = async (
   userId: string,
-  token : string,
+  token: string,
   type: VerificationTokenType,
   expiresInMinutes = 17
 ): Promise<string> => {
@@ -35,17 +35,14 @@ export const handleServerError = (res: Response, error: unknown) => {
       error.message
     );
   else
-    console.error(`Server error: ${StatusCodes.INTERNAL_SERVER_ERROR}`, error, {
+    console.error(`------> Server error : ${StatusCodes.INTERNAL_SERVER_ERROR}`, error, {
       api_key: process.env.SENDGRID_API_KEY,
     });
-  res
-    .status(StatusCodes.INTERNAL_SERVER_ERROR)
-    .json({
-      success: false,
-      message: "Erreur serveur",
-      error,
-      secret: process.env.SENDGRID_API_KEY,
-    });
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+    success: false,
+    message: "Erreur serveur",
+    error,
+  });
 };
 export const generateSlug = (name: string): string => {
   return slugify(name, { lower: true, strict: true });

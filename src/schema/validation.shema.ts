@@ -1,51 +1,29 @@
-import { stringToNumber } from "../utils/helpers";
+import {
+  booleanFromString,
+  parsePositiveNumber,
+  trimStringSchema,
+} from "./utils";
 import { isString } from "../types/type";
 import { z } from "zod";
 
-export const parsePositiveNumber = (key: string) =>
-  z.preprocess(
-    stringToNumber,
-    z
-      .number()
-      .min(0, { message: `La valeur de ${key} doit être un nombre positif` })
-  );
-
-const regexValidateNumber = <T extends string | number>(
-  value: T,
-  message: string
-) =>
-  (typeof value === "string"
-    ? z.string().regex(/^\d+$/, { message }).default(value)
-    : z.number().default(value)
-  )
-    .transform(Number)
-    .optional();
-
-const booleanFromString = (message: string) =>
-  z.preprocess(
-    (val) => {
-      if (val === "true") return true;
-      if (val === "false") return false;
-      return val;
-    },
-    z.boolean({
-      message,
-    })
-  );
 export const CreateCategorySchema = z.object({
-  name: z
-    .string()
-    .min(1, { message: "Le nom est obligatoire" })
-    .min(2, "Le nom doit contenir au moins 2 caractères"),
+  name: trimStringSchema(
+    z
+      .string()
+      .min(1, { message: "Le nom est obligatoire" })
+      .min(2, "Le nom doit contenir au moins 2 caractères")
+      .max(50, "Le nom doit contenir au plus 50 caractères")
+  ),
   description: z.string().optional(),
 });
 // --- SHEMAS PRODUCT
 
 export const createProductShema = z.object({
-  name: z
-    .string()
-    .min(1, { message: "Le nom est obligatoire" })
-    .min(2, "Le nom doit contenir au moins 2 caractères"),
+  title: trimStringSchema(
+    z
+      .string()
+      .min(2, { message: "Le title doit contenir au moins 2 caractères" })
+  ),
   description: z.string().optional(),
   price: parsePositiveNumber("prix"),
   categoryId: z
