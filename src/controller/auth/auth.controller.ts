@@ -130,6 +130,7 @@ const login = async (
     res.cookie("access_token", token, {
       httpOnly: false,
       sameSite: "none",
+      secure:true,
       maxAge: 24 * 60 * 60 * 1000,
     });
     return res
