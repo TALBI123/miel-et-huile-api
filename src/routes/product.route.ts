@@ -48,9 +48,17 @@ router.put(
   verifyToken,
   verifyAdmin,
   uploadMemoryStorage.single("image"),
+  validate({ schema: ValidationId, key: "params" }),
+  validate({ schema: createProductShema.partial(), skipSave: true }),
   updateProduct
 );
 
-router.delete("/:id", verifyToken, verifyAdmin, deleteProduct);
+router.delete(
+  "/:id",
+  verifyToken,
+  verifyAdmin,
+  validate({ schema: createProductShema.partial(), skipSave: true }),
+  deleteProduct
+);
 
 export default router;
