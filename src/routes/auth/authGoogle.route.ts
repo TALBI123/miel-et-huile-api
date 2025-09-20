@@ -6,11 +6,11 @@ router.use(passport.initialize());
 // Route pour démarrer l'authentification Google
 
 router.get(
-  "/auth/google",
+  "/",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 router.get(
-  "/auth/google/callback",
+  "/callback",
   passport.authenticate("google", { session: false }),
   googleCallback
 );
