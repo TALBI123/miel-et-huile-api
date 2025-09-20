@@ -189,14 +189,19 @@ export const updateProduct = async (
       where: { id },
       select: { publicId: true },
     });
-
+    console.log(res.locals.validated, " res.locals.validated");
     if (!existingProduct)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
-
+    // Vérifier si des données valides sont fournies
+    if (isEmptyObject(res.locals.validated ?? {}))
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Aucune donnée valide fournie pour la mise à jour",
+      });
     // Validation des prix de remise
-    const { discountPrice, discountPercentage, price } = res.locals.validated;
+    const { discountPrice, discountPercentage, price } = res.locals.validated ?? {};
     if (discountPrice !== undefined && discountPercentage !== undefined) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
@@ -269,7 +274,6 @@ export const updateProduct = async (
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Produit mis à jour avec succès",
-      data: updateProduct,
     });
   } catch (err) {
     try {

@@ -15,6 +15,7 @@ export const googleCallback = (req: Request, res: Response) => {
     res.cookie("access_token", token, {
       httpOnly: true,
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     });
     // ✅ Redirection avec token dans l'URL (hash ou query)
