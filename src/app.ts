@@ -3,32 +3,12 @@ import verifyEmail from "./routes/auth/verifiy-email";
 import loginRegister from "./routes/auth/auth.route";
 import categoryRoute from "./routes/categorys.route";
 import productRoute from "./routes/product.route";
-// import { connectRedis } from "./config/cache";
 import cookieParser from "cookie-parser";
-import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
-import "./config/passport";
-const PORT = process.env.PORT || 4000;
+import { verifyToken } from "./middlewares/auth";
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
-import fs from "fs"; // Importez le module 'fs' pour vérifier si le fichier existe
-import { PrismaClient } from "@prisma/client";
-import {
-  verifyEmailConfig,
-  verifySendGridConnection,
-
-} from "./services/emailService.service";
-const prisma = new PrismaClient();
-
-if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
-  config();
-  console.log("Variables .env chargées pour le développement local");
-} else {
-  console.log(
-    "Mode Production: Les variables d'environnement système sont utilisées"
-  );
-}
 
 // middleware pckages
 app.use(express.static("view"));
@@ -41,91 +21,53 @@ app.use(cookieParser());
 // });
 
 // Routes
-app.use("/", googleAuth);
+app.use("/auth/google", googleAuth);
 app.use("/", loginRegister);
-app.use("/", verifyEmail);
+app.use("/verify-email", verifyEmail);
 app.use("/categorys", categoryRoute);
 app.use("/products", productRoute);
-async function checkConnection() {
-  try {
-    const prisma = new PrismaClient();
-    await prisma.$connect();
-    console.log("✅ Connexion à la base de données réussie");
-    await prisma.$disconnect();
-    return true;
-  } catch (error) {
-    console.error("❌ Erreur de connexion Prisma:", error);
-    return false;
-  }
-}
-checkConnection().then((success) => {
-  if (!success) {
-    console.log("❌ Arrêt du serveur - Base de données inaccessible");
-    process.exit(1);
-  }
-});
-app.get("/db", async (req, res) => {
-  const data = await prisma.user.findMany();
-  res.status(200).json({ message: "db connected", data });
-});
 
-app.get("/", async (req, res) => {
-  res.json({
-    message: "Server is running updated",
-    env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
-
-    allEnv: Object.keys(process.env)
-      .filter((k) =>
-        [
-          "GOOGLE_CLIENT_ID",
-          "GOOGLE_CLIENT_SECRET",
-          "GOOGLE_CALLBACK_URL",
-        ].includes(k)
-      )
-      .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
-  });
-});
-
+// Route de débogage pour vérifier les variables d'environnement Google OAuth
 app.get("/auth/google/debug", (req, res) => {
   res.json({
     clientId: process.env.GOOGLE_CLIENT_ID ? "✅ Défini" : "❌ Manquant",
     clientSecret: process.env.GOOGLE_CLIENT_SECRET
       ? "✅ Défini"
       : "❌ Manquant",
-    callbackURL:process.env.GOOGLE_CALLBACK_URL
-      ? "✅ Défini"
-      : "❌ Manquant",
+    callbackURL: process.env.GOOGLE_CALLBACK_URL ? "✅ Défini" : "❌ Manquant",
     environment: process.env.NODE_ENV,
     domain: process.env.DOMAIN,
   });
 });
-
-// ✅ NOUVEAU CODE (POUR RAILWAY) :
-const checkEmailConnection = async () => {
-  if (verifyEmailConfig()) {
-    console.log("🔄 Checking SendGrid connection...");
-    const isConnected = await verifySendGridConnection();
-
-    if (isConnected) {
-      console.log("🎉 SendGrid is properly configured and connected!");
-    } else {
-      console.warn("⚠️  SendGrid connection failed. Emails may not be sent.");
-    }
-  } else {
-    console.warn("⚠️  Email service not configured - skipping connection test");
-  }
-};
-checkEmailConnection();
-const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
-app.listen(Number(PORT), HOST, () => {
-  console.log(process.env.NODE_ENV || "❌ NODE_ENV non défini");
-  console.log(`✅ Server running on http://${HOST}:${PORT}`);
+app.get('/me', verifyToken, (req, res) => {
+  // console.log(req.user);
+  res.json({ message: `user info :  ${req.user?.email} - ` });
+});
+app.get("/ping", (req, res) => {
+  res.json({ message: "pong" });
 });
 
+export default app;
 
 
 
 
+// app.get("/", async (req, res) => {
+//   res.json({
+//     message: "Server is running updated",
+//     env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
+
+//     allEnv: Object.keys(process.env)
+//       .filter((k) =>
+//         [
+//           "GOOGLE_CLIENT_ID",
+//           "GOOGLE_CLIENT_SECRET",
+//           "GOOGLE_CALLBACK_URL",
+//         ].includes(k)
+//       )
+//       .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
+//   });
+// });
 // Création dynamique du .env en production
 // if (process.env.NODE_ENV === "production" && !fs.existsSync(".env")) {
 //   try {
