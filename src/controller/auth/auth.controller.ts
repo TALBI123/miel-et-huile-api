@@ -84,7 +84,7 @@ const register = async (
 
 const login = async (
   req: Request<{}, {}, LoginBodyRequest>,
-  res: Response<ApiResponse>
+  res: Response
 ) => {
   const { email, password } = req.body;
   const data = await prisma.user.findUnique({
@@ -128,14 +128,14 @@ const login = async (
 
     // Configeration du cookie
     res.cookie("access_token", token, {
-      httpOnly: false,
+      httpOnly: true,
       sameSite: "none",
       secure:true,
       maxAge: 24 * 60 * 60 * 1000,
     });
     return res
       .status(StatusCodes.OK)
-      .json({ message: "Connexion réussie", success: true });
+      .json({ message: "Connexion réussie", success: true ,date : new Date()});
   } catch (err) {
     handleServerError(res, err);
   }

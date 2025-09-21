@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const fetchData = async () => {
+        // const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
+        console.log(localStorage.getItem("token"));
+        if (localStorage.getItem("token")) {
+          const dataMe = await fetch("http://localhost:3000/me", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+          const respMe = await dataMe.json();
+          console.log(respMe);
+          return;
+        }
+        const data = await fetch("http://localhost:3000/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: "morocostudent@gmail.com",
+            password: "mhayeb",
+          }),
+          credentials: "include",
+        });
+        const json = await data.json();
+        localStorage.setItem("token", JSON.stringify(json));
+        console.log(json);
+        // await new Promise((resolve) => setTimeout(resolve, 3000));
+        // const data2 = await fetch("http://localhost:3000/forget-password/users", {
+        //   method: "DELETE",
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //   },
+        //   credentials: "include",
+        // });
+        // const resp = await data2.json();
+        // console.log(resp);
+      };
+      fetchData();
+    </script>
+  </body>
+</html>

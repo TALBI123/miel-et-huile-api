@@ -8,8 +8,9 @@
   <body>
     <script>
       const fetchData = async () => {
+        // const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
         const data = await fetch(
-          "https://proactive-rebirth-production-f345.up.railway.app/register",
+          "http://localhost:4000/login",
           {
             method: "POST",
             headers: {
@@ -18,8 +19,7 @@
             body: JSON.stringify({
               email: "morocostudent@gmail.com",
               password: "mhayeb",
-              firstName: "mohamed",
-              lastName: "ettalbi",
+            
             }),
           }
         );

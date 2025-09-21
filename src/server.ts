@@ -8,7 +8,7 @@ import {
   verifySendGridConnection,
 } from "./services/emailService.service";
 import { PrismaClient } from "@prisma/client";
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 
 if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
   config();

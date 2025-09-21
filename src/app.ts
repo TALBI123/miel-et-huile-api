@@ -1,3 +1,4 @@
+import forgetPassword from "./routes/auth/forgetPassword";
 import googleAuth from "./routes/auth/authGoogle.route";
 import verifyEmail from "./routes/auth/verifiy-email";
 import loginRegister from "./routes/auth/auth.route";
@@ -26,6 +27,7 @@ app.use("/", loginRegister);
 app.use("/verify-email", verifyEmail);
 app.use("/categorys", categoryRoute);
 app.use("/products", productRoute);
+app.use("/forget-password", forgetPassword)
 
 // Route de débogage pour vérifier les variables d'environnement Google OAuth
 app.get("/auth/google/debug", (req, res) => {
@@ -40,7 +42,7 @@ app.get("/auth/google/debug", (req, res) => {
   });
 });
 app.get('/me', verifyToken, (req, res) => {
-  // console.log(req.user);
+  console.log(req.user);
   res.json({ message: `user info :  ${req.user?.email} - ` });
 });
 app.get("/ping", (req, res) => {
