@@ -44,6 +44,18 @@ app.get("/auth/google/debug", (req, res) => {
     domain: process.env.DOMAIN,
   });
 });
+
+console.log(" - GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+console.log(
+  " - GOOGLE_CLIENT_SECRET:",
+  process.env.GOOGLE_CLIENT_SECRET ? "✅ Défini" : "❌ Manquant"
+);
+console.log(
+  " - GOOGLE_CALLBACK_URL:",
+  process.env.GOOGLE_CALLBACK_URL ? "✅ Défini" : "❌ Manquant"
+);
+console.log(process.env.PORT || "❌ PORT non défini");
+
 app.get('/me', verifyToken, (req, res) => {
   console.log(req.user);
   res.json({ message: `user info :  ${req.user?.email} - ` });
