@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { hashToken, isExpired } from "../../utils/helpers";
 import { StatusCodes } from "http-status-codes";
+import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
 import path from "path";
-import { PassThrough } from "nodemailer/lib/xoauth2";
 interface VerifyEmailQuery {
   token: string;
 }
@@ -13,6 +13,8 @@ export const verifyEmail = async (
 ) => {
   try {
     const { token } = req.query;
+    const rowFlow = decodeURIComponent(token);
+    const hashedToken = hashToken(rowFlow);
     console.log("Token reçu :", token);
     if (!token) {
       return res
@@ -21,15 +23,15 @@ export const verifyEmail = async (
     }
     console.log("Recherche du token dans la base de données...");
     const verificationToken = await prisma.verificationTokens.findUnique({
-      where: { token },
+      where: { token: hashedToken },
     });
-    console.log(verificationToken,token)
+    console.log(verificationToken, token);
     if (!verificationToken)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ message: "Token invalide" });
 
-    if (verificationToken.expiresAt < new Date()) {
+    if (isExpired(verificationToken.expiresAt)) {
       await prisma.user.delete({ where: { id: verificationToken.userId } });
       return res
         .status(StatusCodes.BAD_REQUEST)

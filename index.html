@@ -6,7 +6,13 @@
     <title>Document</title>
   </head>
   <body>
+    <input type="color" onchange="changeColor(this.value)" />
+    <img src="https://raw.githubusercontent.com/AliElkhayatte1/ecommerce_miel/e21c203b78de5f7c8a293d21818c9ac0093ee281/src/assets/nv.png?token=GHSAT0AAAAAADFU56S34A73XZCCTA6HLZTW2GQCVDA" alt="">
     <script>
+      const changeColor = (color) => {
+        console.log(colo)
+      };
+
       const fetchData = async () => {
         // const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
         const data = await fetch(

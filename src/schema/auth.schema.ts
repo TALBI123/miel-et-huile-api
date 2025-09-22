@@ -1,3 +1,4 @@
+import { trimStringSchema } from "./utils";
 import { z } from "zod";
 export const authSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -6,4 +7,19 @@ export const authSchema = z.object({
   password: z
     .string()
     .min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+});
+
+export const forgetPasswordSchema = z.object({
+  newPassword: trimStringSchema(
+    z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères")
+  ),
+});
+export const resetPasswordSchema = z.object({
+  newPassword: trimStringSchema(
+    z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères")
+  ),
+  token: z
+    .string()
+    .nonempty("Token requis")
+    .regex(/^[A-Za-z0-9\-_]+$/, "Token invalide"),
 });

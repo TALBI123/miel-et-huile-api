@@ -22,12 +22,15 @@ app.use(cookieParser());
 // });
 
 // Routes
-app.use("/auth/google", googleAuth);
-app.use("/", loginRegister);
-app.use("/verify-email", verifyEmail);
-app.use("/categorys", categoryRoute);
-app.use("/products", productRoute);
-app.use("/forget-password", forgetPassword)
+// ---- AUth
+app.use("/api/auth/verify-email", verifyEmail);
+app.use("/api/auth/google", googleAuth);
+app.use("/api/auth", loginRegister);
+app.use("/api/auth", forgetPassword);
+
+// ---- API
+app.use("/api/products", productRoute);
+app.use("/api/categorys", categoryRoute);
 
 // Route de débogage pour vérifier les variables d'environnement Google OAuth
 app.get("/auth/google/debug", (req, res) => {

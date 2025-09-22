@@ -1,11 +1,24 @@
-
-import { authSchema } from "../../schema/auth.schema";
-import { login, logout, register } from "../../controller/auth/auth.controller";
-import { Router } from "express";
+import {
+  forgetPassword,
+  resetPassword,
+} from "../../controller/auth/forgetPassword.controller";
 import { validate } from "../../middlewares/validate";
-import { verifyToken } from "../../middlewares/auth";
+import {
+  forgetPasswordSchema,
+  resetPasswordSchema,
+} from "../../schema/auth.schema";
+import { Router } from "express";
 
 const router = Router();
-
+router.post(
+  "/forgot-password",
+  validate({ schema: forgetPasswordSchema }),
+  forgetPassword
+);
+router.post(
+  "/reset-password",
+  validate({ schema: resetPasswordSchema }),
+  resetPassword
+);
 
 export default router;

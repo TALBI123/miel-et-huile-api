@@ -9,10 +9,10 @@ import { Request, Response } from "express";
 import { config } from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 const blacklistService = new BlacklistService();
 import {
   createVerificationToken,
+  generateToken,
   getExpirationDate,
   handleServerError,
 } from "../../utils/helpers";
@@ -46,9 +46,11 @@ const register = async (
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: "l email deja existe", success: false });
     const hash = await bcrypt.hash(password, +process.env.SALT_ROUND! || 10);
-    const token = crypto.randomBytes(16).toString("hex");
-    const link = `${process.env.VERIFICATION_URL}?token=${token}`;
-    console.log(link)
+    const token = generateToken();
+    const link = `${
+      process.env.BACKEND_URL
+    }/verify-email?token=${encodeURIComponent(token)}`;
+    
     const user = await prisma.user.create({
       data: {
         firstName,
@@ -60,7 +62,8 @@ const register = async (
       select: { id: true },
     });
     await createVerificationToken(
-      user.id,token,
+      user.id,
+      token,
       VerificationTokenType.EMAIL_VERIFICATION,
       15
     );
@@ -82,10 +85,7 @@ const register = async (
   }
 };
 
-const login = async (
-  req: Request<{}, {}, LoginBodyRequest>,
-  res: Response
-) => {
+const login = async (req: Request<{}, {}, LoginBodyRequest>, res: Response) => {
   const { email, password } = req.body;
   const data = await prisma.user.findUnique({
     where: { email },
@@ -130,12 +130,12 @@ const login = async (
     res.cookie("access_token", token, {
       httpOnly: true,
       sameSite: "none",
-      secure:true,
+      secure: true,
       maxAge: 24 * 60 * 60 * 1000,
     });
     return res
       .status(StatusCodes.OK)
-      .json({ message: "Connexion réussie", success: true ,date : new Date()});
+      .json({ message: "Connexion réussie", success: true, date: new Date() });
   } catch (err) {
     handleServerError(res, err);
   }

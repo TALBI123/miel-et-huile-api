@@ -8,10 +8,10 @@
   <body>
     <script>
       const fetchData = async () => {
-        // const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
+        const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
         console.log(localStorage.getItem("token"));
         if (localStorage.getItem("token")) {
-          const dataMe = await fetch("http://localhost:3000/me", {
+          const dataMe = await fetch("https://proactive-rebirth-production-f345.up.railway.app/me", {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -19,10 +19,10 @@
             credentials: "include",
           });
           const respMe = await dataMe.json();
-          console.log(respMe);
+          console.log(respMe,"any");
           return;
         }
-        const data = await fetch("http://localhost:3000/login", {
+        const data = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
