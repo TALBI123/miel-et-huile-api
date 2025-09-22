@@ -10,14 +10,14 @@ import {
 import { PrismaClient } from "@prisma/client";
 const PORT = process.env.PORT || 3000;
 
-if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
-  config();
-  console.log("Variables .env chargées pour le développement local");
-} else {
-  console.log(
-    "Mode Production: Les variables d'environnement système sont utilisées"
-  );
-}
+// if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
+//   config();
+//   console.log("Variables .env chargées pour le développement local");
+// } else {
+//   console.log(
+//     "Mode Production: Les variables d'environnement système sont utilisées"
+//   );
+// }
 
 async function checkConnection() {
   try {
@@ -57,7 +57,12 @@ const checkEmailConnection = async () => {
 if (process.env.NODE_ENV !== "test") {
   checkEmailConnection();
 }
-
+app.get('/',async(req,res) => {
+  res.json({
+    message: "Server is running updated",
+    env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
+  });
+})
 const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
 app.listen(Number(PORT), HOST, () => {
   console.log(process.env.NODE_ENV || "❌ NODE_ENV non défini");

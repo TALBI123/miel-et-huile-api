@@ -10,10 +10,9 @@ export const authSchema = z.object({
 });
 
 export const forgetPasswordSchema = z.object({
-  newPassword: trimStringSchema(
-    z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères")
-  ),
+  email: z.string().email("Format d'email invalide"),
 });
+
 export const resetPasswordSchema = z.object({
   newPassword: trimStringSchema(
     z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères")
