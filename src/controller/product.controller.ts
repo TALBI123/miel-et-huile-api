@@ -69,11 +69,12 @@ export const getProducts = async (
   }
 };
 
-export const getProductById = async (req: Request<{}, {}, {}, { id: string }>, res: Response) => {
+export const getProductById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.query;
+    const { id } = req.params;
+    console.log(id)
     const product = await prisma.product.findUnique({ where: { id } });
-    if (product)
+    if (!product)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
