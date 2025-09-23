@@ -30,7 +30,7 @@ interface RegisterBodyRequest {
   password: string;
 }
 
-const register = async (
+export const register = async (
   req: Request<{}, {}, RegisterBodyRequest>,
   res: Response<ApiResponse>
 ) => {
@@ -50,7 +50,7 @@ const register = async (
     const link = `${
       process.env.BACKEND_URL
     }/verify-email?token=${encodeURIComponent(token)}`;
-    
+
     const user = await prisma.user.create({
       data: {
         firstName,
@@ -85,7 +85,7 @@ const register = async (
   }
 };
 
-const login = async (req: Request<{}, {}, LoginBodyRequest>, res: Response) => {
+export const login = async (req: Request<{}, {}, LoginBodyRequest>, res: Response) => {
   const { email, password } = req.body;
   const data = await prisma.user.findUnique({
     where: { email },
@@ -141,7 +141,7 @@ const login = async (req: Request<{}, {}, LoginBodyRequest>, res: Response) => {
   }
 };
 
-const logout = async (req: Request, res: Response) => {
+export const logout = async (req: Request, res: Response) => {
   try {
     const token = req.cookies["access_token"];
     if (token) {
@@ -168,5 +168,3 @@ const logout = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
-
-export { login, register, logout };
