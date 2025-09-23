@@ -83,6 +83,7 @@ export const getProductById = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+
 // --- AdMIN PRODUCT CRUD OPERATIONS
 
 export const createProduct = async (

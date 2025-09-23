@@ -4,10 +4,11 @@ import verifyEmail from "./routes/auth/verifiy-email";
 import loginRegister from "./routes/auth/auth.route";
 import categoryRoute from "./routes/categorys.route";
 import productRoute from "./routes/product.route";
+import usersRoute from './routes/user.route'    
 import cookieParser from "cookie-parser";
 import express from "express";
 import cors from "cors";
-import { verifyToken } from "./middlewares/auth";
+import { setupSwagger } from "./config/swagger";
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 
@@ -31,8 +32,13 @@ app.use("/api/auth", forgetPassword);
 // ---- API
 app.use("/api/products", productRoute);
 app.use("/api/categorys", categoryRoute);
+app.use("/api/users", usersRoute);
+
+// Swagger Documentation
+setupSwagger(app);
 
 // Route de débogage pour vérifier les variables d'environnement Google OAuth
+// Test .env Production
 app.get("/auth/google/debug", (req, res) => {
   res.json({
     clientId: process.env.GOOGLE_CLIENT_ID ? "✅ Défini" : "❌ Manquant",
@@ -44,8 +50,7 @@ app.get("/auth/google/debug", (req, res) => {
     domain: process.env.DOMAIN,
   });
 });
-
-console.log(" - GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("🔍 Vérification des variables d'environnement Google OAuth:");
 console.log(
   " - GOOGLE_CLIENT_SECRET:",
   process.env.GOOGLE_CLIENT_SECRET ? "✅ Défini" : "❌ Manquant"
@@ -56,18 +61,15 @@ console.log(
 );
 console.log(process.env.PORT || "❌ PORT non défini");
 
-app.get('/me', verifyToken, (req, res) => {
-  console.log(req.user);
-  res.json({ message: `user info :  ${req.user?.email} - ` });
-});
-app.get("/ping", (req, res) => {
-  res.json({ message: "pong" });
-});
+// app.get("/me", verifyToken, (req, res) => {
+//   console.log(req.user);
+//   res.json({ message: `user info :  ${req.user?.email} - ` });
+// });
+// app.get("/ping", (req, res) => {
+//   res.json({ message: "pong" });
+// });
 
 export default app;
-
-
-
 
 // app.get("/", async (req, res) => {
 //   res.json({
