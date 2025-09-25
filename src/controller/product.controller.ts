@@ -84,12 +84,13 @@ export const getProducts = async (
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const product = await prisma.product.findUnique({ where: { id } });
+    const product = await prisma.product.findUnique({ where: { id }, include: { images: true } });
     if (!product)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
-    res.status(StatusCodes.OK).json({ success: true, data: product });
+        const { images, ...rest } = product;
+    res.status(StatusCodes.OK).json({ success: true, data: { ...rest, image: images[0]?.image ?? "" } });
   } catch (err) {
     handleServerError(res, err);
   }
@@ -294,6 +295,7 @@ export const updateProductImage = async (req: Request, res: Response) => {
 //   req: Request<{ productId: string }, {}, ProductVariant>,
 //   res: Response
 // ) => {
+
 //   const { productId } = req.params;
 //   try {
 //     const { discountPrice, discountPercentage, price } = res.locals.validated;
