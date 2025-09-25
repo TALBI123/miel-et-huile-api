@@ -11,6 +11,10 @@ interface GoogleAccountInfo {
   image?: string;
   isVerified?: boolean;
 }
+console.log(
+  process.env.LOCAL_URL! + "/api/auth/google/callback",
+  process.env.BACKEND_URL! + "/api/auth/google/callback"
+);
 passport.use(
   new GoogleStrategy(
     {
