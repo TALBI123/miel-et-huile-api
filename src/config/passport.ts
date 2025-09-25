@@ -18,8 +18,8 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL:
         process.env.NODE_ENV !== "development"
-          ? "https://proactive-rebirth-production-f345.up.railway.app/auth/google/callback"
-          : "http://localhost:4000/auth/google/callback",
+          ? process.env.LOCAL_URL! + "/api/auth/google/callback"
+          : process.env.BACKEND_URL! + "/api/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
