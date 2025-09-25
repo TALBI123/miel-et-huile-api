@@ -11,21 +11,33 @@ interface GoogleAccountInfo {
   image?: string;
   isVerified?: boolean;
 }
-console.log('🎯 Client ID:', process.env.GOOGLE_CLIENT_ID ? '✓ Présent' : '✗ Manquant');
-console.log('🎯 Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? '✓ Présent' : '✗ Manquant');
-console.log('🎯 Backend URL:', process.env.BACKEND_URL+"/api/auth/google/callback");
-console.log('problem : ',process.env.NODE_ENV !== "development"
-          ? process.env.LOCAL_URL! + "/api/auth/google/callback"
-          : process.env.BACKEND_URL! + "/api/auth/google/callback",)
+console.log(
+  "🎯 Client ID:",
+  process.env.GOOGLE_CLIENT_ID ? "✓ Présent" : "✗ Manquant"
+);
+console.log(
+  "🎯 Client Secret:",
+  process.env.GOOGLE_CLIENT_SECRET ? "✓ Présent" : "✗ Manquant"
+);
+console.log(
+  "🎯 Backend URL:",
+  process.env.BACKEND_URL + "/api/auth/google/callback"
+);
+const getCallbackURL = () => {
+  if (process.env.NODE_ENV === "development") {
+    return process.env.LOCAL_URL + "/api/auth/google/callback";
+  }
+  return process.env.BACKEND_URL + "/api/auth/google/callback";
+};
+
+console.log("🔧 Using callback URL:", getCallbackURL());
+
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL:
-        process.env.NODE_ENV === "development"
-          ? process.env.LOCAL_URL! + "/api/auth/google/callback"
-          : process.env.BACKEND_URL! + "/api/auth/google/callback",
+      callbackURL: getCallbackURL(),
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
