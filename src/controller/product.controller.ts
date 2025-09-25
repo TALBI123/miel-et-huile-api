@@ -89,8 +89,7 @@ export const getProductById = async (req: Request, res: Response) => {
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
-        const { images, ...rest } = product;
-    res.status(StatusCodes.OK).json({ success: true, data: { ...rest, image: images[0]?.image ?? "" } });
+    res.status(StatusCodes.OK).json({ success: true, data:product });
   } catch (err) {
     handleServerError(res, err);
   }
