@@ -48,8 +48,10 @@ export const register = async (
     const hash = await bcrypt.hash(password, +process.env.SALT_ROUND! || 10);
     const token = generateToken();
     const link = `${
-      process.env.BACKEND_URL
-    }/verify-email?token=${encodeURIComponent(token)}`;
+      process.env.NODE_ENV === "production"
+        ? process.env.BACKEND_URL
+        : process.env.LOCAL_URL
+    }/api/auth/verify-email?token=${encodeURIComponent(token)}`;
 
     const user = await prisma.user.create({
       data: {
