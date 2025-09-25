@@ -12,7 +12,7 @@ import { Router } from "express";
 const router = Router();
 /**
  * @swagger
- * /auth/forget-password:
+ * /auth/forgot-password:
  *   post:
  *     summary: Envoie un lien de réinitialisation du mot de passe à l'email fourni
  *     tags:

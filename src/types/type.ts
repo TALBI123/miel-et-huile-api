@@ -32,17 +32,22 @@ export interface IntCategory {
   publicId?: string;
 }
 
-export interface IntProduct {
+export interface Product {
   title: string;
-  description: string;
-  isOnSale: boolean;
-  price: number;
-  discountPrice?: number;
-  discountPercentage?: number;
   categoryId: string;
-  image: string;
-  publicId: string;
+  description: string;
+  subDescription: string;
+}
+export interface ProductVariant {
+  // id?: string;
+  amount: number;
+  unit: string;
+  price: number;
+  discountPercentage?: number;
+  discountPrice?: number;
+  isOnSale?: boolean;
   stock: number;
+  productId: string;
 }
 
 interface IntUser {
@@ -54,5 +59,21 @@ interface IntUser {
   role: "USER" | "ADMIN";
   image: string;
   publicId: string;
-
 }
+
+type FieldType = "number" | "string";
+
+export type FieldOptions = {
+  type?: FieldType;
+  name: string;
+  required?: boolean;
+  min?: number;         // pour number
+  minLength?: number;   // pour string
+  isUUID?: boolean;     // pour string
+  messages?: {
+    required?: string;
+    invalid?: string;
+    min?: string;
+    minLength?: string;
+  };
+};

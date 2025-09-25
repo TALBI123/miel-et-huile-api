@@ -1,22 +1,28 @@
 import { Router } from "express";
 import {
+  uploadDiskMiddleware,
   uploadHandler,
   uploadMemoryStorage,
 } from "../middlewares/uploadMiddleware";
 import { validate } from "../middlewares/validate";
 import {
   createProduct,
-  deleteProduct,
   getProducts,
   getProductById,
   updateProduct,
+  deleteProduct,
+  addProductImages,
+  deleteProductImage,
+  updateProductImage,
 } from "../controller/product.controller";
+import { QuerySchema, ValidationId } from "../schema/validation.shema";
+import { verifyAdmin, verifyToken } from "../middlewares/auth";
+import { handleValidationErrors } from "../middlewares/handleValidationMiddleware";
 import {
   createProductShema,
-  QuerySchema,
-  ValidationId,
-} from "../schema/validation.shema";
-import { verifyAdmin, verifyToken } from "../middlewares/auth";
+  deleteProductImageSchema,
+} from "../schema/product.shema";
+// import { createProductVariant } from "../controller/product.controller";
 const router = Router();
 // --- PUBLIC CATEGORY ROUTES
 /**
@@ -219,12 +225,17 @@ router.get(
 );
 
 // --- Private Product Routes
-
 /**
  * @swagger
  * /products:
  *   post:
- *     summary: Crée un nouveau produit
+ *     summary: Créer un nouveau produit
+ *     description: |
+ *       Cette route permet de créer un nouveau produit avec ses images.
+ *       - Vérifie si un produit avec le même titre existe déjà.
+ *       - Upload les images sur Cloudinary (maximum 4 images).
+ *       - Enregistre le produit et ses images dans la base de données.
+ *       - **Téléchargez jusqu'à 4 images maximum**
  *     tags:
  *       - Produits
  *     requestBody:
@@ -236,38 +247,27 @@ router.get(
  *             properties:
  *               title:
  *                 type: string
- *                 description: Nom du produit
- *                 example: "Miel de Lavande"
- *               price:
- *                 type: number
- *                 description: Prix initial du produit
- *                 example: 12.5
- *               stock:
- *                 type: integer
- *                 description: Quantité en stock
- *                 example: 25
+ *                 example: "Chaussures Nike Air"
  *               categoryId:
  *                 type: string
- *                 description: ID de la catégorie du produit
- *                 example: "64f2c5e7b5e7e72f12345678"
- *               image:
+ *                 example: "c7d2c4c9-8f56-4c2a-a3a5-2d65e1f0c111"
+ *               description:
  *                 type: string
- *                 format: binary
- *                 description: Image du produit
- *               discountPrice:
- *                 type: number
- *                 description: Prix de réduction (optionnel)
- *                 example: 10
- *               discountPercentage:
- *                 type: number
- *                 description: Pourcentage de réduction (optionnel)
- *                 example: 20
+ *                 example: "Des chaussures confortables et stylées"
+ *               subDescription:
+ *                 type: string
+ *                 example: "Disponible en plusieurs tailles"
+ *               images:
+ *                 type: array
+ *                 maxItems: 4
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                   description: "Téléchargez jusqu'à 4 images maximum"
  *             required:
  *               - title
- *               - price
- *               - stock
  *               - categoryId
- *               - image
+ *               - subDescription
  *     responses:
  *       201:
  *         description: Produit créé avec succès
@@ -278,114 +278,118 @@ router.get(
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: "Produit créé avec succès"
  *                 data:
  *                   type: object
- *             example:
- *               success: true
- *               message: "Produit créé avec succès"
- *               data:
- *                 id: "64f2c5e7b5e7e72f12345678"
- *                 title: "Miel de Lavande"
- *                 price: 12.5
- *                 discountPrice: 10
- *                 discountPercentage: 20
- *                 stock: 25
- *                 categoryId: "64f2c5e7b5e7e72f12345678"
- *                 isOnSale: true
- *                 image: "https://res.cloudinary.com/…/image.jpg"
- *                 publicId: "products/xyz123"
- *                 createdAt: "2025-09-23T17:00:00Z"
- *       400:
- *         description: Requête invalide (prix et pourcentage de réduction incorrects)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               example:
- *                 success: false
- *                 message: "Choisissez soit un prix de remise, soit un pourcentage, mais pas les deux."
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "fa32d83c-2c22-4c0f-832f-22a2b91f4a4a"
+ *                     title:
+ *                       type: string
+ *                       example: "Chaussures Nike Air"
+ *                     categoryId:
+ *                       type: string
+ *                       example: "c7d2c4c9-8f56-4c2a-a3a5-2d65e1f0c111"
+ *                     description:
+ *                       type: string
+ *                     subDescription:
+ *                       type: string
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             example: "img_1234"
+ *                           image:
+ *                             type: string
+ *                             example: "https://res.cloudinary.com/demo/image/upload/v12345/sample.jpg"
+ *                           publicId:
+ *                             type: string
+ *                             example: "products/sample"
  *       409:
- *         description: Conflit – le produit existe déjà
+ *         description: Produit déjà existant (titre en conflit)
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Ce produit existe déjà"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Ce produit existe déjà"
  *       500:
  *         description: Erreur interne du serveur
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Une erreur est survenue côté serveur"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
  */
 
 router.post(
   "/",
   verifyToken,
   verifyAdmin,
-  uploadMemoryStorage.single("image"),
-  uploadHandler,
-  validate({ schema: createProductShema, skipSave: true }),
+  uploadDiskMiddleware,
+  validate({ schema: createProductShema, key: "body" }),
   createProduct
 );
 
 /**
  * @swagger
  * /products/{id}:
- *   put:
- *     summary: Met à jour un produit existant
+ *   patch:
+ *     summary: Mettre à jour un produit existant
+ *     description: |
+ *       Cette route permet de mettre à jour un produit existant.
+ *       - Vérifie si le produit existe.
+ *       - Vérifie si la catégorie fournie existe si `categoryId` est présent.
+ *       - Met à jour uniquement les propriétés valides fournies.
  *     tags:
  *       - Produits
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
+ *         description: ID du produit à mettre à jour
  *         required: true
  *         schema:
  *           type: string
- *           example: "64f2c5e7b5e7e72f12345678"
- *         description: ID du produit à mettre à jour
+ *           example: "fa32d83c-2c22-4c0f-832f-22a2b91f4a4a"
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
+ *             description: Propriétés du produit à mettre à jour (optionnelles)
  *             properties:
  *               title:
  *                 type: string
- *                 description: Nom du produit
- *                 example: "Miel de Lavande"
- *               price:
- *                 type: number
- *                 description: Prix initial du produit
- *                 example: 12.5
- *               discountPrice:
- *                 type: number
- *                 description: Prix de réduction (optionnel)
- *                 example: 10
- *               discountPercentage:
- *                 type: number
- *                 description: Pourcentage de réduction (optionnel)
- *                 example: 20
- *               stock:
- *                 type: integer
- *                 description: Quantité en stock
- *                 example: 25
+ *                 example: "Chaussures Nike Air 2025"
  *               categoryId:
  *                 type: string
- *                 description: ID de la catégorie du produit
- *                 example: "64f2c5e7b5e7e72f12345678"
- *               image:
+ *                 example: "c7d2c4c9-8f56-4c2a-a3a5-2d65e1f0c111"
+ *               description:
  *                 type: string
- *                 format: binary
- *                 description: Nouvelle image du produit
+ *                 example: "Nouvelle description du produit"
+ *               subDescription:
+ *                 type: string
+ *                 example: "Nouvelle sous-description"
+ *             additionalProperties: false
  *     responses:
  *       200:
  *         description: Produit mis à jour avec succès
@@ -393,45 +397,78 @@ router.post(
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: true
- *                 message: "Produit mis à jour avec succès"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Produit mis à jour avec succès"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "fa32d83c-2c22-4c0f-832f-22a2b91f4a4a"
+ *                     title:
+ *                       type: string
+ *                       example: "Chaussures Nike Air 2025"
+ *                     categoryId:
+ *                       type: string
+ *                       example: "c7d2c4c9-8f56-4c2a-a3a5-2d65e1f0c111"
+ *                     description:
+ *                       type: string
+ *                       example: "Nouvelle description du produit"
+ *                     subDescription:
+ *                       type: string
+ *                       example: "Nouvelle sous-description"
  *       400:
- *         description: Requête invalide (données invalides ou conflit prix/remise)
+ *         description: Requête invalide (aucune donnée valide ou catégorie non trouvée)
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Choisissez soit un prix de remise, soit un pourcentage, mais pas les deux."
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Aucune donnée valide fournie pour la mise à jour"
  *       404:
  *         description: Produit non trouvé
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Produit non trouvé"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Produit non trouvé"
  *       500:
  *         description: Erreur interne du serveur
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Une erreur est survenue côté serveur"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
  */
 
-router.put(
+router.patch(
   "/:id",
   verifyToken,
   verifyAdmin,
-  uploadMemoryStorage.single("image"),
   validate({ schema: ValidationId, key: "params" }),
-  validate({ schema: createProductShema.partial(), skipSave: true }),
+  validate({ schema: createProductShema.partial() }),
   updateProduct
 );
 
@@ -487,5 +524,32 @@ router.delete(
   validate({ schema: createProductShema.partial(), skipSave: true }),
   deleteProduct
 );
+// ----- ADD Images to product
 
+// Ajouter une ou plusieurs images
+
+router.post(
+  "/:id/images",
+  verifyToken,
+  verifyAdmin,
+  uploadDiskMiddleware,
+  uploadHandler,
+  addProductImages
+);
+
+// Remplacer / mettre à jour une image
+
+router.put("/:id/images/:imageId", uploadMemoryStorage, updateProductImage);
+
+// Supprimer une image spécifique
+router.delete(
+  "/:id/images/:imageId",
+  verifyToken,
+  verifyAdmin,
+  validate({ schema: deleteProductImageSchema, key: "params" }),
+  deleteProductImage
+);
+
+// variants routes
+// router.use("/:productId/variants", createProductSchema, createProductVariant);
 export default router;

@@ -9,15 +9,14 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider     = "postgresql"
   // Utilisez la variable d'environnement qui contient votre URL
-  url       = env("DATABASE_URL")
+  url          = env("DATABASE_URL")
   // Nouveau : nécessaire pour les migrations avec SSL
-  directUrl = env("DIRECT_URL")
+  directUrl    = env("DIRECT_URL")
   // Nouveau : paramètre crucial pour SSL
   relationMode = "prisma"
 }
-
 
 // model Emp {
 //   id    String @id @default(uuid())
@@ -61,6 +60,7 @@ model User {
   @@index([email])
   @@index([isVerified])
 }
+
 model Category {
   id          String    @id @default(dbgenerated("gen_random_uuid()"))
   name        String    @unique
@@ -68,34 +68,53 @@ model Category {
   publicId    String
   description String?
   slug        String    @unique
-  products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
+  Banner      Banner[]
 }
 
 model Product {
-  id                 String      @id @default(dbgenerated("gen_random_uuid()"))
-  title               String
-  description        String
-  discountPrice      Float?      @default(0)
-  discountPercentage Int?        @default(0)
-  isOnSale           Boolean?    @default(false)
-  price              Float
-  image              String
-  stock              Int         @default(0)
-  publicId           String
-  category           Category    @relation(fields: [categoryId], references: [id])
-  categoryId         String
-  orderItems         OrderItem[]
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-  review             Review[]
+  id             String           @id @default(dbgenerated("gen_random_uuid()"))
+  title          String
+  subDescription String           @default("") // court texte (6-10 mots max)
+  description    String // description détaillée
+  rating         Float?           @default(0) // Note moyenne
+  category       Category         @relation(fields: [categoryId], references: [id])
+  categoryId     String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  review         Review[]
+  orderItems     OrderItem[]
+  images         ProductImage[]
+  variants       ProductVariant[]
+  Banner         Banner[]
 
   @@index([categoryId])
-  @@index([price])
   @@index([createdAt])
 }
 
+model ProductImage {
+  id        String  @id @default(dbgenerated("gen_random_uuid()"))
+  image     String
+  publicId  String
+  product   Product @relation(fields: [productId], references: [id],onDelete: Cascade)
+  productId String
+}
+
+model ProductVariant {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()"))
+  amount             String // "200g", "500g", "1kg"
+  unit               String // "g", "kg", "ml", "L"
+  price              Float
+  discountPrice      Float?   @default(0)
+  discountPercentage Int?     @default(0)
+  isOnSale           Boolean? @default(false)
+  isActive           Boolean  @default(true)
+  stock              Int      @default(0)
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId          String
+}
 
 model Order {
   id            String        @id @default(dbgenerated("gen_random_uuid()"))
@@ -215,6 +234,24 @@ model VerificationTokens {
   @@index([userId, type])
 }
 
+model Banner {
+  id         String         @id @default(dbgenerated("gen_random_uuid()"))
+  title      String
+  text       String?
+  image      String
+  publicId   String
+  linkType   BannerLinkType @default(NONE) // "NONE", "CATEGORY"
+  productId  String? // si lien vers un produit
+  categoryId String? // si lien vers une catégorie
+  product    Product?       @relation(fields: [productId], references: [id])
+  category   Category?      @relation(fields: [categoryId], references: [id])
+  isActive   Boolean        @default(true)
+  startsAt   DateTime?
+  endsAt     DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
 enum Role {
   USER
   ADMIN
@@ -251,4 +288,9 @@ enum DiscountType {
 enum VerificationTokenType {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+}
+
+enum BannerLinkType {
+  NONE
+  CATEGORY
 }

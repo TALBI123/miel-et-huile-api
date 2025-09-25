@@ -266,7 +266,7 @@ router.post(
   "/",
   verifyToken,
   // verifyAdmin,
-  uploadMemoryStorage.single("image"),
+  uploadMemoryStorage,
   uploadHandler,
   validate({ schema: CreateCategorySchema }),
   createCategory
@@ -350,7 +350,7 @@ router.put(
   "/:id",
   verifyToken,
   verifyAdmin,
-  uploadMemoryStorage.single("image"),
+  uploadMemoryStorage,
   validate({ schema: CreateCategorySchema.partial() }),
   validate({ schema: ValidationId, key: "params" }),
   updateCategory

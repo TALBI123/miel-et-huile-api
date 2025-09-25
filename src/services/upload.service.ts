@@ -1,6 +1,7 @@
-import { UploadResult } from "types/type";
+import { UploadResult } from "../types/type";
 import cloudinary from "../config/cloudinary";
-
+import fs from "fs";
+// Upload image to cloudinary from buffer
 export const uploadBufferToCloudinary = (
   buffer: Buffer,
   folder: string
@@ -26,3 +27,50 @@ export const deleteFromCloudinary = (publicId: string): Promise<void> =>
       res();
     });
   });
+
+// Upload image to cloudinary from path
+export const uploadPathToCloudinary = (
+  files: Express.Multer.File[],
+  folder: string
+): Promise<UploadResult[]> => {
+  const uploads = files.map(async (file) => {
+    try {
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder,
+      });
+      fs.unlinkSync(file.path);
+      return result;
+    } catch (err) {
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      throw err;
+    }
+  });
+  return Promise.all(uploads);
+};
+
+export const deletePathToCloudinary = async (
+  publicIds: string[]
+): Promise<{ success: string[]; failed: { id: string; error: any }[] }> => {
+  const results = await Promise.all(
+    publicIds.map(async (publicId) => {
+      try {
+        const result = await cloudinary.uploader.destroy(publicId);
+        if (result.result !== "ok")
+          throw new Error("Échec de la suppression de l'image");
+        return { publicId, status: "success" };
+      } catch (err) {
+        return { publicId, status: "failed", error: err };
+      }
+    })
+  );
+  const success = results
+    .filter((r) => r.status === "success")
+    .map((r) => r.publicId);
+  const failed = results
+    .filter((r) => r.status === "failed")
+    .map((r) => ({ id: r.publicId, error: r.error }));
+  return {
+    success,
+    failed
+  };
+};

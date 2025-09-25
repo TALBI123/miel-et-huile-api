@@ -2,9 +2,10 @@ import { PaginationInput } from "../schema/validation.shema";
 import { VerificationTokenType } from "../types/enums";
 import { StatusCodes } from "http-status-codes";
 import { PrismaClient } from "@prisma/client";
-import { Response } from "express";
+import { Response, Express } from "express";
 import crypto from "crypto";
 import slugify from "slugify";
+import fs from "fs";
 
 const prisma = new PrismaClient();
 export const getExpirationDate = (minutes: number): Date => {
@@ -23,6 +24,18 @@ export const generateToken = (len = 32): string => {
   // retourne base64url pour être safe dans les URL
   return crypto.randomBytes(len).toString("base64url");
 };
+export const generateSlug = (name: string): string => {
+  return slugify(name, { lower: true, strict: true });
+};
+
+export const paginate = ({ page, limit }: PaginationInput) => {
+  const offset = (page - 1) * limit;
+  return { skip: offset, take: limit };
+};
+
+export function isExpired(date: Date) {
+  return date.getTime() < Date.now();
+}
 
 export const createVerificationToken = async (
   userId: string,
@@ -32,6 +45,7 @@ export const createVerificationToken = async (
 ): Promise<string> => {
   const expiresAt = getExpirationDate(expiresInMinutes);
   const hashedToken = hashToken(token);
+  console.log(hashedToken)
   await prisma.verificationTokens.create({
     data: {
       token: hashedToken,
@@ -63,30 +77,8 @@ export const handleServerError = (res: Response, error: unknown) => {
     error,
   });
 };
-export const generateSlug = (name: string): string => {
-  return slugify(name, { lower: true, strict: true });
-};
-
-export const paginate = ({ page, limit }: PaginationInput) => {
-  const offset = (page - 1) * limit;
-  return { skip: offset, take: limit };
-};
-export const filterObjectByKeys = <T, K extends keyof T>(
-  obj: T,
-  list: readonly K[]
-): Pick<T, K> => {
-  const SetList = new Set(list);
-  const objFilterd = {} as Pick<T, K>;
-  list.forEach((key) => {
-    if (SetList.has(key)) objFilterd[key] = obj[key];
+export const cleanUploadedFiles = (files: Express.Multer.File[]) => {
+  files.forEach((file) => {
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
   });
-  return objFilterd;
 };
-
-export const stringToNumber = (value: string | number): number => {
-  return typeof value === "string" ? parseInt(value, 10) : value;
-};
-
-export function isExpired(date: Date) {
-  return date.getTime() < Date.now();
-}

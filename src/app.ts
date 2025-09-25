@@ -33,7 +33,6 @@ app.use("/api/auth", forgetPassword);
 app.use("/api/products", productRoute);
 app.use("/api/categorys", categoryRoute);
 app.use("/api/users", usersRoute);
-
 // Swagger Documentation
 setupSwagger(app);
 

@@ -1,48 +1,18 @@
+import { FieldOptions } from "../types/type";
 import {
   booleanFromString,
-  parsePositiveNumber,
-  trimStringSchema,
+  createFieldConfig,
+  createFieldSchema,
 } from "./utils";
-import { isString } from "../types/type";
 import { z } from "zod";
 
 export const CreateCategorySchema = z.object({
-  name: trimStringSchema(
-    z
-      .string()
-      .min(1, { message: "Le nom est obligatoire" })
-      .min(2, "Le nom doit contenir au moins 2 caractères")
-      .max(50, "Le nom doit contenir au plus 50 caractères")
+  name: createFieldSchema(
+    createFieldConfig({ name: "titre", minLength: 2 }) as FieldOptions
   ),
   description: z.string().optional(),
 });
 // --- SHEMAS PRODUCT
-
-export const createProductShema = z.object({
-  title: trimStringSchema(
-    z
-      .string()
-      .min(2, { message: "Le title doit contenir au moins 2 caractères" })
-  ),
-  description: z.string().optional(),
-  price: parsePositiveNumber("prix"),
-  categoryId: z
-    .string()
-    .uuid({ message: "L'ID de la catégorie doit être un UUID valide" }),
-  stock: parsePositiveNumber("stock"),
-  discountPrice: z
-    .string()
-    .min(0, { message: "Le prix de réduction doit être positif" })
-    .transform(Number)
-    .optional(),
-  discountPercentage: z
-    .string()
-    .regex(/^\d+$/, {
-      message: "Le pourcentage de réduction doit être positif",
-    })
-    .transform(Number)
-    .optional(),
-});
 
 // --- SHEMAS VALIDATION PAGINATION
 export const PaginationSchema = z.object({
@@ -91,7 +61,9 @@ export const QuerySchema = z
 
 // --- SHEMAS VALIDATION ID
 export const ValidationId = z.object({
-  id: z.string().uuid({ message: "L'ID doit être un UUID valide" }),
+  id: z
+    .string({ message: "L'ID est requis" })
+    .uuid({ message: "L'ID doit être un UUID valide" }),
 });
 
 export type PaginationInput = z.infer<typeof PaginationSchema>;

@@ -123,7 +123,7 @@ export const login = async (req: Request<{}, {}, LoginBodyRequest>, res: Respons
       role: data.role,
     };
     const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
-      expiresIn: "1h",
+      expiresIn: "24h",
     });
 
     // Configeration du cookie

@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, IntCategory, UploadResult } from "../types/type";
 import {
-  filterObjectByKeys,
   generateSlug,
   handleServerError,
   paginate,
@@ -13,7 +12,7 @@ import {
   uploadBufferToCloudinary,
 } from "../services/upload.service";
 import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
-import { isEmptyObject } from "../utils/object";
+import { filterObjectByKeys, isEmptyObject } from "../utils/object";
 const prisma = new PrismaClient();
 
 // --- PUBLIC CATEGORY Controller

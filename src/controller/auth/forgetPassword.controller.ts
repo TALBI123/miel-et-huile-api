@@ -24,6 +24,7 @@ export const forgetPassword = async (req: Request, res: Response) => {
         VerificationTokenType.PASSWORD_RESET,
         5
       );
+      console.log("Generated token:", token);
       const link = `${
         process.env.FRONTEND_URL
       }/reset-password?token=${encodeURIComponent(token)}`;
@@ -51,7 +52,9 @@ export const resetPassword = async (req: Request, res: Response) => {
   try {
     const { token, newPassword } = req.body;
     const rowFlow = decodeURIComponent(token);
+    console.log("Decoded token:", rowFlow);
     const hashedToken = hashToken(rowFlow);
+    console.log("Received token:", hashedToken);
     const verificationToken = await prisma.verificationTokens.findUnique({
       where: { token: hashedToken },
     });
