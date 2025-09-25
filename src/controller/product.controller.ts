@@ -264,6 +264,7 @@ export const addProductImages = async (req: Request, res: Response) => {
     );
     console.log(imagesInfo, " imagesInfo");
     // Ajouter les nouvelles images à la base de données
+    console.log()
     // await prisma.productImage.createMany({
     //   data:
     // })
@@ -277,7 +278,7 @@ export const addProductImages = async (req: Request, res: Response) => {
 
 export const deleteProductImage = async (req: Request, res: Response) => {
   // logique pour supprimer une image spécifique
-  
+
 };
 
 export const updateProductImage = async (req: Request, res: Response) => {
