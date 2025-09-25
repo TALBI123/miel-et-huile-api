@@ -17,7 +17,6 @@ import {
 } from "../controller/product.controller";
 import { QuerySchema, ValidationId } from "../schema/validation.shema";
 import { verifyAdmin, verifyToken } from "../middlewares/auth";
-import { handleValidationErrors } from "../middlewares/handleValidationMiddleware";
 import {
   createProductShema,
   deleteProductImageSchema,
