@@ -1,7 +1,7 @@
-import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { UserTokenPayload } from "../types/type";
 import { PrismaClient, User } from "@prisma/client";
+import { UserTokenPayload } from "../types/type";
+import passport from "passport";
 const prisma = new PrismaClient();
 interface GoogleAccountInfo {
   firstName?: string;
@@ -11,16 +11,19 @@ interface GoogleAccountInfo {
   image?: string;
   isVerified?: boolean;
 }
-console.log('Client ID:', process.env.GOOGLE_CLIENT_ID ? '✓ Présent' : '✗ Manquant');
-console.log('Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? '✓ Présent' : '✗ Manquant');
-console.log('Callback URL:', process.env.GOOGLE_CALLBACK_URL);
+console.log('🎯 Client ID:', process.env.GOOGLE_CLIENT_ID ? '✓ Présent' : '✗ Manquant');
+console.log('🎯 Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? '✓ Présent' : '✗ Manquant');
+console.log('🎯 Backend URL:', process.env.BACKEND_URL+"/api/auth/google/callback");
+console.log('problem : ',process.env.NODE_ENV !== "development"
+          ? process.env.LOCAL_URL! + "/api/auth/google/callback"
+          : process.env.BACKEND_URL! + "/api/auth/google/callback",)
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL:
-        process.env.NODE_ENV !== "development"
+        process.env.NODE_ENV === "development"
           ? process.env.LOCAL_URL! + "/api/auth/google/callback"
           : process.env.BACKEND_URL! + "/api/auth/google/callback",
     },
