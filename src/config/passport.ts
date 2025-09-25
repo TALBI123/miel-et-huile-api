@@ -11,10 +11,9 @@ interface GoogleAccountInfo {
   image?: string;
   isVerified?: boolean;
 }
-console.log(
-  process.env.LOCAL_URL! + "/api/auth/google/callback",
-  process.env.BACKEND_URL! + "/api/auth/google/callback"
-);
+console.log('Client ID:', process.env.GOOGLE_CLIENT_ID ? '✓ Présent' : '✗ Manquant');
+console.log('Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? '✓ Présent' : '✗ Manquant');
+console.log('Callback URL:', process.env.GOOGLE_CALLBACK_URL);
 passport.use(
   new GoogleStrategy(
     {
