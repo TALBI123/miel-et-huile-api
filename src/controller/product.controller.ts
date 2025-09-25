@@ -68,9 +68,14 @@ export const getProducts = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });
-    res
-      .status(StatusCodes.OK)
-      .json({ success: true, data: products as Product[] });
+    const newProducts = products.map((p) => {
+      const { images, ...rest } = p;
+      return { ...rest, image: images[0]?.image ?? "" };
+    });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: newProducts,
+    });
   } catch (err) {
     handleServerError(res, err);
   }
@@ -264,7 +269,7 @@ export const addProductImages = async (req: Request, res: Response) => {
     );
     console.log(imagesInfo, " imagesInfo");
     // Ajouter les nouvelles images à la base de données
-    console.log()
+    console.log();
     // await prisma.productImage.createMany({
     //   data:
     // })
@@ -278,7 +283,6 @@ export const addProductImages = async (req: Request, res: Response) => {
 
 export const deleteProductImage = async (req: Request, res: Response) => {
   // logique pour supprimer une image spécifique
-
 };
 
 export const updateProductImage = async (req: Request, res: Response) => {
