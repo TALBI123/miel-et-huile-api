@@ -275,7 +275,7 @@ router.post(
 /**
  * @swagger
  * /categories/{id}:
- *   put:
+ *   patch:
  *     summary: Met à jour une catégorie existante
  *     tags:
  *       - Catégories
@@ -347,7 +347,7 @@ router.post(
  *                 message: "Une erreur est survenue côté serveur"
  */
 
-router.put(
+router.patch(
   "/:id",
   verifyToken,
   verifyAdmin,
