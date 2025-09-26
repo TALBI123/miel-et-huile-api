@@ -113,6 +113,7 @@ export const updateCategory = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Catégorie non trouvée" });
+        console.log(req.body);
     const updatedData: Partial<IntCategory> = {
       ...filterObjectByKeys<Pick<IntCategory, "name" | "description">, typeof ALLOWED_CATEGORY_PROPERTIES[number]>(
         req.body,
@@ -130,9 +131,9 @@ export const updateCategory = async (
       updatedData.publicId = imageInfo.public_id;
     }
 
-    console.log(updatedData);
+    console.log(isEmptyObject(updatedData));
 
-    if (!isEmptyObject(updatedData))
+    if (isEmptyObject(updatedData))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Aucune donnée valide fournie pour la mise à jour",

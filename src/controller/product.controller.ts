@@ -84,12 +84,15 @@ export const getProducts = async (
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const product = await prisma.product.findUnique({ where: { id }, include: { images: true } });
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { images: true },
+    });
     if (!product)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
-    res.status(StatusCodes.OK).json({ success: true, data:product });
+    res.status(StatusCodes.OK).json({ success: true, data: product });
   } catch (err) {
     handleServerError(res, err);
   }
@@ -229,6 +232,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
       .status(StatusCodes.OK)
       .json({ success: true, message: "Produit supprimé avec succès" });
   } catch (err) {
+    console.log("⚠️ delete product error", err);
     handleServerError(res, err);
   }
 };
@@ -236,26 +240,31 @@ export const deleteProduct = async (req: Request, res: Response) => {
 // --- Image management for product update could be added here
 
 export const addProductImages = async (req: Request, res: Response) => {
+  const files = req.files as Express.Multer.File[];
   try {
     const { id } = req.params;
     const existingProduct = await prisma.product.findUnique({
       where: { id },
       select: { images: true },
     });
-    if (!existingProduct)
+    if (!existingProduct) {
+      cleanUploadedFiles(files);
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ message: "Produit non trouvé" });
+    }
     const numberOfImages = existingProduct.images.length;
+
     if (numberOfImages >= 4) {
-      cleanUploadedFiles(req.files as Express.Multer.File[]);
+      cleanUploadedFiles(files);
       return res.status(StatusCodes.BAD_REQUEST).json({
         message:
           "Le nombre maximum d'images (4) pour ce produit est déjà atteint",
       });
     }
-    if (numberOfImages - (req.files as Express.Multer.File[]).length < 0) {
-      cleanUploadedFiles(req.files as Express.Multer.File[]);
+
+    if (numberOfImages + files.length > 4) {
+      cleanUploadedFiles(files);
 
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: `Vous pouvez ajouter jusqu'à ${
@@ -267,27 +276,57 @@ export const addProductImages = async (req: Request, res: Response) => {
       req.files as Express.Multer.File[],
       "products"
     );
-    console.log(imagesInfo, " imagesInfo");
+    console.log("🔧 ", imagesInfo, " imagesInfo");
     // Ajouter les nouvelles images à la base de données
-    console.log();
-    // await prisma.productImage.createMany({
-    //   data:
-    // })
-    res
-      .status(StatusCodes.NOT_IMPLEMENTED)
-      .json({ message: "l'image ajoutée avec succès" });
+    await prisma.productImage.createMany({
+      data: imagesInfo.map((img) => ({
+        publicId: img.public_id,
+        image: img.secure_url,
+        productId: id,
+      })),
+    });
+    res.status(StatusCodes.CREATED).json({
+      message: "Images ajoutées avec succès",
+    });
   } catch (err) {
+    cleanUploadedFiles(files);
     handleServerError(res, err);
   }
 };
 
+export const updateProductImage = async (req: Request, res: Response) => {
+  const {id,imageId} = req.params;
+  let imageInfo : UploadResult | null = null;
+  try{
+    console.log(req.file, " req.file");
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!existingProduct) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: "Produit non trouvé" });
+    }
+    const  imageToUpdate = await prisma.productImage.findFirst({
+      where: { id: imageId, productId: id },
+    })
+    if (!imageToUpdate) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: "Image non trouvée pour ce produit" });
+    }
+
+
+  }catch(err){
+    handleServerError(res, err);
+  }
+};
 export const deleteProductImage = async (req: Request, res: Response) => {
   // logique pour supprimer une image spécifique
 };
 
-export const updateProductImage = async (req: Request, res: Response) => {
-  // logique pour remplacer une image existante par une nouvelle
-};
 
 // --- PRODUCT VARIANT MANAGEMENT
 // export const createProductVariant = async (

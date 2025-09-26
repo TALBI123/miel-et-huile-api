@@ -526,6 +526,71 @@ router.delete(
 // ----- ADD Images to product
 
 // Ajouter une ou plusieurs images
+/**
+ * @swagger
+ * /products/{id}/images:
+ *   post:
+ *     summary: Ajouter des images à un produit
+ *     description: >
+ *       Ajoute une ou plusieurs images à un produit existant.
+ *       - Maximum **4 images par produit**.
+ *       - Si la limite est atteinte, une erreur est retournée.
+ *     tags:
+ *       - Produits
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Liste des images à uploader
+ *     responses:
+ *       201:
+ *         description: Images ajoutées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Images ajoutées avec succès
+ *       400:
+ *         description: Trop d'images ou mauvaise requête
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Le nombre maximum d'images (4) pour ce produit est déjà atteint
+ *       404:
+ *         description: Produit non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Produit non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
 
 router.post(
   "/:id/images",
@@ -533,12 +598,20 @@ router.post(
   verifyAdmin,
   uploadDiskMiddleware,
   uploadHandler,
+  validate({ schema: ValidationId, key: "params" }),
   addProductImages
 );
 
 // Remplacer / mettre à jour une image
 
-router.put("/:id/images/:imageId", uploadMemoryStorage, updateProductImage);
+router.put(
+  "/:id/images/:imageId",
+  verifyToken,
+  verifyAdmin,
+  uploadMemoryStorage,
+  uploadHandler,
+  updateProductImage
+);
 
 // Supprimer une image spécifique
 router.delete(
