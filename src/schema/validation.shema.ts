@@ -1,17 +1,8 @@
-import { FieldOptions } from "../types/type";
 import {
   booleanFromString,
-  createFieldConfig,
-  createFieldSchema,
 } from "./utils";
 import { z } from "zod";
 
-export const CreateCategorySchema = z.object({
-  name: createFieldSchema(
-    createFieldConfig({ name: "titre", minLength: 2 }) as FieldOptions
-  ),
-  description: z.string().optional(),
-});
 // --- SHEMAS PRODUCT
 
 // --- SHEMAS VALIDATION PAGINATION

@@ -120,7 +120,7 @@ export const updateCategory = async (
         ALLOWED_CATEGORY_PROPERTIES
       ),
     };
-    if (req.body.name) updatedData.slug = generateSlug(req.body.name);
+    if (req.body?.name) updatedData.slug = generateSlug(req.body.name);
     // 🔹 Upload de la nouvelle image
     if (req.file) {
       imageInfo = await uploadBufferToCloudinary(

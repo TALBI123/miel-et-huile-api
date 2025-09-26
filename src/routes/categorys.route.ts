@@ -11,12 +11,12 @@ import {
   uploadHandler,
   uploadMemoryStorage,
 } from "../middlewares/uploadMiddleware";
-import { validate } from "../middlewares/validate";
+import { checkEmptyRequestBody, validate } from "../middlewares/validate";
 import {
-  CreateCategorySchema,
   PaginationSchema,
   ValidationId,
 } from "../schema/validation.shema";
+import { CreateCategorySchema } from "../schema/category.shema";
 const router = Router();
 
 /**
@@ -354,6 +354,7 @@ router.patch(
   uploadMemoryStorage,
   validate({ schema: CreateCategorySchema.partial() }),
   validate({ schema: ValidationId, key: "params" }),
+  checkEmptyRequestBody,
   updateCategory
 );
 /**

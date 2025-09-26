@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { StatusCodes } from "http-status-codes";
+import { isEmptyObject } from "../utils/object";
 
 import { ZodError, ZodObject, ZodRawShape, ZodIssue } from "zod";
 type RequestSource = "body" | "query" | "params";
@@ -44,3 +45,15 @@ export const validate =
         .json({ message: "Une erreur serveur est survenue" });
     }
   };
+export const checkEmptyRequestBody = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (isEmptyObject(req.body || {}))
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      success: false,
+      message: "Aucune donnée valide fournie pour la mise à jour",
+    });
+  next();
+};
