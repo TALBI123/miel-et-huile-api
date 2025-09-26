@@ -50,7 +50,8 @@ export const checkEmptyRequestBody = (
   res: Response,
   next: NextFunction
 ) => {
-  if (isEmptyObject(req.body || {}))
+  console.log(req.body, req.file, isEmptyObject(req.body || {}), !req.file || isEmptyObject(req.body || {}));
+  if (!req.file && isEmptyObject(req.body || {}))
     return res.status(StatusCodes.BAD_REQUEST).json({
       success: false,
       message: "Aucune donnée valide fournie pour la mise à jour",
