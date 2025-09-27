@@ -1,23 +1,26 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { StatusCodes } from "http-status-codes";
 import { isEmptyObject } from "../utils/object";
+import { ZodError, ZodTypeAny } from "zod";
 
-import { ZodError, ZodObject, ZodRawShape, ZodIssue } from "zod";
 type RequestSource = "body" | "query" | "params";
-interface ValidateOptions<T extends ZodObject<ZodRawShape>> {
+
+// Corrigez l'interface pour accepter les deux types
+interface ValidateOptions<T extends ZodTypeAny> {
   schema: T;
   key?: RequestSource;
   skipSave?: boolean;
 }
 
 export const validate =
-  <T extends ZodObject<ZodRawShape>>({
+  <T extends ZodTypeAny>({
     schema,
     key = "body",
     skipSave = false,
   }: ValidateOptions<T>): RequestHandler =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
+      // console.log(req[key], " req[key]");
       const parsed = schema.parse(req[key] ?? {});
       if (skipSave) res.locals.validated = parsed ?? {};
       next();
@@ -36,7 +39,6 @@ export const validate =
           []
         );
         console.log(err.issues);
-
         return res.status(StatusCodes.BAD_REQUEST).json({ errors });
       }
       console.error(err);
@@ -45,12 +47,12 @@ export const validate =
         .json({ message: "Une erreur serveur est survenue" });
     }
   };
+
 export const checkEmptyRequestBody = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  console.log(req.body, req.file, isEmptyObject(req.body || {}), !req.file || isEmptyObject(req.body || {}));
   if (!req.file && isEmptyObject(req.body || {}))
     return res.status(StatusCodes.BAD_REQUEST).json({
       success: false,

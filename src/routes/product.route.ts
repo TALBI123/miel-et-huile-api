@@ -4,7 +4,7 @@ import {
   uploadHandler,
   uploadMemoryStorage,
 } from "../middlewares/uploadMiddleware";
-import { validate } from "../middlewares/validate";
+import { checkEmptyRequestBody, validate } from "../middlewares/validate";
 import {
   createProduct,
   getProducts,
@@ -14,14 +14,18 @@ import {
   addProductImages,
   deleteProductImage,
   updateProductImage,
+  updateProductVariant,
 } from "../controller/product.controller";
 import { QuerySchema, ValidationId } from "../schema/validation.shema";
 import { verifyAdmin, verifyToken } from "../middlewares/auth";
 import {
   createProductShema,
-  deleteProductImageSchema,
+  createProductVariantSchema,
+  productImageSchema,
+  productVariantImageSchema,
 } from "../schema/product.shema";
-// import { createProductVariant } from "../controller/product.controller";
+import { createProductVariant } from "../controller/product.controller";
+import { calculateDiscountForVariant } from "../utils/mathUtils";
 const router = Router();
 // --- PUBLIC CATEGORY ROUTES
 /**
@@ -523,7 +527,7 @@ router.delete(
   validate({ schema: createProductShema.partial(), skipSave: true }),
   deleteProduct
 );
-// ----- ADD Images to product
+// -------------------- ADD Images to product
 
 // Ajouter une ou plusieurs images
 /**
@@ -603,25 +607,283 @@ router.post(
 );
 
 // Remplacer / mettre à jour une image
+/**
+ * @swagger
+ * /products/{id}/images/{imageId}:
+ *   put:
+ *     summary: Mettre à jour une image d'un produit
+ *     description: >
+ *       Remplace une image existante d’un produit par une nouvelle.
+ *       - Upload sur Cloudinary
+ *       - Mise à jour en base
+ *       - Suppression de l’ancienne image
+ *     tags:
+ *       - Produits
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *       - in: path
+ *         name: imageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'image à mettre à jour
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Nouvelle image à uploader
+ *             required:
+ *               - file
+ *     responses:
+ *       200:
+ *         description: Image mise à jour avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Image mise à jour avec succès
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: img_123
+ *                     publicId:
+ *                       type: string
+ *                       example: products/abc123
+ *                     image:
+ *                       type: string
+ *                       example: https://res.cloudinary.com/demo/image/upload/v1690000000/products/abc123.jpg
+ *       404:
+ *         description: Produit ou image introuvable
+ *       500:
+ *         description: Erreur serveur
+ */
 
 router.put(
   "/:id/images/:imageId",
   verifyToken,
   verifyAdmin,
   uploadMemoryStorage,
+  validate({ schema: productImageSchema, key: "params" }),
   uploadHandler,
   updateProductImage
 );
+/**
+ * @swagger
+ * /products/{id}/images/{imageId}:
+ *   delete:
+ *     summary: Supprimer une image d'un produit
+ *     description: >
+ *       Supprime une image associée à un produit donné.
+ *       - Supprime l’entrée en base de données
+ *       - Supprime également l’image sur Cloudinary (si elle existe)
+ *     tags:
+ *       - Produits
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *       - in: path
+ *         name: imageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'image associée au produit
+ *     responses:
+ *       200:
+ *         description: Image supprimée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: l'image a été supprimée avec succès
+ *       404:
+ *         description: Produit ou image introuvable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Image non trouvée pour ce produit
+ *       500:
+ *         description: Erreur serveur
+ */
 
 // Supprimer une image spécifique
 router.delete(
   "/:id/images/:imageId",
   verifyToken,
   verifyAdmin,
-  validate({ schema: deleteProductImageSchema, key: "params" }),
+  validate({ schema: productImageSchema, key: "params" }),
   deleteProductImage
 );
 
-// variants routes
-// router.use("/:productId/variants", createProductSchema, createProductVariant);
+// -------------------- ADD Variants to product
+/**
+ * @swagger
+ * /products/{id}/variants:
+ *   post:
+ *     summary: Créer une variante de produit
+ *     description: |
+ *       Cette route permet d'ajouter une nouvelle variante à un produit existant.
+ *       Une variante représente une configuration spécifique (par ex. quantité, unité, prix, etc.).
+ *     tags:
+ *       - Variantes de Produits
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: L'identifiant du produit auquel la variante sera associée
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 500
+ *                 description: Quantité de la variante
+ *               unit:
+ *                 type: string
+ *                 example: "g"
+ *                 description: Unité de mesure de la variante
+ *               price:
+ *                 type: number
+ *                 example: 19.99
+ *                 description: Prix normal de la variante
+ *               discountPercentage:
+ *                 type: number
+ *                 example: 10
+ *                 description: Pourcentage de réduction (optionnel)
+ *               discountPrice:
+ *                 type: number
+ *                 example: 17.99
+ *                 description: Prix réduit si en promotion (optionnel)
+ *               isOnSale:
+ *                 type: boolean
+ *                 example: true
+ *                 description: Indique si la variante est en promotion
+ *               stock:
+ *                 type: number
+ *                 example: 50
+ *                 description: Quantité en stock disponible
+ *     responses:
+ *       201:
+ *         description: Variante créée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/ProductVariant'
+ *       404:
+ *         description: Produit non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ProductVariant:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: "var_123"
+ *         productId:
+ *           type: string
+ *           example: "prod_456"
+ *         amount:
+ *           type: number
+ *           example: 500
+ *         unit:
+ *           type: string
+ *           example: "g"
+ *         price:
+ *           type: number
+ *           example: 19.99
+ *         discountPercentage:
+ *           type: number
+ *           example: 10
+ *         discountPrice:
+ *           type: number
+ *           example: 17.99
+ *         isOnSale:
+ *           type: boolean
+ *           example: true
+ *         stock:
+ *           type: number
+ *           example: 50
+ */
+
+router.post(
+  "/:id/variants",
+  verifyToken,
+  verifyAdmin,
+  validate({ schema: ValidationId, key: "params" }),
+  validate({
+    schema: createProductVariantSchema.transform(calculateDiscountForVariant),
+    skipSave: true,
+  }),
+  checkEmptyRequestBody,
+  createProductVariant
+);
+
+router.patch(
+  "/:id/variants/:variantId",
+  verifyToken,
+  verifyAdmin,
+  validate({ schema: productVariantImageSchema, key: "params" }),
+  validate({
+    schema: createProductVariantSchema
+      .partial()
+      .transform(calculateDiscountForVariant),
+    skipSave: true,
+  }),
+  checkEmptyRequestBody,
+  updateProductVariant
+);
+
 export default router;
+console.log("🔒 product routes loaded");

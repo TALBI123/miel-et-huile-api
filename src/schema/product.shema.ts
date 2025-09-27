@@ -14,42 +14,62 @@ export const createProductShema = z.object({
     .string({ message: "L'ID est requis" })
     .uuid({ message: "L'ID doit être un UUID valide" }),
 });
-export const createProductVariantSchema = z.object({
-  amount: z
-    .string({ message: "Le prix est requis" })
-    .min(0, { message: "Le prix doit être positif" })
-    .transform(Number),
-  unit: z.enum(["g", "kg", "ml", "L"], {
-    message: "Veuillez sélectionner une unité valide",
-  }),
-  price: z
-    .string({ message: "Le prix est requis" })
-    .min(0, { message: "Le prix doit être positif" })
-    .transform(Number),
-  stock: z
-    .string({ message: "Le stock est requis" })
-    .min(0, { message: "Le stock doit être positif" })
-    .transform(Number),
-  discountPrice: z
-    .string()
-    .min(0, { message: "Le prix de réduction doit être positif" })
-    .transform(Number)
-    .optional(),
-  discountPercentage: z
-    .string()
-    .min(0, { message: "Le pourcentage de réduction doit être positif" })
-    .transform(Number)
-    .optional(),
-  productId: z
-    .string({ message: "L'ID est requis" })
-    .uuid({ message: "L'ID doit être un UUID valide" }),
-});
-// --- SHEMAS UPLOAD IMAGES
-export const deleteProductImageSchema = z.object({
+
+export const createProductVariantSchema = z
+  .object({
+    amount: z
+      .number({ message: "La quantité est requise" })
+      .min(1, { message: "La quantité est requise" }),
+    unit: z.enum(["g", "kg", "ml", "L"], {
+      message: "Veuillez sélectionner une unité valide",
+    }),
+    price: z
+      .number({ message: "Le prix est requis" })
+      .min(1, { message: "Le prix est requise" })
+      .refine((price) => price > 0, "Le prix doit être positif"),
+    stock: z
+      .number({ message: "Le stock est requis" })
+      .min(1, { message: "Le stock est requis" })
+      .refine((stock) => stock >= 0, "Le stock ne peut pas être négatif"),
+    discountPrice: z
+      .number({ message: "Le prix de réduction est requis" })
+      .refine((val) => val >= 0, "Le prix de réduction doit être positif")
+      .optional(),
+    discountPercentage: z
+      .number({ message: "Le pourcentage de réduction est requis" })
+      .min(0, { message: "Le pourcentage de réduction doit être positif" })
+      .refine(
+        (val) => val >= 0,
+        "Le pourcentage de réduction doit être positif"
+      )
+      .refine((val) => val <= 100, "Le pourcentage ne peut pas dépasser 100%")
+      .optional(),
+  })
+  .refine((data) => !(data.discountPrice && data.discountPercentage), {
+    message:
+      "Choisissez soit le prix de réduction, soit le pourcentage de réduction, pas les deux.",
+    path: ["discountExclusive"],
+  })
+  .refine((data) => !data.discountPrice || data.discountPrice < data.price, {
+    message: "Le prix de réduction doit être inférieur au prix initial",
+    path: ["discountPrice"],
+  })
+ 
+// --- SCHEMAS UPLOAD IMAGES
+export const productImageSchema = z.object({
   id: z
     .string({ message: "L'ID est requis" })
     .uuid({ message: "L'ID doit être un UUID valide" }),
   imageId: z
-    .string({ message: "L'ID de l'image est requis" })
-    .uuid({ message: "L'ID de l'image doit être un UUID valide" }),
+    .string({ message: "imageId de l'image est requis" })
+    .uuid({ message: "imageId de l'image doit être un UUID valide" }),
+});
+// --- SCHEMAS UPLOAD VARIANTS
+export const productVariantImageSchema = z.object({
+  id: z
+    .string({ message: "L'ID est requis" })
+    .uuid({ message: "L'ID doit être un UUID valide" }),
+  variantId: z
+    .string({ message: "variantId de la variante est requis" })
+    .uuid({ message: "variantId de la variante doit être un UUID valide" }),
 });

@@ -61,7 +61,7 @@ export const handleServerError = (res: Response, error: unknown) => {
   if (error instanceof Error)
     console.error(
       `Server error: ${StatusCodes.INTERNAL_SERVER_ERROR}`,
-      error.message
+      error.message,error
     );
   else
     console.error(

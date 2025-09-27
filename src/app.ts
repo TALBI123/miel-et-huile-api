@@ -1,4 +1,5 @@
 import forgetPassword from "./routes/auth/forgetPassword";
+import { errorHandler } from "./middlewares/handleErrors";
 import googleAuth from "./routes/auth/authGoogle.route";
 import verifyEmail from "./routes/auth/verifiy-email";
 import loginRegister from "./routes/auth/auth.route";
@@ -33,6 +34,9 @@ app.use("/api/auth", forgetPassword);
 app.use("/api/products", productRoute);
 app.use("/api/categorys", categoryRoute);
 app.use("/api/users", usersRoute);
+
+// ---- Error Handler
+app.use(errorHandler);
 // Swagger Documentation
 setupSwagger(app);
 

@@ -13,5 +13,5 @@ export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [
   "discountPrice",
   "discountPercentage",
   "stock",
-  "productId",
+  "isOnSale"
 ] as const;

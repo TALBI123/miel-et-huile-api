@@ -98,13 +98,15 @@ model ProductImage {
   id        String  @id @default(dbgenerated("gen_random_uuid()"))
   image     String
   publicId  String
-  product   Product @relation(fields: [productId], references: [id],onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
+
+  @@index([productId]) // accélère les requêtes product.images
 }
 
 model ProductVariant {
   id                 String   @id @default(dbgenerated("gen_random_uuid()"))
-  amount             String // "200g", "500g", "1kg"
+  amount             Float // "100", "500", "1.5"
   unit               String // "g", "kg", "ml", "L"
   price              Float
   discountPrice      Float?   @default(0)
@@ -114,6 +116,11 @@ model ProductVariant {
   stock              Int      @default(0)
   product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId          String
+
+  @@unique([amount, productId]) // évite doublons
+  @@index([productId]) // pour toutes les variantes d’un produit
+  @@index([isActive]) // utile si tu listes seulement les variantes actives
+  @@index([isOnSale]) // utile pour filtrer les promotions
 }
 
 model Order {

@@ -39,7 +39,6 @@ export interface Product {
   subDescription: string;
 }
 export interface ProductVariant {
-  // id?: string;
   amount: number;
   unit: string;
   price: number;
