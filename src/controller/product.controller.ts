@@ -5,7 +5,7 @@ import {
   UploadResult,
 } from "../types/type";
 import { StatusCodes } from "http-status-codes";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import {
   cleanUploadedFiles,
@@ -24,7 +24,6 @@ import {
   ALLOWED_PRODUCT_VARIANT_PROPERTIES,
 } from "../data/allowedNames";
 import { filterObjectByKeys, isEmptyObject } from "../utils/object";
-import { success } from "zod";
 const prisma = new PrismaClient();
 
 // --- PUBLIC PRODUCT Controller
@@ -44,7 +43,8 @@ export const getProducts = async (
       maxPrice,
       inStock,
     } = res.locals.validated;
-
+    const { showVariants = "all" } = req.query;
+    console.log(req.query, " req.query");
     if (minPrice && maxPrice && minPrice > maxPrice) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
@@ -69,7 +69,8 @@ export const getProducts = async (
     const products = await prisma.product.findMany({
       where: {
         ...where,
-        variants: { some: {} },
+        ...(showVariants === "with" ? { variants: { some: {} } } : {}),
+        ...(showVariants === "without" ? { variants: { none: {} } } : {}),
       },
       skip,
       take,
@@ -87,15 +88,26 @@ export const getProducts = async (
         },
       },
     });
+    console.log(products, " products");
     if (!products.length)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });
     const newProducts = products.map((p) => {
       const { images, variants, ...rest } = p;
-      const { id, ...firstvariante }: any = variants[0];
-      firstvariante.varianteId = variants[0].id;
-      return { ...rest, image: images[0]?.image ?? "", ...firstvariante };
+      if (showVariants === "with") {
+        const { id, ...firstvariante }: any = variants[0];
+        firstvariante.varianteId = variants[0].id;
+        return {
+          ...rest,
+          image: images[0]?.image ?? "",
+          ...(showVariants ? { ...firstvariante } : {}),
+        };
+      }
+      return {
+        ...rest,
+        image: images[0]?.image ?? "",
+      };
     });
     res.status(StatusCodes.OK).json({
       success: true,
@@ -468,9 +480,14 @@ export const updateProductVariant = async (req: Request, res: Response) => {
     if (!existingVariant)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
-        message: "Variant not found",
+        message: "Variant non trouvé",
       });
-        console.log(res.locals.validated, " req.body");
+    if (existingVariant.productId !== id)
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Produit ou variant ne correspond pas au produit",
+      });
+    console.log(res.locals.validated, " req.body");
     if (req.body?.amount && req.body.amount !== existingVariant.amount) {
       const amountExists = await prisma.productVariant.findFirst({
         where: { amount: req.body.amount, productId: id },
@@ -485,7 +502,7 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         success: false,
         message: "amount est deja utilisé pour cette variante",
       });
-    
+
     // Construire l'objet Produit mis à jour
     const updatedData = {
       ...filterObjectByKeys<
@@ -493,14 +510,11 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
       >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
     };
-  
-    const updatedFields = Object.fromEntries(
-      Object.entries(updatedData).filter(([_, v]) => v !== undefined)
-    );
-    console.log(updatedFields, " updatedData");
+
+    console.log(updatedData, " updatedData");
     if (
       isEmptyObject(
-        filterObjectByKeys(updatedFields, ALLOWED_PRODUCT_VARIANT_PROPERTIES)
+        filterObjectByKeys(updatedData, ALLOWED_PRODUCT_VARIANT_PROPERTIES)
       )
     )
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -510,12 +524,49 @@ export const updateProductVariant = async (req: Request, res: Response) => {
 
     const updatedVariant = await prisma.productVariant.update({
       where: { id: variantId },
-      data: updatedFields,
+      data: updatedData,
     });
     res.status(StatusCodes.OK).json({
       success: true,
       message: "le variante ajoutées avec succès",
       data: updatedVariant,
+    });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+};
+export const deleteProductVariant = async (
+  req: Request<{ id: string; variantId: string }>,
+  res: Response
+) => {
+  const { id, variantId } = req.params;
+  try {
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+    });
+    if (!existingProduct)
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Produit non trouvé",
+      });
+    const existingVariant = await prisma.productVariant.findUnique({
+      where: { id: variantId },
+    });
+    console.log(variantId);
+    if (!existingVariant)
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Variant non trouvé",
+      });
+    if (existingVariant.productId !== id)
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Produit ou variant ne correspond pas au produit",
+      });
+    await prisma.productVariant.delete({ where: { id: variantId } });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "le variante a été supprimée avec succès",
     });
   } catch (err) {
     handleServerError(res, err);

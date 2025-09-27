@@ -15,6 +15,7 @@ import {
   deleteProductImage,
   updateProductImage,
   updateProductVariant,
+  deleteProductVariant,
 } from "../controller/product.controller";
 import { QuerySchema, ValidationId } from "../schema/validation.shema";
 import { verifyAdmin, verifyToken } from "../middlewares/auth";
@@ -22,7 +23,7 @@ import {
   createProductShema,
   createProductVariantSchema,
   productImageSchema,
-  productVariantImageSchema,
+  productVariantSchema,
 } from "../schema/product.shema";
 import { createProductVariant } from "../controller/product.controller";
 import { calculateDiscountForVariant } from "../utils/mathUtils";
@@ -39,57 +40,87 @@ const router = Router();
  * @swagger
  * /products:
  *   get:
- *     summary: Récupère la liste des produits avec filtres et pagination
+ *     summary: Récupérer la liste des produits
+ *     description: |
+ *       Cette route permet de récupérer une liste paginée de produits avec la possibilité
+ *       de filtrer par catégorie, prix, disponibilité, statut promotionnel et présence de variantes.
+ *       Les images et variantes associées peuvent également être incluses.
+ *
  *     tags:
  *       - Produits
+ *
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
- *           minimum: 1
- *         description: Numéro de la page pour la pagination (par défaut 1)
+ *           example: 1
+ *         description: Numéro de la page (par défaut = 1)
+ *
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           minimum: 1
- *         description: Nombre de produits par page (par défaut 10)
+ *           example: 10
+ *         description: Nombre de produits à retourner par page (par défaut = 10)
+ *
  *       - in: query
  *         name: category
  *         schema:
  *           type: string
- *         description: Nom de la catégorie pour filtrer les produits
+ *           example: "Miel"
+ *         description: Nom de la catégorie à filtrer
+ *
  *       - in: query
  *         name: search
  *         schema:
  *           type: string
- *         description: Terme de recherche pour filtrer les produits par titre
+ *           example: "Miel bio"
+ *         description: Terme de recherche à appliquer sur le titre des produits
+ *
  *       - in: query
  *         name: onSale
  *         schema:
  *           type: boolean
- *         description: Filtrer les produits en promotion
+ *           example: true
+ *         description: Filtrer les produits en promotion (`true` = seulement ceux en promotion)
+ *
  *       - in: query
  *         name: minPrice
  *         schema:
  *           type: number
- *           minimum: 0
- *         description: Prix minimum pour filtrer les produits
+ *           example: 50
+ *         description: Prix minimum des produits à afficher
+ *
  *       - in: query
  *         name: maxPrice
  *         schema:
  *           type: number
- *           minimum: 0
- *         description: Prix maximum pour filtrer les produits
+ *           example: 200
+ *         description: Prix maximum des produits à afficher
+ *
  *       - in: query
  *         name: inStock
  *         schema:
  *           type: boolean
- *         description: Filtrer uniquement les produits en stock
+ *           example: true
+ *         description: Filtrer uniquement les produits en stock (`true` = uniquement ceux dont le stock > 0)
+ *
+ *       - in: query
+ *         name: showVariants
+ *         schema:
+ *           type: string
+ *           enum: [all, with, without]
+ *           example: with
+ *         description: |
+ *           Détermine si on inclut les variantes :
+ *           - `all` : retourne tous les produits (avec ou sans variantes)
+ *           - `with` : retourne seulement les produits ayant au moins une variante
+ *           - `without` : retourne seulement les produits sans variantes
+ *
  *     responses:
  *       200:
- *         description: Liste des produits récupérée avec succès
+ *         description: Liste des produits trouvés
  *         content:
  *           application/json:
  *             schema:
@@ -101,34 +132,31 @@ const router = Router();
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/IntProduct'
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "prod_12345"
+ *                       title:
+ *                         type: string
+ *                         example: "Miel d'acacia bio"
+ *                       image:
+ *                         type: string
+ *                         example: "https://cdn.monsite.com/images/miel.png"
+ *                       price:
+ *                         type: number
+ *                         example: 150
+ *                       discountPrice:
+ *                         type: number
+ *                         example: 120
+ *
  *       404:
- *         description: Aucun produit trouvé avec les critères fournis
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Aucun produit trouvé"
+ *         description: Aucun produit trouvé
  *       500:
  *         description: Erreur interne du serveur
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Une erreur est survenue côté serveur"
+
  */
+
 router.get(
   "/",
   validate({ schema: QuerySchema, key: "query", skipSave: true }),
@@ -527,6 +555,7 @@ router.delete(
   validate({ schema: createProductShema.partial(), skipSave: true }),
   deleteProduct
 );
+
 // -------------------- ADD Images to product
 
 // Ajouter une ou plusieurs images
@@ -753,6 +782,12 @@ router.delete(
 // -------------------- ADD Variants to product
 /**
  * @swagger
+ * tags:
+ *   - name: Variantes de Produits
+ *     description: Gestion des variantes de produits (création, mise à jour, suppression, affichage)
+ */
+/**
+ * @swagger
  * /products/{id}/variants:
  *   post:
  *     summary: Créer une variante de produit
@@ -869,12 +904,86 @@ router.post(
   checkEmptyRequestBody,
   createProductVariant
 );
+/**
+ * @swagger
+ * /products/{id}/variants/{variantId}:
+ *   patch:
+ *     summary: Mettre à jour une variante de produit
+ *     description: Cette route permet de mettre à jour une variante existante d'un produit.
+ *     tags:
+ *       - Variantes de Produits
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: L'identifiant du produit auquel la variante appartient
+ *       - in: path
+ *         name: variantId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: L'identifiant de la variante à mettre à jour
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 1000
+ *               unit:
+ *                 type: string
+ *                 example: "ml"
+ *               price:
+ *                 type: number
+ *                 example: 29.99
+ *               discountPercentage:
+ *                 type: number
+ *                 example: 15
+ *               discountPrice:
+ *                 type: number
+ *                 example: 24.99
+ *               isOnSale:
+ *                 type: boolean
+ *                 example: false
+ *               stock:
+ *                 type: number
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: Variante mise à jour avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: La variante a été mise à jour avec succès
+ *                 data:
+ *                   $ref: '#/components/schemas/ProductVariant'
+ *       400:
+ *         description: Aucune donnée valide fournie pour la mise à jour
+ *       404:
+ *         description: Produit ou variante non trouvée
+ *       409:
+ *         description: Conflit - amount déjà utilisé pour une autre variante
+ *       500:
+ *         description: Erreur interne du serveur
+ */
 
 router.patch(
   "/:id/variants/:variantId",
   verifyToken,
   verifyAdmin,
-  validate({ schema: productVariantImageSchema, key: "params" }),
+  validate({ schema: productVariantSchema, key: "params" }),
   validate({
     schema: createProductVariantSchema
       .partial()
@@ -883,6 +992,78 @@ router.patch(
   }),
   checkEmptyRequestBody,
   updateProductVariant
+);
+/**
+ * @swagger
+ * /products/{id}/variants/{variantId}:
+ *   delete:
+ *     summary: Supprimer une variante de produit
+ *     description: >
+ *       Supprime une variante spécifique d'un produit.  
+ *       Vérifie que la variante appartient bien au produit avant suppression.
+ *     tags:
+ *       - Variantes de Produits
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: L'identifiant du produit
+ *       - in: path
+ *         name: variantId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: L'identifiant de la variante à supprimer
+ *     responses:
+ *       200:
+ *         description: Variante supprimée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "La variante a été supprimée avec succès"
+ *       404:
+ *         description: Produit ou variante introuvable / Produit et variante ne correspondent pas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Produit ou variant ne correspond pas au produit"
+ *       500:
+ *         description: Erreur serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur serveur"
+ */
+
+router.delete(
+  "/:id/variants/:variantId",
+  verifyToken,
+  verifyAdmin,
+  validate({ schema: productVariantSchema, key: "params" }),
+  deleteProductVariant
 );
 
 export default router;
