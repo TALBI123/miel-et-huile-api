@@ -12,7 +12,6 @@ import {
   handleServerError,
   paginate,
 } from "../utils/helpers";
-
 import {
   deleteFromCloudinary,
   deletePathToCloudinary,
@@ -24,6 +23,7 @@ import {
   ALLOWED_PRODUCT_VARIANT_PROPERTIES,
 } from "../data/allowedNames";
 import { filterObjectByKeys, isEmptyObject } from "../utils/object";
+import { buildProductQuery } from "../utils/filter";
 const prisma = new PrismaClient();
 
 // --- PUBLIC PRODUCT Controller
@@ -43,14 +43,19 @@ export const getProducts = async (
       maxPrice,
       inStock,
     } = res.locals.validated;
+
     const { showVariants = "all" } = req.query;
-    console.log(req.query, " req.query");
+
     if (minPrice && maxPrice && minPrice > maxPrice) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Le prix minimum ne peut pas être supérieur au prix maximum",
       });
     }
+    const query = buildProductQuery({
+      ...res.locals.validated || {},
+      relationName: "variants",
+    });
     const where: any = {
       ...(category ? { category: { name: category } } : {}),
       ...(inStock !== undefined ? { stock: { gt: 0 } } : {}),
@@ -88,7 +93,7 @@ export const getProducts = async (
         },
       },
     });
-    console.log(products, " products");
+    // console.log(products, " products");
     if (!products.length)
       return res
         .status(StatusCodes.NOT_FOUND)

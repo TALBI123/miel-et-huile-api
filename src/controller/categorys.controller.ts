@@ -1,29 +1,30 @@
-import {  PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, IntCategory, UploadResult } from "../types/type";
-import {
-  generateSlug,
-  handleServerError,
-  paginate,
-} from "../utils/helpers";
+import { generateSlug, handleServerError, paginate } from "../utils/helpers";
 import {
   deleteFromCloudinary,
   uploadBufferToCloudinary,
 } from "../services/upload.service";
 import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
 import { filterObjectByKeys, isEmptyObject } from "../utils/object";
+import { buildProductQuery } from "../utils/filter";
 const prisma = new PrismaClient();
 
 // --- PUBLIC CATEGORY Controller
 export const getAllCategorys = async (
-  req: Request ,
+  req: Request,
   res: Response<ApiResponse<IntCategory[] | null>>
 ) => {
   try {
-    const { page, limit } = res.locals.validated ;
-    console.log(res.locals)
-    const data = await prisma.category.findMany(paginate({ page, limit }));
+    // console.log(res.locals.validated, "res.locals.validated",req.query);
+    const query = buildProductQuery({
+      ...(res.locals.validated || {}),
+      relationName: "products",
+      // include: { products: true },
+    });
+    const data = await prisma.category.findMany(query);
     if (!data)
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -55,7 +56,7 @@ export const createCategory = async (
 ) => {
   let imageInfo: UploadResult | undefined;
   try {
-    console.log(req.file,"jjj");
+    console.log(req.file, "jjj");
     const { name, description } = req.body;
     const existingCategory = await prisma.category.findUnique({
       where: { name },
@@ -113,12 +114,12 @@ export const updateCategory = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Catégorie non trouvée" });
-        console.log(req.body);
+    console.log(req.body);
     const updatedData: Partial<IntCategory> = {
-      ...filterObjectByKeys<Pick<IntCategory, "name" | "description">, typeof ALLOWED_CATEGORY_PROPERTIES[number]>(
-        req.body,
-        ALLOWED_CATEGORY_PROPERTIES
-      ),
+      ...filterObjectByKeys<
+        Pick<IntCategory, "name" | "description">,
+        (typeof ALLOWED_CATEGORY_PROPERTIES)[number]
+      >(req.body, ALLOWED_CATEGORY_PROPERTIES),
     };
     if (req.body?.name) updatedData.slug = generateSlug(req.body.name);
     // 🔹 Upload de la nouvelle image
@@ -174,22 +175,27 @@ export const deleteCategory = async (req: Request, res: Response) => {
     const { id } = req.params;
     const existingCategory = await prisma.category.findUnique({
       where: { id },
-      select: { publicId: true },
+      select: {
+        publicId: true,
+        products: { include: { images: { select: { publicId: true } } } },
+      },
     });
+    console.log(existingCategory);
     if (!existingCategory)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Category n'existe pas" });
+    // const deletedCategory = await prisma.category.delete({ where: { id } });
 
-    await prisma.category.delete({ where: { id } });
+    // await prisma.category.delete({ where: { id } });
 
-    if (existingCategory.publicId) {
-      try {
-        await deleteFromCloudinary(existingCategory.publicId);
-      } catch (err) {
-        console.error("❗ Suppression de l'image échouée :", err);
-      }
-    }
+    // if (existingCategory.publicId) {
+    //   try {
+    //     await deleteFromCloudinary(existingCategory.publicId);
+    //   } catch (err) {
+    //     console.error("❗ Suppression de l'image échouée :", err);
+    //   }
+    // }
 
     return res.status(StatusCodes.OK).json({
       success: true,

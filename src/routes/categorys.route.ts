@@ -1,8 +1,8 @@
 import {
-  createCategory,
-  deleteCategory,
   getAllCategorys,
   getCategoryById,
+  createCategory,
+  deleteCategory,
   updateCategory,
 } from "../controller/categorys.controller";
 import { Router } from "express";
@@ -12,10 +12,7 @@ import {
   uploadMemoryStorage,
 } from "../middlewares/uploadMiddleware";
 import { checkEmptyRequestBody, validate } from "../middlewares/validate";
-import {
-  PaginationSchema,
-  ValidationId,
-} from "../schema/validation.shema";
+import { FilterSchema, ValidationId } from "../schema/validation.shema";
 import { CreateCategorySchema } from "../schema/category.shema";
 const router = Router();
 
@@ -103,7 +100,7 @@ const router = Router();
 
 router.get(
   "/",
-  validate({ schema: PaginationSchema, key: "query",skipSave:true }),
+  validate({ schema: FilterSchema.strict(), key: "query", skipSave: true }),
   getAllCategorys
 );
 /**
@@ -173,7 +170,6 @@ router.get(
 );
 
 // --- AdMIN CATEGORY CRUD OPERATIONS
-
 
 /**
  * @swagger

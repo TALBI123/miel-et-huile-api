@@ -159,7 +159,7 @@ const router = Router();
 
 router.get(
   "/",
-  validate({ schema: QuerySchema, key: "query", skipSave: true }),
+  validate({ schema: QuerySchema.strict(), key: "query", skipSave: true }),
   getProducts
 );
 /**
@@ -999,7 +999,7 @@ router.patch(
  *   delete:
  *     summary: Supprimer une variante de produit
  *     description: >
- *       Supprime une variante spécifique d'un produit.  
+ *       Supprime une variante spécifique d'un produit.
  *       Vérifie que la variante appartient bien au produit avant suppression.
  *     tags:
  *       - Variantes de Produits

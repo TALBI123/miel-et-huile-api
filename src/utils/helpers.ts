@@ -1,4 +1,3 @@
-import { PaginationInput } from "../schema/validation.shema";
 import { VerificationTokenType } from "../types/enums";
 import { StatusCodes } from "http-status-codes";
 import { PrismaClient } from "@prisma/client";
@@ -6,6 +5,7 @@ import { Response, Express } from "express";
 import crypto from "crypto";
 import slugify from "slugify";
 import fs from "fs";
+import { FilterType } from "schema/validation.shema";
 
 const prisma = new PrismaClient();
 export const getExpirationDate = (minutes: number): Date => {
@@ -28,7 +28,10 @@ export const generateSlug = (name: string): string => {
   return slugify(name, { lower: true, strict: true });
 };
 
-export const paginate = ({ page, limit }: PaginationInput) => {
+export const paginate = ({
+  page,
+  limit,
+}: Pick<FilterType, "page" | "limit">) => {
   const offset = (page - 1) * limit;
   return { skip: offset, take: limit };
 };
@@ -45,7 +48,7 @@ export const createVerificationToken = async (
 ): Promise<string> => {
   const expiresAt = getExpirationDate(expiresInMinutes);
   const hashedToken = hashToken(token);
-  console.log(hashedToken)
+  console.log(hashedToken);
   await prisma.verificationTokens.create({
     data: {
       token: hashedToken,
@@ -61,7 +64,8 @@ export const handleServerError = (res: Response, error: unknown) => {
   if (error instanceof Error)
     console.error(
       `Server error: ${StatusCodes.INTERNAL_SERVER_ERROR}`,
-      error.message,error
+      error.message,
+      error
     );
   else
     console.error(

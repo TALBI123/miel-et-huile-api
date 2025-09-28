@@ -64,6 +64,7 @@ export const productImageSchema = z.object({
     .string({ message: "imageId de l'image est requis" })
     .uuid({ message: "imageId de l'image doit être un UUID valide" }),
 });
+
 // --- SCHEMAS UPLOAD VARIANTS
 export const productVariantSchema = z.object({
   id: z

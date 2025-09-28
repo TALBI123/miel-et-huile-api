@@ -1,12 +1,10 @@
-import {
-  booleanFromString,
-} from "./utils";
+import { booleanFromString } from "./utils";
 import { z } from "zod";
 
 // --- SHEMAS PRODUCT
 
 // --- SHEMAS VALIDATION PAGINATION
-export const PaginationSchema = z.object({
+export const FilterSchema = z.object({
   page: z
     .string()
     .regex(/^\d+$/, { message: "La page doit être un nombre entier positif" })
@@ -17,6 +15,18 @@ export const PaginationSchema = z.object({
     .regex(/^\d+$/, { message: "La limite doit être un nombre entier positif" })
     .default("5")
     .transform(Number),
+  search: z
+    .string({
+      message: "La recherche /search/ doit être une chaîne de caractères",
+    })
+    .min(2)
+    .max(100)
+    .optional(),
+  mode: z
+    .enum(["with", "without", "all"], {
+      message: "Veuillez sélectionner une unité valide",
+    })
+    .default("all"),
 });
 
 // --- SHEMAS VALIDATION QUERY
@@ -27,7 +37,6 @@ export const QuerySchema = z
       .string()
       .min(1, { message: "La catégorie ne peut pas être vide" })
       .optional(),
-    search: z.string().optional(),
 
     onSale: booleanFromString(
       "La valeur de onSale doit être true ou false"
@@ -48,7 +57,16 @@ export const QuerySchema = z
       "La valeur de inStock doit être true ou false"
     ).optional(),
   })
-  .merge(PaginationSchema);
+  .merge(FilterSchema)
+  .refine(
+    (data) =>
+      data.minPrice === undefined ||
+      data.maxPrice === undefined ||
+      data.minPrice <= data.maxPrice,
+    {
+      message: "Le prix minimum ne peut pas être supérieur au prix maximum",
+    }
+  );
 
 // --- SHEMAS VALIDATION ID
 export const ValidationId = z.object({
@@ -56,5 +74,4 @@ export const ValidationId = z.object({
     .string({ message: "L'ID est requis" })
     .uuid({ message: "L'ID doit être un UUID valide" }),
 });
-
-export type PaginationInput = z.infer<typeof PaginationSchema>;
+export type FilterType = z.infer<typeof FilterSchema>;
