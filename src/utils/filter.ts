@@ -16,9 +16,9 @@ interface ProductFilterOptions {
   inStock?: boolean;
   mode?: RelationMode;
   relationName: string;
-  order?: OrderOptions;
   nested?: any;
   include?: Record<string, any>;
+  orderBy?: Record<string, any>;
 }
 const buildRelationFilter = (
   relationName: string,
@@ -47,7 +47,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     mode = "all",
     relationName,
     nested,
-    order,
+    orderBy,
     include,
   } = options;
   if (minPrice && maxPrice && minPrice > maxPrice) {
@@ -79,17 +79,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     where,
     skip,
     take,
-    // ...(relationName === "variants"
-    //   ? {
-    //       orderBy: {
-    //         [relationName]: {
-    //           _min: {
-    //             [order?.orderBy ?? "price"]: order?.orderDirection ?? "asc",
-    //           },
-    //         },
-    //       },
-    //     }
-    //   : {}),
+    ...(orderBy ? { orderBy } : {}),
     include: include ?? {},
   };
 };

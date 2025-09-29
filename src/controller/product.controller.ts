@@ -30,88 +30,40 @@ const prisma = new PrismaClient();
 
 export const getProducts = async (
   req: Request,
-  res: Response<ApiResponse<Product[] | null>>
+  res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
   try {
-    const {
-      page,
-      limit,
-      category,
-      search,
-      onSale,
-      minPrice,
-      maxPrice,
-      inStock,
-    } = res.locals.validated;
-
-    const { showVariants = "all" } = req.query;
-
-    if (minPrice && maxPrice && minPrice > maxPrice) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: "Le prix minimum ne peut pas être supérieur au prix maximum",
-      });
-    }
+    const { mode } = res.locals.validated;
     const query = buildProductQuery({
-      ...res.locals.validated || {},
+      ...(res.locals.validated || {}),
       relationName: "variants",
-    });
-    const where: any = {
-      ...(category ? { category: { name: category } } : {}),
-      ...(inStock !== undefined ? { stock: { gt: 0 } } : {}),
-      ...(onSale !== undefined ? { onSale } : {}),
-      ...(search ? { title: { contains: search, mode: "insensitive" } } : {}),
-      ...(minPrice || maxPrice
-        ? {
-            price: {
-              ...(minPrice && { gte: minPrice }),
-              ...(maxPrice && { lte: maxPrice }),
-            },
-          }
-        : {}),
-    };
-    const { skip, take } = paginate({ page, limit });
-    const products = await prisma.product.findMany({
-      where: {
-        ...where,
-        ...(showVariants === "with" ? { variants: { some: {} } } : {}),
-        ...(showVariants === "without" ? { variants: { none: {} } } : {}),
-      },
-      skip,
-      take,
       include: {
-        images: true,
         variants: {
+          orderBy: { price: "asc" },
+          take: 1, // récupère seulement la variante la moins chère
           select: {
-            id: true,
+            // id: true,
             price: true,
             discountPrice: true,
             discountPercentage: true,
-            isOnSale: true,
           },
-          orderBy: { amount: "asc" },
         },
+        images: true,
       },
     });
-    // console.log(products, " products");
+    const products = await prisma.product.findMany(query);
     if (!products.length)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });
     const newProducts = products.map((p) => {
-      const { images, variants, ...rest } = p;
-      if (showVariants === "with") {
-        const { id, ...firstvariante }: any = variants[0];
-        firstvariante.varianteId = variants[0].id;
-        return {
-          ...rest,
-          image: images[0]?.image ?? "",
-          ...(showVariants ? { ...firstvariante } : {}),
-        };
-      }
+      const { images, createdAt, updatedAt, variants, ...rest } = p;
       return {
         ...rest,
-        image: images[0]?.image ?? "",
+        image: images.length && "image" in images[0] ? images[0]?.image : "",
+        ...(variants.length ? { ...variants[0] } : {}),
+        createdAt,
+        updatedAt,
       };
     });
     res.status(StatusCodes.OK).json({

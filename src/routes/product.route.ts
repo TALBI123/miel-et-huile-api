@@ -37,90 +37,78 @@ const router = Router();
  */
 
 /**
- * @swagger
+ * @openapi
  * /products:
  *   get:
  *     summary: Récupérer la liste des produits
- *     description: |
- *       Cette route permet de récupérer une liste paginée de produits avec la possibilité
- *       de filtrer par catégorie, prix, disponibilité, statut promotionnel et présence de variantes.
- *       Les images et variantes associées peuvent également être incluses.
- *
  *     tags:
  *       - Produits
- *
  *     parameters:
- *       - in: query
- *         name: page
+ *       - name: page
+ *         in: query
+ *         required: false
+ *         description: Numéro de page pour la pagination
  *         schema:
  *           type: integer
- *           example: 1
- *         description: Numéro de la page (par défaut = 1)
- *
- *       - in: query
- *         name: limit
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Nombre de produits par page
  *         schema:
  *           type: integer
- *           example: 10
- *         description: Nombre de produits à retourner par page (par défaut = 10)
- *
- *       - in: query
- *         name: category
+ *           default: 5
+ *       - name: category
+ *         in: query
+ *         required: false
+ *         description: ID de la catégorie pour filtrer les produits
  *         schema:
  *           type: string
- *           example: "Miel"
- *         description: Nom de la catégorie à filtrer
- *
- *       - in: query
- *         name: search
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: Recherche par nom de produit (insensible à la casse)
  *         schema:
  *           type: string
- *           example: "Miel bio"
- *         description: Terme de recherche à appliquer sur le titre des produits
- *
- *       - in: query
- *         name: onSale
+ *       - name: onSale
+ *         in: query
+ *         required: false
+ *         description: Filtrer uniquement les produits en promotion
  *         schema:
  *           type: boolean
- *           example: true
- *         description: Filtrer les produits en promotion (`true` = seulement ceux en promotion)
- *
- *       - in: query
- *         name: minPrice
+ *       - name: minPrice
+ *         in: query
+ *         required: false
+ *         description: Prix minimum des variantes incluses
  *         schema:
  *           type: number
- *           example: 50
- *         description: Prix minimum des produits à afficher
- *
- *       - in: query
- *         name: maxPrice
+ *       - name: maxPrice
+ *         in: query
+ *         required: false
+ *         description: Prix maximum des variantes incluses
  *         schema:
  *           type: number
- *           example: 200
- *         description: Prix maximum des produits à afficher
- *
- *       - in: query
- *         name: inStock
+ *       - name: inStock
+ *         in: query
+ *         required: false
+ *         description: Filtrer uniquement les produits en stock
  *         schema:
  *           type: boolean
- *           example: true
- *         description: Filtrer uniquement les produits en stock (`true` = uniquement ceux dont le stock > 0)
- *
- *       - in: query
- *         name: showVariants
+ *       - name: mode
+ *         in: query
+ *         required: false
+ *         description: >
+ *           Détermine comment les relations (ex: variantes) sont prises en compte :
+ *           - **with** : uniquement les produits qui possèdent au moins une variante correspondant aux filtres
+ *           - **without** : uniquement les produits qui n’ont aucune variante correspondant aux filtres
+ *           - **all** : renvoie tous les produits sans restriction (par défaut)
  *         schema:
  *           type: string
- *           enum: [all, with, without]
- *           example: with
- *         description: |
- *           Détermine si on inclut les variantes :
- *           - `all` : retourne tous les produits (avec ou sans variantes)
- *           - `with` : retourne seulement les produits ayant au moins une variante
- *           - `without` : retourne seulement les produits sans variantes
- *
+ *           enum: [with, without, all]
+ *           default: all
  *     responses:
  *       200:
- *         description: Liste des produits trouvés
+ *         description: Succès
  *         content:
  *           application/json:
  *             schema:
@@ -128,7 +116,6 @@ const router = Router();
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 data:
  *                   type: array
  *                   items:
@@ -136,25 +123,20 @@ const router = Router();
  *                     properties:
  *                       id:
  *                         type: string
- *                         example: "prod_12345"
- *                       title:
+ *                       name:
  *                         type: string
- *                         example: "Miel d'acacia bio"
- *                       image:
- *                         type: string
- *                         example: "https://cdn.monsite.com/images/miel.png"
  *                       price:
  *                         type: number
- *                         example: 150
  *                       discountPrice:
  *                         type: number
- *                         example: 120
- *
+ *                       discountPercentage:
+ *                         type: number
+ *                       image:
+ *                         type: string
  *       404:
  *         description: Aucun produit trouvé
  *       500:
- *         description: Erreur interne du serveur
-
+ *         description: Erreur serveur
  */
 
 router.get(
