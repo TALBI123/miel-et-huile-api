@@ -2,9 +2,10 @@ import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, IntCategory, UploadResult } from "../types/type";
-import { generateSlug, handleServerError, paginate } from "../utils/helpers";
+import { generateSlug, handleServerError } from "../utils/helpers";
 import {
   deleteFromCloudinary,
+  deletePathToCloudinary,
   uploadBufferToCloudinary,
 } from "../services/upload.service";
 import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
@@ -22,14 +23,29 @@ export const getAllCategorys = async (
     const query = buildProductQuery({
       ...(res.locals.validated || {}),
       relationName: "products",
-      // include: { products: true },
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
     });
     const data = await prisma.category.findMany(query);
     if (!data)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Catégorie non trouvée" });
-    res.status(StatusCodes.OK).json({ success: true, data });
+
+    const newData = data.map((cat) => {
+      const { _count, createdAt, updatedAt, ...rest } = cat;
+      const productsCount = "products" in _count ? _count.products : 0;
+      return {
+        ...rest,
+        productsCount,
+        createdAt,
+        updatedAt,
+      };
+    });
+    res.status(StatusCodes.OK).json({ success: true, data: newData });
   } catch (err) {
     handleServerError(res, err);
   }
@@ -177,29 +193,53 @@ export const deleteCategory = async (req: Request, res: Response) => {
       where: { id },
       select: {
         publicId: true,
-        products: { include: { images: { select: { publicId: true } } } },
+        products: {
+          select: {
+            id: true,
+            images: { select: { publicId: true } },
+          },
+        },
       },
     });
-    console.log(existingCategory);
     if (!existingCategory)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Category n'existe pas" });
-    // const deletedCategory = await prisma.category.delete({ where: { id } });
+    const { publicId, products } = existingCategory;
+    const publicIdOfImages = products.reduce<string[]>((acc, { images }) => {
+      for (const { publicId } of images) if (publicId) acc.push(publicId);
+      return acc;
+    }, []);
 
-    // await prisma.category.delete({ where: { id } });
-
-    // if (existingCategory.publicId) {
-    //   try {
-    //     await deleteFromCloudinary(existingCategory.publicId);
-    //   } catch (err) {
-    //     console.error("❗ Suppression de l'image échouée :", err);
-    //   }
-    // }
-
+    await prisma.category.delete({ where: { id } });
+    try {
+      if (publicIdOfImages.length) {
+        const { success,failed } = await deletePathToCloudinary(publicIdOfImages);
+        console.log(success,failed)
+        if (failed.length)
+          console.log(
+            "❗ Certaines images n'ont pas pu être supprimées :",
+            failed
+          );
+      }
+    } catch (err) {
+      console.log("❗ Suppression des images des produits échouée :", err);
+    }
+    if (publicId) {
+      try {
+        await deleteFromCloudinary(publicId);
+      } catch (err) {
+        console.error(
+          "❗ Suppression de l'image de la catégorie échouée :",
+          err
+        );
+      }
+    }
+    
     return res.status(StatusCodes.OK).json({
       success: true,
       message: "La catégorie a été supprimée avec succès",
+      products,
     });
   } catch (err) {
     handleServerError(res, err);

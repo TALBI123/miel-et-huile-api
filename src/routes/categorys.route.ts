@@ -24,32 +24,55 @@ const router = Router();
  */
 
 // --- PUBLIC CATEGORY ROUTES
-
 /**
  * @swagger
- * /categories:
+ * /categorys:
  *   get:
- *     summary: Récupère toutes les catégories avec pagination
+ *     summary: Récupérer la liste des catégories avec le nombre de produits
+ *     description: >
+ *       Cette route permet de récupérer toutes les catégories, avec des informations détaillées sur chaque catégorie, y compris :
+ *         - `productsCount` : le nombre de produits associés à chaque catégorie.
+ *         - `createdAt` et `updatedAt` : les dates de création et de mise à jour.
+ *       Elle supporte des filtres et options de pagination via les **query params**.
+ *       Les champs possibles pour filtrer ou trier sont :
+ *         - `page` (number) : numéro de page pour la pagination.
+ *         - `limit` (number) : nombre de résultats par page.
+ *         - `search` (string) : recherche par nom ou description de catégorie.
+ *         - `mode` (enum) : filtrage des catégories selon leur contenu en produits :
+ *             - `all` : récupère toutes les catégories.
+ *             - `with` : récupère uniquement les catégories qui contiennent des produits.
+ *             - `without` : récupère uniquement les catégories sans produits.
+ *       Cette route renvoie un tableau de catégories avec leur nombre de produits.
  *     tags:
  *       - Catégories
  *     parameters:
  *       - in: query
  *         name: page
- *         required: false
  *         schema:
  *           type: integer
- *           example: 1
- *         description: Numéro de la page pour la pagination
+ *           default: 1
+ *         description: Numéro de la page pour la pagination.
  *       - in: query
  *         name: limit
- *         required: false
  *         schema:
  *           type: integer
- *           example: 10
- *         description: Nombre d'éléments par page
+ *           default: 10
+ *         description: Nombre d'éléments par page.
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Texte à rechercher dans le nom ou la description des catégories.
+ *       - in: query
+ *         name: mode
+ *         schema:
+ *           type: string
+ *           enum: [all, with, without]
+ *           default: all
+ *         description: Mode de filtrage des catégories selon leur présence de produits.
  *     responses:
  *       200:
- *         description: Liste des catégories récupérée avec succès
+ *         description: Liste des catégories récupérées avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -66,36 +89,38 @@ const router = Router();
  *                         type: string
  *                       name:
  *                         type: string
+ *                       publicId:
+ *                         type: string
+ *                       productsCount:
+ *                         type: integer
  *                       createdAt:
  *                         type: string
  *                         format: date-time
- *             example:
- *               success: true
- *               data:
- *                 - id: "64f2c5e7b5e7e72f12345678"
- *                   name: "Miels"
- *                   createdAt: "2025-09-23T17:00:00Z"
- *                 - id: "64f2c5e7b5e7e72f12345679"
- *                   name: "Pollen"
- *                   createdAt: "2025-09-23T17:10:00Z"
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
  *       404:
  *         description: Aucune catégorie trouvée
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Catégorie non trouvée"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  *       500:
- *         description: Erreur interne du serveur
+ *         description: Erreur serveur inattendue
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Une erreur est survenue côté serveur"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 
 router.get(
@@ -105,9 +130,13 @@ router.get(
 );
 /**
  * @swagger
- * /categories/{id}:
+ * /categorys/{id}:
  *   get:
- *     summary: Récupère une catégorie par son ID
+ *     summary: Récupérer une catégorie par son ID
+ *     description: >
+ *       Cette route permet de récupérer **une catégorie unique** en utilisant son ID. 
+ *       Si la catégorie existe, elle renvoie toutes ses informations.
+ *       Si elle n'existe pas, renvoie une erreur 404.
  *     tags:
  *       - Catégories
  *     parameters:
@@ -116,8 +145,7 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *           example: "64f2c5e7b5e7e72f12345678"
- *         description: ID de la catégorie à récupérer
+ *         description: L'ID de la catégorie à récupérer.
  *     responses:
  *       200:
  *         description: Catégorie récupérée avec succès
@@ -135,34 +163,38 @@ router.get(
  *                       type: string
  *                     name:
  *                       type: string
+ *                     publicId:
+ *                       type: string
  *                     createdAt:
  *                       type: string
  *                       format: date-time
- *             example:
- *               success: true
- *               data:
- *                 id: "64f2c5e7b5e7e72f12345678"
- *                 name: "Miels"
- *                 createdAt: "2025-09-23T17:00:00Z"
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
  *       404:
- *         description: Catégorie non trouvée
+ *         description: La catégorie n'existe pas
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Catégorie non trouvée"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  *       500:
- *         description: Erreur interne du serveur
+ *         description: Erreur serveur inattendue
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Une erreur est survenue côté serveur"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
+
 router.get(
   "/:id",
   validate({ schema: ValidationId, key: "params" }),
@@ -173,7 +205,7 @@ router.get(
 
 /**
  * @swagger
- * /categorys/:
+ * /categorys:
  *   post:
  *     summary: Crée une nouvelle catégorie (Admin)
  *     tags:
@@ -270,7 +302,7 @@ router.post(
 );
 /**
  * @swagger
- * /categories/{id}:
+ * /categorys/{id}:
  *   patch:
  *     summary: Met à jour une catégorie existante
  *     tags:
@@ -355,9 +387,18 @@ router.patch(
 );
 /**
  * @swagger
- * /categories/{id}:
+ * /categorys/{id}:
  *   delete:
- *     summary: Supprime une catégorie existante
+ *     summary: Supprimer une catégorie et tous ses produits associés
+ *     description: >
+ *       Cette route supprime une catégorie par son ID.
+ *       La suppression est **en cascade** :
+ *         - Tous les produits associés à cette catégorie sont supprimés.
+ *         - Tous les variants des produits sont supprimés.
+ *         - Toutes les images des produits sont supprimées de la base de données et de **Cloudinary**.
+ *         - L'image principale de la catégorie est également supprimée de Cloudinary.
+ *       Cette approche garantit que la base de données reste propre et que les fichiers médias ne restent pas sur Cloudinary après suppression.
+ *       Le frontend peut utiliser la réponse pour mettre à jour son interface avec la liste des produits supprimés.
  *     tags:
  *       - Catégories
  *     parameters:
@@ -366,36 +407,48 @@ router.patch(
  *         required: true
  *         schema:
  *           type: string
- *           example: "64f2c5e7b5e7e72f12345678"
- *         description: ID de la catégorie à supprimer
+ *         description: L'ID de la catégorie à supprimer.
  *     responses:
  *       200:
- *         description: Catégorie supprimée avec succès
+ *         description: Catégorie et produits supprimés avec succès.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: true
- *                 message: "La catégorie a été supprimée avec succès"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
  *       404:
- *         description: Catégorie non trouvée
+ *         description: La catégorie n'existe pas.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Category n'existe pas"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  *       500:
- *         description: Erreur interne du serveur
+ *         description: Erreur serveur inattendue.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               example:
- *                 success: false
- *                 message: "Une erreur est survenue côté serveur"
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 
 router.delete(

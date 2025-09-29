@@ -114,7 +114,7 @@ export const createProduct = async (
       "products"
     );
 
-    console.log(imagesInfo, " imagesInfo");
+    // console.log(imagesInfo, " imagesInfo");
     // Enregistrer la Produit dans la base de données
     const data = await prisma.product.create({
       data: {
