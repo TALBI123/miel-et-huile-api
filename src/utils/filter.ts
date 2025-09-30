@@ -19,6 +19,7 @@ interface ProductFilterOptions {
   nested?: any;
   include?: Record<string, any>;
   orderBy?: Record<string, any>;
+  extraWhere?: Record<string, any>;
 }
 const buildRelationFilter = (
   relationName: string,
@@ -34,6 +35,7 @@ const buildRelationFilter = (
       return {};
   }
 };
+
 export const buildProductQuery = (options: ProductFilterOptions) => {
   const {
     page = 1,
@@ -49,6 +51,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     nested,
     orderBy,
     include,
+    extraWhere,
   } = options;
   if (minPrice && maxPrice && minPrice > maxPrice) {
     throw new Error(
@@ -73,6 +76,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
           },
         }
       : {}),
+    ...(extraWhere ?? {}),
   };
   const { skip, take } = paginate({ page, limit });
   return {

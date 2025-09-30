@@ -81,7 +81,7 @@ model Product {
   description    String // description détaillée
   rating         Float?           @default(0) // Note moyenne
   category       Category         @relation(fields: [categoryId], references: [id],onDelete:Cascade)
-  categoryId     String
+  categoryId     String        
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   review         Review[]

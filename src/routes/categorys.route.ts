@@ -12,7 +12,11 @@ import {
   uploadMemoryStorage,
 } from "../middlewares/uploadMiddleware";
 import { checkEmptyRequestBody, validate } from "../middlewares/validate";
-import { FilterSchema, ValidationId } from "../schema/validation.shema";
+import {
+  categorySlug,
+  FilterSchema,
+  ValidationId,
+} from "../schema/validation.shema";
 import { CreateCategorySchema } from "../schema/category.shema";
 const router = Router();
 
@@ -125,7 +129,11 @@ const router = Router();
 
 router.get(
   "/",
-  validate({ schema: FilterSchema.strict(), key: "query", skipSave: true }),
+  validate({
+    schema: FilterSchema,
+    key: "query",
+    skipSave: true,
+  }),
   getAllCategorys
 );
 /**
@@ -134,7 +142,7 @@ router.get(
  *   get:
  *     summary: Récupérer une catégorie par son ID
  *     description: >
- *       Cette route permet de récupérer **une catégorie unique** en utilisant son ID. 
+ *       Cette route permet de récupérer **une catégorie unique** en utilisant son ID.
  *       Si la catégorie existe, elle renvoie toutes ses informations.
  *       Si elle n'existe pas, renvoie une erreur 404.
  *     tags:

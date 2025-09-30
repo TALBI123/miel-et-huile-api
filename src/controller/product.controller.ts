@@ -32,10 +32,22 @@ export const getProducts = async (
   req: Request,
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
+  const { categorySlug, ...rest } = res.locals.validated;
+  let categoryId: string | undefined;
   try {
-    const { mode } = res.locals.validated;
+    if (categorySlug) {
+      const existingSlug = await prisma.category.findUnique({
+        where: { slug: categorySlug },
+        select: { id: true },
+      });
+      if (!existingSlug)
+        return res
+          .status(StatusCodes.NOT_FOUND)
+          .json({ success: false, message: "Catégorie non trouvée" });
+      categoryId = existingSlug?.id;
+    }
     const query = buildProductQuery({
-      ...(res.locals.validated || {}),
+      ...(rest || {}),
       relationName: "variants",
       include: {
         variants: {
@@ -49,6 +61,9 @@ export const getProducts = async (
           },
         },
         images: true,
+      },
+      extraWhere: {
+        ...(categoryId  ? { categoryId } : {}),
       },
     });
     const products = await prisma.product.findMany(query);

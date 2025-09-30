@@ -1,18 +1,20 @@
 import forgetPassword from "./routes/auth/forgetPassword";
-import { errorHandler } from "./middlewares/handleErrors";
+import { errorHandler } from "./middlewares/handleErrors"
 import googleAuth from "./routes/auth/authGoogle.route";
 import verifyEmail from "./routes/auth/verifiy-email";
 import loginRegister from "./routes/auth/auth.route";
 import categoryRoute from "./routes/categorys.route";
 import productRoute from "./routes/product.route";
-import usersRoute from './routes/user.route'    
+import { setupSwagger } from "./config/swagger";
+import usersRoute from "./routes/user.route";
+import { Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import express from "express";
 import cors from "cors";
-import { setupSwagger } from "./config/swagger";
+import Stripe from "stripe";
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
-
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 // middleware pckages
 app.use(express.static("view"));
 app.use(express.json());
@@ -63,14 +65,17 @@ console.log(
   process.env.GOOGLE_CALLBACK_URL ? "✅ Défini" : "❌ Manquant"
 );
 console.log(process.env.PORT || "❌ PORT non défini");
-
-// app.get("/me", verifyToken, (req, res) => {
-//   console.log(req.user);
-//   res.json({ message: `user info :  ${req.user?.email} - ` });
-// });
-// app.get("/ping", (req, res) => {
-//   res.json({ message: "pong" });
-// });
+// Export the app for use in other files (like server.ts)
+app.post("/checkout",async(req : Request ,res : Response) => {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: req.body.items,
+    mode: "payment",
+    success_url: `${process.env.FRONTEND_URL}/success`,
+    cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+  });
+  res.json({ id: session.id });
+});
 
 export default app;
 

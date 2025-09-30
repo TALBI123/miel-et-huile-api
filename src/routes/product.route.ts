@@ -17,7 +17,7 @@ import {
   updateProductVariant,
   deleteProductVariant,
 } from "../controller/product.controller";
-import { QuerySchema, ValidationId } from "../schema/validation.shema";
+import { categorySlug, QuerySchema, ValidationId } from "../schema/validation.shema";
 import { verifyAdmin, verifyToken } from "../middlewares/auth";
 import {
   createProductShema,
@@ -40,7 +40,14 @@ const router = Router();
  * @openapi
  * /products:
  *   get:
- *     summary: Récupérer la liste des produits
+ *     summary: Récupérer la liste des produits avec filtres et pagination
+ *     description: >
+ *       Cette route permet de récupérer les produits avec la possibilité de :
+ *       - filtrer par catégorie via `categorySlug`
+ *       - rechercher par nom de produit
+ *       - filtrer par prix, stock ou promotion
+ *       - utiliser le mode `all`, `with` ou `without` pour gérer les variantes
+ *       La variante la moins chère est incluse dans le retour.
  *     tags:
  *       - Produits
  *     parameters:
@@ -58,10 +65,10 @@ const router = Router();
  *         schema:
  *           type: integer
  *           default: 5
- *       - name: category
+ *       - name: categorySlug
  *         in: query
  *         required: false
- *         description: ID de la catégorie pour filtrer les produits
+ *         description: Slug de la catégorie pour filtrer les produits
  *         schema:
  *           type: string
  *       - name: search
@@ -123,8 +130,14 @@ const router = Router();
  *                     properties:
  *                       id:
  *                         type: string
- *                       name:
+ *                       title:
  *                         type: string
+ *                       subDescription:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       rating:
+ *                         type: number
  *                       price:
  *                         type: number
  *                       discountPrice:
@@ -133,6 +146,12 @@ const router = Router();
  *                         type: number
  *                       image:
  *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
  *       404:
  *         description: Aucun produit trouvé
  *       500:
@@ -141,7 +160,7 @@ const router = Router();
 
 router.get(
   "/",
-  validate({ schema: QuerySchema.strict(), key: "query", skipSave: true }),
+  validate({ schema: QuerySchema.merge(categorySlug), key: "query", skipSave: true }),
   getProducts
 );
 /**

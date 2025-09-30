@@ -28,7 +28,9 @@ export const FilterSchema = z.object({
     })
     .default("all"),
 });
-
+export const categorySlug = z.object({
+  categorySlug: z.string().regex(/^[a-z0-9-]+$/i).optional(),
+});
 // --- SHEMAS VALIDATION QUERY
 
 export const QuerySchema = z
