@@ -46,6 +46,7 @@ export const getProducts = async (
           .json({ success: false, message: "Catégorie non trouvée" });
       categoryId = existingSlug?.id;
     }
+    console.log(categorySlug, rest, categoryId);
     const query = buildProductQuery({
       ...(rest || {}),
       relationName: "variants",
@@ -62,9 +63,7 @@ export const getProducts = async (
         },
         images: true,
       },
-      extraWhere: {
-        ...(categoryId  ? { categoryId } : {}),
-      },
+      ...(categoryId ? { extraWhere: { categoryId } } : {}),
     });
     const products = await prisma.product.findMany(query);
     if (!products.length)
@@ -174,7 +173,7 @@ export const updateProduct = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
-    console.log(req.body);
+
     if (req.body?.categoryId) {
       const existingCategory = await prisma.category.findUnique({
         where: { id: req.body.categoryId },
@@ -184,13 +183,20 @@ export const updateProduct = async (
           success: false,
           message: "Catégorie non trouvée",
         });
+      if (req.body?.categoryId === existingProduct.categoryId)
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Le produit appartient déjà à cette catégorie",
+        });
     }
+    
     // Vérifier si des données valides sont fournies
+    console.log(res.locals.validated, " res.locals.validated");
     const filterdProduct = filterObjectByKeys(
-      req.body,
+      res.locals.validated,
       ALLOWED_PRODUCT_PROPERTIES
     );
-    console.log(filterdProduct);
+    console.log(filterdProduct, "filterdProduct");
     if (isEmptyObject(filterdProduct ?? {}))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
@@ -459,7 +465,7 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         success: false,
         message: "Produit ou variant ne correspond pas au produit",
       });
-    console.log(res.locals.validated, " req.body");
+    console.log(res.locals.validated, " res.locals.validated hnaya",req.body);
     if (req.body?.amount && req.body.amount !== existingVariant.amount) {
       const amountExists = await prisma.productVariant.findFirst({
         where: { amount: req.body.amount, productId: id },

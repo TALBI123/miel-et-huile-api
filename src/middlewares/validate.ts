@@ -23,6 +23,8 @@ export const validate =
       // console.log(req[key], " req[key]");
       const parsed = schema.parse(req[key] ?? {});
       if (skipSave) res.locals.validated = parsed ?? {};
+      console.log(skipSave, parsed, " skipSave");
+      console.log(res.locals.validated, " res.locals.validated");
       next();
     } catch (err: any) {
       if (err instanceof ZodError) {
@@ -53,6 +55,7 @@ export const checkEmptyRequestBody = (
   res: Response,
   next: NextFunction
 ) => {
+  console.log(req.body, "req.body");
   if (!req.file && isEmptyObject(req.body || {}))
     return res.status(StatusCodes.BAD_REQUEST).json({
       success: false,

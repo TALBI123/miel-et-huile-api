@@ -26,10 +26,21 @@ export const FilterSchema = z.object({
     .enum(["with", "without", "all"], {
       message: "Veuillez sélectionner une unité valide",
     })
-    .default("all"),
+    .default("with"),
+  isActive: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val === "true") return true;
+      if (val === "false") return false;
+      return undefined; // ou une valeur par défaut
+    }),
 });
 export const categorySlug = z.object({
-  categorySlug: z.string().regex(/^[a-z0-9-]+$/i).optional(),
+  categorySlug: z
+    .string()
+    .regex(/^[a-z0-9-]+$/i)
+    .optional(),
 });
 // --- SHEMAS VALIDATION QUERY
 

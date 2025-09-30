@@ -37,6 +37,7 @@ export interface Product {
   categoryId: string;
   description: string;
   subDescription: string;
+  isActive?:boolean;
 }
 export interface ProductVariant {
   amount: number;
@@ -45,6 +46,7 @@ export interface ProductVariant {
   discountPercentage?: number;
   discountPrice?: number;
   isOnSale?: boolean;
+  isActive?: boolean;
   stock: number;
   productId: string;
 }

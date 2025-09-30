@@ -17,13 +17,18 @@ import {
   updateProductVariant,
   deleteProductVariant,
 } from "../controller/product.controller";
-import { categorySlug, QuerySchema, ValidationId } from "../schema/validation.shema";
+import {
+  categorySlug,
+  QuerySchema,
+  ValidationId,
+} from "../schema/validation.shema";
 import { verifyAdmin, verifyToken } from "../middlewares/auth";
 import {
   createProductShema,
   createProductVariantSchema,
   productImageSchema,
   productVariantSchema,
+  updateeProductVariantSchema,
 } from "../schema/product.shema";
 import { createProductVariant } from "../controller/product.controller";
 import { calculateDiscountForVariant } from "../utils/mathUtils";
@@ -160,7 +165,11 @@ const router = Router();
 
 router.get(
   "/",
-  validate({ schema: QuerySchema.merge(categorySlug), key: "query", skipSave: true }),
+  validate({
+    schema: QuerySchema.merge(categorySlug),
+    key: "query",
+    skipSave: true,
+  }),
   getProducts
 );
 /**
@@ -499,8 +508,9 @@ router.patch(
   "/:id",
   verifyToken,
   verifyAdmin,
+  uploadDiskMiddleware,
   validate({ schema: ValidationId, key: "params" }),
-  validate({ schema: createProductShema.partial() }),
+  validate({ schema: createProductShema.partial(), skipSave: true }),
   updateProduct
 );
 
@@ -553,7 +563,7 @@ router.delete(
   "/:id",
   verifyToken,
   verifyAdmin,
-  validate({ schema: createProductShema.partial(), skipSave: true }),
+  validate({ schema: createProductShema.partial() }),
   deleteProduct
 );
 
@@ -986,8 +996,7 @@ router.patch(
   verifyAdmin,
   validate({ schema: productVariantSchema, key: "params" }),
   validate({
-    schema: createProductVariantSchema
-      .partial()
+    schema: updateeProductVariantSchema
       .transform(calculateDiscountForVariant),
     skipSave: true,
   }),

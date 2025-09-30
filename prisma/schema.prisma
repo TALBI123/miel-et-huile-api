@@ -67,11 +67,14 @@ model Category {
   image       String
   publicId    String
   description String?
+  isActive    Boolean   @default(true)
   slug        String    @unique
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
   Banner      Banner[]
+
+  @@index([isActive])
 }
 
 model Product {
@@ -80,8 +83,9 @@ model Product {
   subDescription String           @default("") // court texte (6-10 mots max)
   description    String // description détaillée
   rating         Float?           @default(0) // Note moyenne
-  category       Category         @relation(fields: [categoryId], references: [id],onDelete:Cascade)
-  categoryId     String        
+  isActive       Boolean          @default(true)
+  category       Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId     String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   review         Review[]
@@ -92,6 +96,7 @@ model Product {
 
   @@index([categoryId])
   @@index([createdAt])
+  @@index([isActive])
 }
 
 model ProductImage {

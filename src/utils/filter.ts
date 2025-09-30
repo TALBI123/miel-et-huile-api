@@ -11,6 +11,7 @@ interface ProductFilterOptions {
   category?: string;
   search?: string;
   onSale?: boolean;
+  isActive?: boolean;
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
@@ -42,6 +43,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     limit = 5,
     category,
     search,
+    isActive,
     onSale,
     minPrice,
     maxPrice,
@@ -61,6 +63,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
   const where: any = {
     ...(category ? { categoryId: category } : {}),
     ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
+    ...(isActive !== undefined ? { isActive } : {}),
     ...(onSale !== undefined ? { onSale } : {}),
     ...(inStock !== undefined ? { inStock } : {}),
     ...buildRelationFilter(relationName, mode, nested),
@@ -87,3 +90,14 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     include: include ?? {},
   };
 };
+// export const objFiltered = <T extends Record<string, any>>(
+//   oldObj: T,
+//   newObj: Partial<T>
+// ): Partial<T> => {
+//   const map = new Map(Object.entries(oldObj));
+//   let filterdObj: Partial<T> = {};
+//   for(){
+
+//   }
+//   return filterdObj;
+// };
