@@ -10,7 +10,7 @@ import {
 } from "../services/upload.service";
 import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
 import { filterObjectByKeys, isEmptyObject } from "../utils/object";
-import { buildProductQuery } from "../utils/filter";
+import { buildProductQuery, objFiltered } from "../utils/filter";
 const prisma = new PrismaClient();
 
 // --- PUBLIC CATEGORY Controller
@@ -150,16 +150,16 @@ export const updateCategory = async (
     }
 
     console.log(isEmptyObject(updatedData));
-
-    if (isEmptyObject(updatedData))
+    const changedObj = objFiltered(existingCategory, updatedData);
+    if (isEmptyObject(changedObj))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Aucune donnée valide fournie pour la mise à jour",
       });
     const updateCategory = await prisma.category.update({
-      data: updatedData,
+      data: changedObj,
       where: { id },
-      select: { id: true },
+      // select: { id: true },
     });
     // 🔹 Supprimer l’ancienne image seulement si tout a réussi
     if (req.file && existingCategory.publicId) {

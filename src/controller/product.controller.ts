@@ -208,7 +208,7 @@ export const updateProduct = async (
     console.log(existingProduct);
     const updateProduct = await prisma.product.update({
       where: { id },
-      data: filterdProduct,
+      data: changedObj,
       // select: { id: true, title: true },
     });
     res.status(StatusCodes.OK).json({
