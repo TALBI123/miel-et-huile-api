@@ -90,14 +90,15 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     include: include ?? {},
   };
 };
-// export const objFiltered = <T extends Record<string, any>>(
-//   oldObj: T,
-//   newObj: Partial<T>
-// ): Partial<T> => {
-//   const map = new Map(Object.entries(oldObj));
-//   let filterdObj: Partial<T> = {};
-//   for(){
 
-//   }
-//   return filterdObj;
-// };
+export const objFiltered = <T extends Record<string, any>, K extends keyof T>(
+  oldObj: T,
+  newObj: Partial<T>
+): Partial<T> => {
+  let filteredObj: Partial<T> = {};
+  for (const [key, value] of Object.entries(newObj)) {
+    if (oldObj[key as K] && value !== oldObj[key as K])
+      filteredObj[key as K] = value;
+  }
+  return filteredObj;
+};

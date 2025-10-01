@@ -96,6 +96,7 @@ export const createCategory = async (
         slug: generateSlug(name),
       },
     });
+    
     return res.status(StatusCodes.CREATED).json({
       success: true,
       message: "Catégorie créée avec succès",
@@ -235,7 +236,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
         );
       }
     }
-    
+
     return res.status(StatusCodes.OK).json({
       success: true,
       message: "La catégorie a été supprimée avec succès",

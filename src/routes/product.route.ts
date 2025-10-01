@@ -41,45 +41,31 @@ const router = Router();
  *     description: Gestion des produits (CRUD, affichage, détails)
  */
 
+
 /**
  * @openapi
  * /products:
  *   get:
- *     summary: Récupérer la liste des produits avec filtres et pagination
+ *     summary: Récupérer les produits avec filtres, pagination et catégorie
  *     description: >
  *       Cette route permet de récupérer les produits avec la possibilité de :
- *       - filtrer par catégorie via `categorySlug`
- *       - rechercher par nom de produit
- *       - filtrer par prix, stock ou promotion
- *       - utiliser le mode `all`, `with` ou `without` pour gérer les variantes
+ *       - Filtrer par `categorySlug` (slug de catégorie)
+ *       - Rechercher par nom ou titre
+ *       - Filtrer par prix, stock ou promotion
+ *       - Filtrer uniquement les produits actifs via `isActive`
+ *       - Gérer les variantes via `mode` (all, with, without)
  *       La variante la moins chère est incluse dans le retour.
  *     tags:
  *       - Produits
  *     parameters:
- *       - name: page
- *         in: query
- *         required: false
- *         description: Numéro de page pour la pagination
- *         schema:
- *           type: integer
- *           default: 1
- *       - name: limit
- *         in: query
- *         required: false
- *         description: Nombre de produits par page
- *         schema:
- *           type: integer
- *           default: 5
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/ModeParam'
  *       - name: categorySlug
  *         in: query
  *         required: false
  *         description: Slug de la catégorie pour filtrer les produits
- *         schema:
- *           type: string
- *       - name: search
- *         in: query
- *         required: false
- *         description: Recherche par nom de produit (insensible à la casse)
  *         schema:
  *           type: string
  *       - name: onSale
@@ -106,21 +92,15 @@ const router = Router();
  *         description: Filtrer uniquement les produits en stock
  *         schema:
  *           type: boolean
- *       - name: mode
+ *       - name: isActive
  *         in: query
  *         required: false
- *         description: >
- *           Détermine comment les relations (ex: variantes) sont prises en compte :
- *           - **with** : uniquement les produits qui possèdent au moins une variante correspondant aux filtres
- *           - **without** : uniquement les produits qui n’ont aucune variante correspondant aux filtres
- *           - **all** : renvoie tous les produits sans restriction (par défaut)
+ *         description: Filtrer uniquement les produits actifs
  *         schema:
- *           type: string
- *           enum: [with, without, all]
- *           default: all
+ *           type: boolean
  *     responses:
  *       200:
- *         description: Succès
+ *         description: Succès, renvoie la liste des produits filtrés
  *         content:
  *           application/json:
  *             schema:
@@ -151,6 +131,8 @@ const router = Router();
  *                         type: number
  *                       image:
  *                         type: string
+ *                       isActive:
+ *                         type: boolean
  *                       createdAt:
  *                         type: string
  *                         format: date-time

@@ -47,36 +47,23 @@ const router = Router();
  *             - `with` : récupère uniquement les catégories qui contiennent des produits.
  *             - `without` : récupère uniquement les catégories sans produits.
  *       Cette route renvoie un tableau de catégories avec leur nombre de produits.
+ *         - Filtrer uniquement les catégories actives via `isActive`
  *     tags:
  *       - Catégories
  *     parameters:
- *       - in: query
- *         name: page
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/ModeParam'
+ *       - name: isActive
+ *         in: query
+ *         required: false
+ *         description: Filtrer uniquement les catégories actives
  *         schema:
- *           type: integer
- *           default: 1
- *         description: Numéro de la page pour la pagination.
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Nombre d'éléments par page.
- *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *         description: Texte à rechercher dans le nom ou la description des catégories.
- *       - in: query
- *         name: mode
- *         schema:
- *           type: string
- *           enum: [all, with, without]
- *           default: all
- *         description: Mode de filtrage des catégories selon leur présence de produits.
+ *           type: boolean
  *     responses:
  *       200:
- *         description: Liste des catégories récupérées avec succès
+ *         description: Succès, renvoie la liste des catégories
  *         content:
  *           application/json:
  *             schema:
@@ -93,10 +80,18 @@ const router = Router();
  *                         type: string
  *                       name:
  *                         type: string
+ *                       slug:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       image:
+ *                         type: string
  *                       publicId:
  *                         type: string
  *                       productsCount:
  *                         type: integer
+ *                       isActive:
+ *                         type: boolean
  *                       createdAt:
  *                         type: string
  *                         format: date-time
@@ -105,28 +100,9 @@ const router = Router();
  *                         format: date-time
  *       404:
  *         description: Aucune catégorie trouvée
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
  *       500:
- *         description: Erreur serveur inattendue
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
+ *         description: Erreur serveur
  */
-
 router.get(
   "/",
   validate({

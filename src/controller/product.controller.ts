@@ -23,7 +23,7 @@ import {
   ALLOWED_PRODUCT_VARIANT_PROPERTIES,
 } from "../data/allowedNames";
 import { filterObjectByKeys, isEmptyObject } from "../utils/object";
-import { buildProductQuery } from "../utils/filter";
+import { buildProductQuery, objFiltered } from "../utils/filter";
 const prisma = new PrismaClient();
 
 // --- PUBLIC PRODUCT Controller
@@ -189,15 +189,16 @@ export const updateProduct = async (
           message: "Le produit appartient déjà à cette catégorie",
         });
     }
-    
+
     // Vérifier si des données valides sont fournies
     console.log(res.locals.validated, " res.locals.validated");
     const filterdProduct = filterObjectByKeys(
       res.locals.validated,
       ALLOWED_PRODUCT_PROPERTIES
     );
-    console.log(filterdProduct, "filterdProduct");
-    if (isEmptyObject(filterdProduct ?? {}))
+     const changedObj = objFiltered(existingProduct, filterdProduct);
+    console.log(changedObj, "changedObj");
+    if (isEmptyObject(changedObj ?? {}))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Aucune donnée valide fournie pour la mise à jour",
@@ -465,7 +466,7 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         success: false,
         message: "Produit ou variant ne correspond pas au produit",
       });
-    console.log(res.locals.validated, " res.locals.validated hnaya",req.body);
+    // console.log(res.locals.validated, " res.locals.validated hnaya", req.body);
     if (req.body?.amount && req.body.amount !== existingVariant.amount) {
       const amountExists = await prisma.productVariant.findFirst({
         where: { amount: req.body.amount, productId: id },
@@ -475,11 +476,7 @@ export const updateProductVariant = async (req: Request, res: Response) => {
           success: false,
           message: "Cette variante existe déjà",
         });
-    } else if (req.body?.amount && req.body.amount === existingVariant.amount)
-      return res.status(StatusCodes.CONFLICT).json({
-        success: false,
-        message: "amount est deja utilisé pour cette variante",
-      });
+    }
 
     // Construire l'objet Produit mis à jour
     const updatedData = {
@@ -488,13 +485,9 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
       >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
     };
-
-    console.log(updatedData, " updatedData");
-    if (
-      isEmptyObject(
-        filterObjectByKeys(updatedData, ALLOWED_PRODUCT_VARIANT_PROPERTIES)
-      )
-    )
+    const changedObj = objFiltered(existingVariant, updatedData);
+    // console.log(changedObj, " changedObj");
+    if (isEmptyObject(changedObj))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Aucune donnée valide fournie pour la mise à jour",
@@ -502,7 +495,7 @@ export const updateProductVariant = async (req: Request, res: Response) => {
 
     const updatedVariant = await prisma.productVariant.update({
       where: { id: variantId },
-      data: updatedData,
+      data: changedObj,
     });
     res.status(StatusCodes.OK).json({
       success: true,
@@ -513,6 +506,7 @@ export const updateProductVariant = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+
 export const deleteProductVariant = async (
   req: Request<{ id: string; variantId: string }>,
   res: Response
@@ -530,7 +524,6 @@ export const deleteProductVariant = async (
     const existingVariant = await prisma.productVariant.findUnique({
       where: { id: variantId },
     });
-    console.log(variantId);
     if (!existingVariant)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
