@@ -1,12 +1,13 @@
-import forgetPassword from "./routes/auth/forgetPassword";
+import forgetPassword from "./routes/auth/forgetPassword.routes";
+import verifyEmail from "./routes/auth/verifiy-email.routes";
 import { errorHandler } from "./middlewares/handleErrors"
-import googleAuth from "./routes/auth/authGoogle.route";
-import verifyEmail from "./routes/auth/verifiy-email";
-import loginRegister from "./routes/auth/auth.route";
-import categoryRoute from "./routes/categorys.route";
-import productRoute from "./routes/product.route";
+import googleAuth from "./routes/auth/authGoogle.routes";
+import loginRegister from "./routes/auth/auth.routes";
+import categoryRoute from "./routes/categorys.routes";
+import productRoute from "./routes/product.routes";
+import checkout from "./routes/checkout.routes";
 import { setupSwagger } from "./config/swagger";
-import usersRoute from "./routes/user.route";
+import usersRoute from "./routes/user.routes";
 import { Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import express from "express";
@@ -33,9 +34,10 @@ app.use("/api/auth", loginRegister);
 app.use("/api/auth", forgetPassword);
 
 // ---- API
-app.use("/api/products", productRoute);
 app.use("/api/categorys", categoryRoute);
+app.use("/api/products", productRoute);
 app.use("/api/users", usersRoute);
+app.use("/api/checkout", checkout)
 
 // ---- Error Handler
 app.use(errorHandler);
@@ -69,11 +71,37 @@ console.log(process.env.PORT || "❌ PORT non défini");
 app.post("/checkout",async(req : Request ,res : Response) => {
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
-    line_items: req.body.items,
+    line_items: [
+    {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: "Miel bio 500g",
+          description: "Pot de miel 100% naturel",
+          images: ["https://example.com/miel500.jpg"],
+        },
+        unit_amount: 1500, // en cents -> 15.00 USD
+      },
+      quantity: 2,
+    },
+    {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: "Pack 3 savons au miel",
+          description: "Savons artisanaux faits main",
+          images: ["https://example.com/savon.jpg"],
+        },
+        unit_amount: 800, // en cents -> 8.00 USD
+      },
+      quantity: 1,
+    },
+  ],
     mode: "payment",
     success_url: `${process.env.FRONTEND_URL}/success`,
     cancel_url: `${process.env.FRONTEND_URL}/cancel`,
   });
+  console.log(session);
   res.json({ id: session.id });
 });
 

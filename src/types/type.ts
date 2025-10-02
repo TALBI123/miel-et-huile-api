@@ -1,5 +1,21 @@
 type Role = "USER" | "ADMIN";
 export type isString<T> = T extends string ? "string" : "number";
+type FieldType = "number" | "string";
+
+export type FieldOptions = {
+  type?: FieldType;
+  name: string;
+  required?: boolean;
+  min?: number; // pour number
+  minLength?: number; // pour string
+  isUUID?: boolean; // pour string
+  messages?: {
+    required?: string;
+    invalid?: string;
+    min?: string;
+    minLength?: string;
+  };
+};
 export interface MailOptions<T> {
   to: string;
   subject: string;
@@ -38,7 +54,8 @@ export interface Product {
   categoryId: string;
   description: string;
   subDescription: string;
-  isActive?:boolean;
+  isActive?: boolean;
+  images?: { id: string; image: string; publicId: string }[];
 }
 export interface ProductVariant {
   amount: number;
@@ -52,6 +69,8 @@ export interface ProductVariant {
   productId: string;
 }
 
+
+
 interface IntUser {
   id: string;
   firstName: string;
@@ -62,20 +81,3 @@ interface IntUser {
   image: string;
   publicId: string;
 }
-
-type FieldType = "number" | "string";
-
-export type FieldOptions = {
-  type?: FieldType;
-  name: string;
-  required?: boolean;
-  min?: number;         // pour number
-  minLength?: number;   // pour string
-  isUUID?: boolean;     // pour string
-  messages?: {
-    required?: string;
-    invalid?: string;
-    min?: string;
-    minLength?: string;
-  };
-};
