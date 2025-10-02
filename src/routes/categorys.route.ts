@@ -364,7 +364,7 @@ router.patch(
   verifyToken,
   verifyAdmin,
   uploadMemoryStorage,
-  validate({ schema: CreateCategorySchema.partial() }),
+  validate({ schema: CreateCategorySchema.partial() ,skipSave:true}),
   validate({ schema: ValidationId, key: "params" }),
   checkEmptyRequestBody,
   updateCategory

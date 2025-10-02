@@ -27,6 +27,7 @@ export interface UploadResult {
 export interface IntCategory {
   name: string;
   description?: string | null;
+  isActive?: boolean;
   slug?: string;
   image?: string;
   publicId?: string;

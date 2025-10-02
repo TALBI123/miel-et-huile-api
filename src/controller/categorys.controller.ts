@@ -20,14 +20,18 @@ export const getAllCategorys = async (
 ) => {
   try {
     // console.log(res.locals.validated, "res.locals.validated",req.query);
+    const { mode, nestedIsActive } = res.locals.validated;
     const query = buildProductQuery({
       ...(res.locals.validated || {}),
+      // ...(mode ? { relationFilter: { relation: "products", mode } } : {}),
       relationName: "products",
+      ...(nestedIsActive ? { nested: { isActive: true } } : {}),
       include: {
         _count: {
           select: { products: true },
         },
       },
+      // extraWhere: { isActive: true}
     });
     const data = await prisma.category.findMany(query);
     if (!data)
@@ -55,7 +59,12 @@ export const getAllCategorys = async (
 export const getCategoryById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const data = await prisma.category.findUnique({ where: { id } });
+    const data = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        products: true,
+      },
+    });
     if (!data)
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -96,7 +105,7 @@ export const createCategory = async (
         slug: generateSlug(name),
       },
     });
-    
+
     return res.status(StatusCodes.CREATED).json({
       success: true,
       message: "Catégorie créée avec succès",
@@ -122,23 +131,22 @@ export const updateCategory = async (
   let imageInfo: UploadResult | undefined;
   try {
     const { id } = req.params;
+    const body = res.locals.validated;
     const existingCategory = await prisma.category.findUnique({
       where: { id },
-      select: { publicId: true },
     });
 
     if (!existingCategory)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Catégorie non trouvée" });
-    console.log(req.body);
     const updatedData: Partial<IntCategory> = {
       ...filterObjectByKeys<
-        Pick<IntCategory, "name" | "description">,
+        Pick<IntCategory, "name" | "description" | "isActive">,
         (typeof ALLOWED_CATEGORY_PROPERTIES)[number]
-      >(req.body, ALLOWED_CATEGORY_PROPERTIES),
+      >(body, ALLOWED_CATEGORY_PROPERTIES),
     };
-    if (req.body?.name) updatedData.slug = generateSlug(req.body.name);
+    if (body?.name) updatedData.slug = generateSlug(body.name);
     // 🔹 Upload de la nouvelle image
     if (req.file) {
       imageInfo = await uploadBufferToCloudinary(
@@ -149,8 +157,9 @@ export const updateCategory = async (
       updatedData.publicId = imageInfo.public_id;
     }
 
-    console.log(isEmptyObject(updatedData));
+    console.log(existingCategory, updatedData);
     const changedObj = objFiltered(existingCategory, updatedData);
+    console.log(changedObj, "changedObj");
     if (isEmptyObject(changedObj))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
@@ -215,8 +224,10 @@ export const deleteCategory = async (req: Request, res: Response) => {
     await prisma.category.delete({ where: { id } });
     try {
       if (publicIdOfImages.length) {
-        const { success,failed } = await deletePathToCloudinary(publicIdOfImages);
-        console.log(success,failed)
+        const { success, failed } = await deletePathToCloudinary(
+          publicIdOfImages
+        );
+        console.log(success, failed);
         if (failed.length)
           console.log(
             "❗ Certaines images n'ont pas pu être supprimées :",

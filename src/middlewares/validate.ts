@@ -23,6 +23,7 @@ export const validate =
       // console.log(req[key], " req[key]");
       const parsed = schema.parse(req[key] ?? {});
       if (skipSave) res.locals.validated = parsed ?? {};
+      // console.log(parsed, " parsed validate",skipSave);
       // console.log(skipSave, parsed, " skipSave");
       // console.log(res.locals.validated, " res.locals.validated");
       next();

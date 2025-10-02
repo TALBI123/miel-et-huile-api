@@ -32,7 +32,7 @@ export const getProducts = async (
   req: Request,
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
-  const { categorySlug, ...rest } = res.locals.validated;
+  const { categorySlug, mode, ...rest } = res.locals.validated;
   let categoryId: string | undefined;
   try {
     if (categorySlug) {
@@ -46,9 +46,14 @@ export const getProducts = async (
           .json({ success: false, message: "Catégorie non trouvée" });
       categoryId = existingSlug?.id;
     }
-    console.log(categorySlug, rest, categoryId);
+    // console.log(categorySlug, rest, categoryId);
+    let extraWhere: any = {};
+    if (categoryId) extraWhere.categoryId = categoryId;
+    else if (res.locals.validated?.mode === "with")
+      extraWhere.category = { isActive: true };
     const query = buildProductQuery({
       ...(rest || {}),
+      // ...(mode ? { relationFilter: { relation: "variants", mode } } : {}),
       relationName: "variants",
       include: {
         variants: {
@@ -63,8 +68,11 @@ export const getProducts = async (
         },
         images: true,
       },
-      ...(categoryId ? { extraWhere: { categoryId } } : {}),
+      extraWhere,
+      // ...(categoryId ? { extraWhere: { categoryId } } : {}),
+      // ...(res.locals.validated?.mode ? { category: { isActive: true } } : {}),
     });
+
     const products = await prisma.product.findMany(query);
     if (!products.length)
       return res
@@ -130,6 +138,7 @@ export const createProduct = async (
 
     // console.log(imagesInfo, " imagesInfo");
     // Enregistrer la Produit dans la base de données
+
     const data = await prisma.product.create({
       data: {
         ...filterObjectByKeys(req.body, ALLOWED_PRODUCT_PROPERTIES),
@@ -168,6 +177,7 @@ export const updateProduct = async (
     const { id } = req.params;
     const existingProduct = await prisma.product.findUnique({
       where: { id },
+      include: { category: true },
     });
     if (!existingProduct)
       return res
@@ -196,20 +206,36 @@ export const updateProduct = async (
       res.locals.validated,
       ALLOWED_PRODUCT_PROPERTIES
     );
-     const changedObj = objFiltered(existingProduct, filterdProduct);
+    const { category, ...rest } = existingProduct;
+    const changedObj = objFiltered(rest, filterdProduct);
     console.log(changedObj, "changedObj");
-    if (isEmptyObject(changedObj ?? {}))
+    if (isEmptyObject(changedObj))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Aucune donnée valide fournie pour la mise à jour",
       });
-    console.log(filterdProduct);
+    console.log(existingProduct, filterdProduct);
 
-    console.log(existingProduct);
-    const updateProduct = await prisma.product.update({
-      where: { id },
-      data: changedObj,
-      // select: { id: true, title: true },
+    const updateProduct = await prisma.$transaction(async (tx) => {
+      const updatedProduct = await tx.product.update({
+        where: { id },
+        data: changedObj,
+      });
+      const activeProductCount = await tx.product.count({
+        where: { categoryId: existingProduct.categoryId, isActive: true },
+      });
+      if (!activeProductCount && category.isActive) {
+        await tx.category.update({
+          where: { id: category.id },
+          data: { isActive: false },
+        });
+      } else if (activeProductCount> 0 && !category.isActive) {
+        await tx.category.update({
+          where: { id: category.id },
+          data: { isActive: true },
+        });
+      }
+      return updatedProduct;
     });
     res.status(StatusCodes.OK).json({
       success: true,
@@ -410,7 +436,14 @@ export const createProductVariant = async (
   const { id } = req.params;
   try {
     console.log(res.locals.validated, " req.body");
-    const existingProduct = await prisma.product.findUnique({ where: { id } });
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+      select: {
+        category: { select: { id: true, isActive: true } },
+        isActive: true,
+      },
+    });
+    console.log(existingProduct);
     if (!existingProduct)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
@@ -425,18 +458,43 @@ export const createProductVariant = async (
         message: "Cette variante existe déjà",
       });
     // // Construire l'objet Produit
-    const createdVariant = await prisma.productVariant.create({
-      data: {
-        ...filterObjectByKeys<
-          Omit<ProductVariant, "productId">,
-          (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
-        >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
-        productId: id,
-      },
+    const data = await prisma.$transaction(async (tx) => {
+      const variant = await tx.productVariant.create({
+        data: {
+          ...filterObjectByKeys<
+            Omit<ProductVariant, "productId">,
+            (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
+          >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
+          productId: id,
+        },
+      });
+      console.log(existingProduct);
+      if (!existingProduct.category.isActive)
+        await tx.category.update({
+          where: { id: existingProduct.category.id },
+          data: { isActive: true },
+          select: { id: true },
+        });
+      if (!existingProduct.isActive)
+        await tx.product.update({
+          where: { id },
+          data: { isActive: true },
+          select: { id: true },
+        });
+      return variant;
     });
+    // const createdVariant = await prisma.productVariant.create({
+    //   data: {
+    //     ...filterObjectByKeys<
+    //       Omit<ProductVariant, "productId">,
+    //       (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
+    //     >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
+    //     productId: id,
+    //   },
+    // });
     res.status(StatusCodes.CREATED).json({
       success: true,
-      data: createdVariant,
+      data,
     });
   } catch (err) {
     handleServerError(res, err);
@@ -447,6 +505,11 @@ export const updateProductVariant = async (req: Request, res: Response) => {
     const { variantId, id } = req.params;
     const existingProduct = await prisma.product.findUnique({
       where: { id },
+      select: {
+        categoryId: true,
+        isActive: true,
+        category: { select: { id: true, isActive: true } },
+      },
     });
     if (!existingProduct)
       return res.status(StatusCodes.NOT_FOUND).json({
@@ -493,9 +556,47 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         message: "Aucune donnée valide fournie pour la mise à jour",
       });
 
-    const updatedVariant = await prisma.productVariant.update({
-      where: { id: variantId },
-      data: changedObj,
+    const updatedVariant = await prisma.$transaction(async (tx) => {
+      const variant = await tx.productVariant.update({
+        where: { id: variantId },
+        data: changedObj,
+      });
+      console.log("varaints a bro ",variant)
+      const activeVariantsCount = await tx.productVariant.count({
+        where: { productId: id, isActive: true },
+      });
+      if (!activeVariantsCount && existingProduct.isActive) {
+        await tx.product.update({
+          where: { id },
+          data: { isActive: false },
+          select: { id: true },
+        });
+        const activeProductsCount = await tx.product.count({
+          where: { categoryId: existingProduct.categoryId, isActive: true },
+        });
+        if (!activeProductsCount && existingProduct.isActive)
+          console.log("product.update est excuter ...");
+
+          await tx.category.update({
+            where: { id: existingProduct.categoryId },
+            data: { isActive: false },
+            select: { id: true },
+          });
+      } else if (!existingProduct.isActive && activeVariantsCount > 0) {
+        console.log("product.update est excuter ...")
+        await tx.product.update({
+          where: { id },
+          data: { isActive: true },
+          select: { id: true },
+        });
+        if (!existingProduct.category.isActive)
+          await tx.category.update({
+            where: { id: existingProduct.categoryId },
+            data: { isActive: true },
+            select: { id: true },
+          });
+      }
+      return variant;
     });
     res.status(StatusCodes.OK).json({
       success: true,

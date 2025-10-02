@@ -2,7 +2,16 @@ import { booleanFromString } from "./utils";
 import { z } from "zod";
 
 // --- SHEMAS PRODUCT
+export const booleanFromStringSchema = z
+  .string()
+  .optional()
+  .transform((val) => {
+    console.log("Valeur reçue pour isActive:", val, "Type:", typeof val);
 
+    if (val === "true") return true;
+    if (val === "false") return false;
+    return undefined; // ou une valeur par défaut
+  });
 // --- SHEMAS VALIDATION PAGINATION
 export const FilterSchema = z.object({
   page: z
@@ -27,14 +36,8 @@ export const FilterSchema = z.object({
       message: "Veuillez sélectionner une unité valide",
     })
     .default("with"),
-  isActive: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (val === "true") return true;
-      if (val === "false") return false;
-      return undefined; // ou une valeur par défaut
-    }),
+  isActive: booleanFromStringSchema,
+  nestedIsActive: booleanFromStringSchema,
 });
 export const categorySlug = z.object({
   categorySlug: z
