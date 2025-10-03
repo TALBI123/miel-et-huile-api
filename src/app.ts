@@ -69,8 +69,12 @@ console.log(
   process.env.GOOGLE_CLIENT_SECRET ? "✅ Défini" : "❌ Manquant"
 );
 console.log(
-  " - GOOGLE_CALLBACK_URL:",
-  process.env.GOOGLE_CALLBACK_URL ? "✅ Défini" : "❌ Manquant"
+  " - STRIPE_SECRET_KEY:",
+  process.env.STRIPE_SECRET_KEY ? "✅ Défini" : "❌ Manquant"
+);
+console.log(
+  " - STRIPE_PUBLIC_KEY:",
+  process.env.STRIPE_PUBLIC_KEY ? "✅ Défini" : "❌ Manquant"
 );
 console.log(process.env.PORT || "❌ PORT non défini");
 // Export the app for use in other files (like server.ts)

@@ -44,34 +44,37 @@
         "pk_test_51SD0MlE9nqjkeo4XMjZnJQvIBFneVE2JIbysAcGIyOQS5tSr4McSjx68qOytbKB9IczrW9aRYLWLEAklvc13Ocnx00jBNObBSW";
       const checkOut = async () => {
         try {
-          const res = await fetch("http://localhost:3000/api/checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: "8395e8cb-b3b6-45b4-b750-788f10f80c8a",
-            items: [
-              {
-                productId: "42b6302b-4e6d-45d0-9f79-c2865465b720",
-                variantId: "577e8b2b-1c13-46f7-8c04-9f4b95410b2a",
-                quantity: 3,
+          const res = await fetch(
+            "https://miel-et-huile-api-production.up.railway.app/api/webhooks/stripe",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
               },
-              {
-                productId: "370b81c0-20be-4625-b997-b27107ae79ff",
-                variantId: "38777d59-042e-45e6-b155-d7a74eb7ded2",
-                quantity: 5,
-              },
-            ],
-          }),
-        });
-        const { id } = await res.json();
-        const stripe = Stripe(pk_k);
-        await stripe.redirectToCheckout({ sessionId: id });
+              body: JSON.stringify({
+                userId: "8395e8cb-b3b6-45b4-b750-788f10f80c8a",
+                items: [
+                  {
+                    productId: "42b6302b-4e6d-45d0-9f79-c2865465b720",
+                    variantId: "577e8b2b-1c13-46f7-8c04-9f4b95410b2a",
+                    quantity: 3,
+                  },
+                  {
+                    productId: "370b81c0-20be-4625-b997-b27107ae79ff",
+                    variantId: "38777d59-042e-45e6-b155-d7a74eb7ded2",
+                    quantity: 5,
+                  },
+                ],
+              }),
+            }
+          );
+          const { id } = await res.json();
+          console.log("Session ID:", id);
+          const stripe = Stripe(pk_k);
+          await stripe.redirectToCheckout({ sessionId: id });
         } catch (error) {
           console.error("Error during checkout:", error);
         }
-
       };
     </script>
   </body>
