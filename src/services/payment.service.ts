@@ -25,6 +25,9 @@ export const createStripeSession = async (order: OrderWithRelations) => {
     mode: "payment",
     success_url: `${process.env.FRONTEND_URL}/success`,
     cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+    metadata: {
+      orderId: order.id,
+    },
   });
   return session.id;
 };
