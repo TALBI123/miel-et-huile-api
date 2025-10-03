@@ -7,6 +7,7 @@ export class WebhookService {
   static async handleCheckoutSessionCompleted(session: any) {
     try {
       const orderId = session.metadata.orderId;
+      console.log(" ------ Session Metadata:", session.metadata);
       if (!orderId) {
         console.error("❌ No orderId found in session metadata");
         return;
