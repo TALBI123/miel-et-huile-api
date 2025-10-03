@@ -1,6 +1,7 @@
+import { OrderWithRelations } from "../types/order.type";
+import { WebhookService } from "./webhook.service";
+import { stripe } from "../config/stripe";
 import Stripe from "stripe";
-import { Order, OrderWithRelations } from "../types/order.type";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 export const createStripeSession = async (order: OrderWithRelations) => {
   const line_items = order.items.map((item) => ({
     price_data: {
@@ -26,4 +27,31 @@ export const createStripeSession = async (order: OrderWithRelations) => {
     cancel_url: `${process.env.FRONTEND_URL}/cancel`,
   });
   return session.id;
+};
+export const handleStripeWebhook = async (event: Stripe.Event) => {
+  try {
+    switch (event.type) {
+      case "checkout.session.completed":
+        await WebhookService.handleCheckoutSessionCompleted(event.data.object);
+        break;
+
+      case "checkout.session.async_payment_succeeded":
+        await WebhookService.handleCheckoutSessionCompleted(event.data.object);
+        break;
+
+      case "checkout.session.async_payment_failed":
+        await WebhookService.handlePaymentFailed(event.data.object);
+        break;
+
+      case "payment_intent.payment_failed":
+        console.log("❌ Paiement échoué:", event.data.object);
+        break;
+
+      default:
+        console.log(`ℹ️ Événement non géré: ${event.type}`);
+    }
+  } catch (err) {
+    console.error("❌ Erreur traitement webhook Stripe:", err);
+    throw err;
+  }
 };

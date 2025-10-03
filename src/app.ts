@@ -1,21 +1,27 @@
 import forgetPassword from "./routes/auth/forgetPassword.routes";
 import verifyEmail from "./routes/auth/verifiy-email.routes";
-import { errorHandler } from "./middlewares/handleErrors"
+import { errorHandler } from "./middlewares/handleErrors";
 import googleAuth from "./routes/auth/authGoogle.routes";
 import loginRegister from "./routes/auth/auth.routes";
 import categoryRoute from "./routes/categorys.routes";
+import webhookRoutes from "./routes/webhook.routes";
 import productRoute from "./routes/product.routes";
 import checkout from "./routes/checkout.routes";
 import { setupSwagger } from "./config/swagger";
 import usersRoute from "./routes/user.routes";
 import { Request, Response } from "express";
 import cookieParser from "cookie-parser";
+
 import express from "express";
 import cors from "cors";
 import Stripe from "stripe";
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+
+// ⚠️ IMPORTANT: Les webhooks doivent être AVANT express.json()
+app.use("/api/webhooks", webhookRoutes);
+
 // middleware pckages
 app.use(express.static("view"));
 app.use(express.json());
@@ -37,7 +43,7 @@ app.use("/api/auth", forgetPassword);
 app.use("/api/categorys", categoryRoute);
 app.use("/api/products", productRoute);
 app.use("/api/users", usersRoute);
-app.use("/api/checkout", checkout)
+app.use("/api/checkout", checkout);
 
 // ---- Error Handler
 app.use(errorHandler);
@@ -68,35 +74,35 @@ console.log(
 );
 console.log(process.env.PORT || "❌ PORT non défini");
 // Export the app for use in other files (like server.ts)
-app.post("/checkout",async(req : Request ,res : Response) => {
+app.post("/checkout", async (req: Request, res: Response) => {
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: [
-    {
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: "Miel bio 500g",
-          description: "Pot de miel 100% naturel",
-          images: ["https://example.com/miel500.jpg"],
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Miel bio 500g",
+            description: "Pot de miel 100% naturel",
+            images: ["https://example.com/miel500.jpg"],
+          },
+          unit_amount: 1500, // en cents -> 15.00 USD
         },
-        unit_amount: 1500, // en cents -> 15.00 USD
+        quantity: 2,
       },
-      quantity: 2,
-    },
-    {
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: "Pack 3 savons au miel",
-          description: "Savons artisanaux faits main",
-          images: ["https://example.com/savon.jpg"],
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Pack 3 savons au miel",
+            description: "Savons artisanaux faits main",
+            images: ["https://example.com/savon.jpg"],
+          },
+          unit_amount: 800, // en cents -> 8.00 USD
         },
-        unit_amount: 800, // en cents -> 8.00 USD
+        quantity: 1,
       },
-      quantity: 1,
-    },
-  ],
+    ],
     mode: "payment",
     success_url: `${process.env.FRONTEND_URL}/success`,
     cancel_url: `${process.env.FRONTEND_URL}/cancel`,
@@ -154,4 +160,3 @@ export default app;
 //     console.error("❌ Erreur lors de la création du .env:", error);
 //   }
 // }
-
