@@ -7,9 +7,9 @@ import { Request, Response } from "express";
 
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
-    const { userId, items } = req.body;
+    const { userId, items, shippingCost } = req.body;
     const order: OrderWithRelations = await createOrder(userId, items);
-    const id = await createStripeSession(order);
+    const id = await createStripeSession(order,shippingCost);
     res
       .status(StatusCodes.OK)
       .json({ success: true, message: "Commande créée avec succès", id });

@@ -49,8 +49,8 @@ export const getProducts = async (
     // console.log(categorySlug, rest, categoryId);
     let extraWhere: any = {};
     if (categoryId) extraWhere.categoryId = categoryId;
-    else if (res.locals.validated?.mode === "with")
-      extraWhere.category = { isActive: true };
+    // else if (res.locals.validated?.mode === "with")
+    //   extraWhere.category = { isActive: true };
     const query = buildProductQuery({
       ...(rest || {}),
       // ...(mode ? { relationFilter: { relation: "variants", mode } } : {}),
@@ -91,6 +91,7 @@ export const getProducts = async (
     res.status(StatusCodes.OK).json({
       success: true,
       data: newProducts,
+      len : newProducts.length
     });
   } catch (err) {
     handleServerError(res, err);
@@ -229,7 +230,7 @@ export const updateProduct = async (
           where: { id: category.id },
           data: { isActive: false },
         });
-      } else if (activeProductCount> 0 && !category.isActive) {
+      } else if (activeProductCount > 0 && !category.isActive) {
         await tx.category.update({
           where: { id: category.id },
           data: { isActive: true },
@@ -561,7 +562,7 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         where: { id: variantId },
         data: changedObj,
       });
-      console.log("varaints a bro ",variant)
+      console.log("varaints a bro ", variant);
       const activeVariantsCount = await tx.productVariant.count({
         where: { productId: id, isActive: true },
       });
@@ -577,13 +578,13 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         if (!activeProductsCount && existingProduct.isActive)
           console.log("product.update est excuter ...");
 
-          await tx.category.update({
-            where: { id: existingProduct.categoryId },
-            data: { isActive: false },
-            select: { id: true },
-          });
+        await tx.category.update({
+          where: { id: existingProduct.categoryId },
+          data: { isActive: false },
+          select: { id: true },
+        });
       } else if (!existingProduct.isActive && activeVariantsCount > 0) {
-        console.log("product.update est excuter ...")
+        console.log("product.update est excuter ...");
         await tx.product.update({
           where: { id },
           data: { isActive: true },

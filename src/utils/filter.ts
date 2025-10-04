@@ -72,7 +72,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     maxPrice,
     inStock,
     mode = "all",
-    relationFilter,
+    // relationFilter,
     relationName,
     nested,
     orderBy,
@@ -96,21 +96,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
       ? buildRelationFilter(relationName, mode, nested)
       : {}),
   };
-
-  // if (relationFilter) {
-  //   const relationFilters = buildRelationsFilter(relationFilter);
-  //   where = { ...where, ...relationFilters };
-  // }
-
-  // if (relationName) {
-  //   const relationFilters = buildRelationsFilter(
-  //     Array.isArray(relationName)
-  //       ? relationName.map((name) => ({ relation: name, mode, nested }))
-  //       : { relation: relationName, mode, nested }
-  //   );
-  //   where = { ...where, ...relationFilters };
-  // }
-
+  console.log(mode,where, " where buildProductQuery");
   if (minPrice !== undefined || maxPrice !== undefined) {
     where.variants = {
       some: {
@@ -122,13 +108,6 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
       },
     };
   }
-  console.log(
-    where,
-    relationName,
-    " where buildProductQuery",
-    relationName !== undefined &&
-      buildRelationFilter(relationName, mode, nested)
-  );
   const { skip, take } = paginate({ page, limit });
   return {
     where,

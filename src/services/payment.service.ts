@@ -2,7 +2,10 @@ import { OrderWithRelations } from "../types/order.type";
 import { WebhookService } from "./webhook.service";
 import { stripe } from "../config/stripe";
 import Stripe from "stripe";
-export const createStripeSession = async (order: OrderWithRelations) => {
+export const createStripeSession = async (
+  order: OrderWithRelations,
+  shippingCost: number
+) => {
   const line_items = order.items.map((item) => ({
     price_data: {
       currency: "eur",
@@ -19,6 +22,18 @@ export const createStripeSession = async (order: OrderWithRelations) => {
     },
     quantity: item.quantity,
   }));
+  line_items.push({
+    price_data: {
+      currency: "eur",
+      product_data: {
+        name: "Frais de livraison ",
+        description: "Frais de livraison pour votre commande",
+        images: [],
+      },
+      unit_amount: Math.round(shippingCost * 100), // en cents
+    },
+    quantity: 1,
+  });
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items,
