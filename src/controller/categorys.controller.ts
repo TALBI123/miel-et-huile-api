@@ -33,6 +33,7 @@ export const getAllCategorys = async (
       },
       // extraWhere: { isActive: true}
     });
+     
     const data = await prisma.category.findMany(query);
     if (!data)
       return res
@@ -257,3 +258,4 @@ export const deleteCategory = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+

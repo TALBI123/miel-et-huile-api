@@ -45,6 +45,7 @@ app.use("/api/categorys", categoryRoute);
 app.use("/api/products", productRoute);
 app.use("/api/orders", ordersRoute);
 app.use("/api/users", usersRoute);
+
 // --- Checkout & Payment
 app.use("/api/checkout", checkout);
 

@@ -44,14 +44,16 @@
         "pk_test_51SD0MlE9nqjkeo4XMjZnJQvIBFneVE2JIbysAcGIyOQS5tSr4McSjx68qOytbKB9IczrW9aRYLWLEAklvc13Ocnx00jBNObBSW";
       const checkOut = async () => {
         try {
+          //https://miel-et-huile-api-production.up.railway.app
           const res = await fetch(
-            "https://miel-et-huile-api-production.up.railway.app/api/checkout",
+            "http://localhost:3000/api/checkout",
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
+                shippingCost: 45,
                 userId: "8395e8cb-b3b6-45b4-b750-788f10f80c8a",
                 items: [
                   {
