@@ -21,9 +21,10 @@ interface ProductFilterOptions {
   inStock?: boolean;
   mode?: RelationMode;
   nested?: any;
+  // relationName?: string | string[];
+  relationName?: string;
   include?: Record<string, any>;
   orderBy?: Record<string, any>;
-  relationName?: string | string[];
   extraWhere?: Record<string, any>;
   relationFilter: RelationFilter | RelationFilter[];
 }
@@ -33,7 +34,8 @@ const buildRelationFilter = (
   mode: RelationMode,
   nested?: any
 ): Record<string, any> => {
-  switch (mode) {
+  if (!relationName) return {};
+  switch (mode.trim()) {
     case "with":
       return { [relationName]: { some: nested || {} } };
     case "without":
@@ -48,6 +50,7 @@ export const buildRelationsFilter = (
   const filters: Record<string, any> = {};
   const handle = (relation: RelationFilter) => {
     const { relation: rel, mode, nested } = relation;
+    console.log(rel, mode, nested, " buildRelationsFilter");
     filters[rel] = buildRelationFilter(rel, mode, nested)[rel];
   };
   if (Array.isArray(relations)) {
@@ -81,6 +84,7 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
       "Le prix minimum ne peut pas être supérieur au prix maximum"
     );
   }
+  console.log(mode)
   let where: any = {
     ...(category ? { categoryId: category } : {}),
     ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
@@ -88,21 +92,25 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     ...(onSale !== undefined ? { onSale } : {}),
     ...(inStock !== undefined ? { inStock } : {}),
     ...(extraWhere ?? {}),
+    ...(relationName !== undefined && mode
+      ? buildRelationFilter(relationName, mode, nested)
+      : {}),
   };
 
   // if (relationFilter) {
   //   const relationFilters = buildRelationsFilter(relationFilter);
   //   where = { ...where, ...relationFilters };
   // }
-  
-  if (relationName) {
-    const relationFilters = buildRelationsFilter(
-      Array.isArray(relationName)
-        ? relationName.map((name) => ({ relation: name, mode, nested }))
-        : { relation: relationName, mode, nested }
-    );
-    where = { ...where, ...relationFilters };
-  }
+
+  // if (relationName) {
+  //   const relationFilters = buildRelationsFilter(
+  //     Array.isArray(relationName)
+  //       ? relationName.map((name) => ({ relation: name, mode, nested }))
+  //       : { relation: relationName, mode, nested }
+  //   );
+  //   where = { ...where, ...relationFilters };
+  // }
+
   if (minPrice !== undefined || maxPrice !== undefined) {
     where.variants = {
       some: {
@@ -114,6 +122,13 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
       },
     };
   }
+  console.log(
+    where,
+    relationName,
+    " where buildProductQuery",
+    relationName !== undefined &&
+      buildRelationFilter(relationName, mode, nested)
+  );
   const { skip, take } = paginate({ page, limit });
   return {
     where,

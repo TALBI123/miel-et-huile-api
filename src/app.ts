@@ -8,13 +8,14 @@ import webhookRoutes from "./routes/webhook.routes";
 import productRoute from "./routes/product.routes";
 import checkout from "./routes/checkout.routes";
 import { setupSwagger } from "./config/swagger";
+import ordersRoute from "./routes/order.routes";
 import usersRoute from "./routes/user.routes";
 import { Request, Response } from "express";
 import cookieParser from "cookie-parser";
-
 import express from "express";
-import cors from "cors";
 import Stripe from "stripe";
+import cors from "cors";
+
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -42,7 +43,9 @@ app.use("/api/auth", forgetPassword);
 // ---- API
 app.use("/api/categorys", categoryRoute);
 app.use("/api/products", productRoute);
+app.use("/api/orders", ordersRoute);
 app.use("/api/users", usersRoute);
+// --- Checkout & Payment
 app.use("/api/checkout", checkout);
 
 // ---- Error Handler

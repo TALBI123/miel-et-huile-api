@@ -4,6 +4,20 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class WebhookService {
+  private static async updateStockAndConfirmOrder(orderId: string) {
+    try{
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { items: { include: { variant: true } } },
+      });
+      if(!order)
+        throw new Error(`Order with ID ${orderId} not found`);
+      
+      console.log("✅ Stock mis à jour et commande confirmée");
+    }catch(err){
+      console.error("❌ Erreur mise à jour stock/confirmation commande:", err);
+    }
+  }
   static async handleCheckoutSessionCompleted(session: any) {
     try {
       const orderId = session.metadata.orderId;

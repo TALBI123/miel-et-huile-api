@@ -32,7 +32,7 @@ export const getProducts = async (
   req: Request,
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
-  const { categorySlug, mode, ...rest } = res.locals.validated;
+  const { categorySlug, ...rest } = res.locals.validated;
   let categoryId: string | undefined;
   try {
     if (categorySlug) {

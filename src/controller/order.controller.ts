@@ -35,7 +35,19 @@ export const getOrderById = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
-
+export const updateOrder = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status },
+    });
+    res.json(order);
+  } catch (err) {
+    handleServerError(res, err);
+  }
+}
 export const cancelOrder = async (req: Request, res: Response) => {
   const { id } = req.params;
   const order = await prisma.order.update({
