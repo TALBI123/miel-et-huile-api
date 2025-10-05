@@ -1,6 +1,8 @@
 import { OrderStatus, PrismaClient } from "@prisma/client";
 import { stripe, Stripe } from "../config/stripe";
 import { sendEmail } from "./emailService.service";
+import { InventoryService } from "./inventory.service";
+import { createOrderData } from "../utils/object";
 
 const prisma = new PrismaClient();
 
@@ -21,31 +23,72 @@ export class WebhookService {
   static async handleCheckoutSessionCompleted(
     session: Stripe.Checkout.Session
   ) {
+    const { orderId, email } = session.metadata || {};
+    console.log(" ------ Session Metadata:", session.metadata);
+    if (!orderId || !session.payment_intent)
+      throw new Error("❌ No orderId found in session metadata");
     try {
-      const orderId = session.metadata?.orderId;
-      console.log(" ------ Session Metadata:", session.metadata);
-      if (!orderId) {
-        console.error("❌ No orderId found in session metadata");
-        return;
-      }
-      console.log("💰 Transaction Stripe:", session.payment_intent);
-
-      await prisma.order.update({
+      const order = await prisma.order.findUnique({
         where: { id: orderId },
-        data: {
-          paymentStatus: "PAID",
-          status: OrderStatus.CONFIRMED,
-          // paymentMethod: session.payment_method_types?.[0] || "CARD",
-          stripePaymentIntentId: session.payment_intent as string,
+        select: {
+          paymentStatus: true,
+          items: {
+            select: {
+              product: { select: { title: true } },
+              quantity: true,
+              price: true,
+            },
+          },
         },
       });
+      if (!order) {
+        console.error(`❌ Order ${orderId} introuvable`);
+        return;
+      }
+      if (order.paymentStatus === "PAID") {
+        console.log(`Commande ${orderId} déjà traitée, webhook ignoré`);
+        return;
+      }
+
+      await prisma.$transaction(async (tx) => {
+        // Met à jour le statut de la commande
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            paymentStatus: "PAID",
+            status: OrderStatus.CONFIRMED,
+            // paymentMethod: session.payment_method_types?.[0] || "CARD" ,
+            stripePaymentIntentId: session.payment_intent as string,
+          },
+        });
+
+        // - Mettre à jour le stock
+        await InventoryService.decrementStock(orderId, tx);
+      });
+
       console.log(`✅ Commande ${orderId} marquée comme payée`);
       // Ici vous pouvez ajouter :
       // - Envoyer un email de confirmation
-      // - Mettre à jour le stock
+      await sendEmail({
+        to: email,
+        subject: "✅ Confirmation de votre commande",
+        htmlFileName: "order-confirmation-email.ejs",
+        context: createOrderData({
+          customerEmail: email,
+          items: order.items.map((item) => ({
+            title: item.product.title,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        }),
+      });
       // - Notifier l'équipe
     } catch (err) {
-      console.error("Error handling checkout.session.completed:", err);
+      this.handleChargeRefunded(session as unknown as Stripe.Charge);
+      console.error(
+        "❌ Erreur lors du traitement de checkout.session.completed:",
+        err
+      );
       throw err;
     }
   }
@@ -60,7 +103,7 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: "FAILED", status:OrderStatus.CANCELED },
+          data: { paymentStatus: "FAILED", status: OrderStatus.CANCELED },
         });
       }
       console.log(`❌ Commande ${orderId} marquée comme échouée`);
@@ -103,7 +146,7 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: "FAILED", status: OrderStatus.CANCELED},
+          data: { paymentStatus: "FAILED", status: OrderStatus.CANCELED },
         });
         console.log(`❌ Commande ${orderId} annulée`);
       }
@@ -165,7 +208,6 @@ export class WebhookService {
       console.error("Erreur handleChargeRefunded:", err);
     }
   }
-
   private static async sendCustomRefundEmail(paymentIntentId: string) {
     const order = await prisma.order.findFirst({
       where: { stripePaymentIntentId: paymentIntentId },

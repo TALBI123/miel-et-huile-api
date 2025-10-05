@@ -4,7 +4,8 @@ import { stripe } from "../config/stripe";
 import Stripe from "stripe";
 export const createStripeSession = async (
   order: OrderWithRelations,
-  shippingCost: number
+  shippingCost: number,
+  email: string
 ) => {
   const line_items = order.items.map((item) => ({
     price_data: {
@@ -34,7 +35,7 @@ export const createStripeSession = async (
     },
     quantity: 1,
   });
-  console.log(line_items, shippingCost);
+  // console.log(line_items, shippingCost);
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items,
@@ -43,6 +44,7 @@ export const createStripeSession = async (
     cancel_url: `${process.env.FRONTEND_URL}/cancel`,
     metadata: {
       orderId: order.id,
+      email,
     },
   });
   return session.id;
@@ -78,12 +80,16 @@ export const handleStripeWebhook = async (event: Stripe.Event) => {
       //   break;
 
       case "payment_intent.canceled":
-        await WebhookService.handlePaymentCanceled(event.data.object as Stripe.PaymentIntent);
+        await WebhookService.handlePaymentCanceled(
+          event.data.object as Stripe.PaymentIntent
+        );
         break;
 
       // Événements de remboursement
       case "charge.dispute.created":
-        await WebhookService.handleDisputeCreated(event.data.object as Stripe.Dispute);
+        await WebhookService.handleDisputeCreated(
+          event.data.object as Stripe.Dispute
+        );
         break;
 
       // case "invoice.payment_failed":
@@ -91,7 +97,9 @@ export const handleStripeWebhook = async (event: Stripe.Event) => {
       //   break;
       // Événements de session expirée
       case "checkout.session.expired":
-        await WebhookService.handleSessionExpired(event.data.object as Stripe.Checkout.Session); 
+        await WebhookService.handleSessionExpired(
+          event.data.object as Stripe.Checkout.Session
+        );
         break;
 
       // Événements de remboursement

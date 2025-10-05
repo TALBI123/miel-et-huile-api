@@ -1,6 +1,9 @@
-
-import { Router } from "express";
 import { createCheckoutSession } from "../controller/checkout.controller";
+import { validateOrderItems } from "../middlewares/validationOrders";
+import { CheckoutSchema } from "../schema/checkout.schema";
+import { validate } from "../middlewares/validate";
+import { verifyToken } from "../middlewares/auth";
+import { Router } from "express";
 const router = Router();
 /**
  * @swagger
@@ -15,12 +18,12 @@ const router = Router();
  *   post:
  *     summary: Créer une session de paiement Stripe
  *     description: >
- *       Ce endpoint permet de créer une nouvelle commande et de générer une **session Stripe Checkout**.  
- *       Le frontend utilisera l'`id` de session retourné pour rediriger l'utilisateur vers la page de paiement Stripe.  
+ *       Ce endpoint permet de créer une nouvelle commande et de générer une **session Stripe Checkout**.
+ *       Le frontend utilisera l'`id` de session retourné pour rediriger l'utilisateur vers la page de paiement Stripe.
  *
- *       ⚠️ Les champs `userId` et `items` sont **obligatoires**.  
- *       - `userId` représente l'identifiant unique de l'utilisateur.  
- *       - `items` est un tableau contenant les produits du panier avec leur quantité.  
+ *       ⚠️ Les champs `userId` et `items` sont **obligatoires**.
+ *       - `userId` représente l'identifiant unique de l'utilisateur.
+ *       - `items` est un tableau contenant les produits du panier avec leur quantité.
  *     tags:
  *       - Paiement
  *     requestBody:
@@ -92,6 +95,12 @@ const router = Router();
  *                   example: Impossible de créer la session Stripe
  */
 
-router.post("/", createCheckoutSession);
+router.post(
+  "/",
+    verifyToken,
+  validate({ schema: CheckoutSchema, skipSave: true }),
+  validateOrderItems,
+  createCheckoutSession
+);
 
 export default router;

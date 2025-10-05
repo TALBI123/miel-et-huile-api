@@ -10,7 +10,7 @@ export const verifyToken = (
   res: Response<ApiResponse>,
   next: NextFunction
 ) => {
-  console.log(req.cookies);
+  console.log(req.cookies," from auth middleware");
   const token = req.cookies?.access_token;
   if (!token)
     return res.status(StatusCodes.UNAUTHORIZED).json({

@@ -12,68 +12,66 @@
       alt=""
     />
     <button onclick="checkOut()">Checkout</button>
-    <!-- <script>
+
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
       const changeColor = (color) => {
-        console.log(color)
+        console.log(color);
       };
 
       const fetchData = async () => {
         // const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
-        const data = await fetch(
-          "http://localhost:4000/login",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: "morocostudent@gmail.com",
-              password: "mhayeb",
-            
-            }),
-          }
-        );
+        const data = await fetch("http://localhost:3000/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: "morocostudent@gmail.com",
+            password: "mhayeb",
+          }),
+          credentials: "include",
+        });
         const json = await data.json();
         console.log(json);
       };
       fetchData();
-    </script> -->
-    <script src="https://js.stripe.com/v3/"></script>
-    <script>
       const pk_k =
         "pk_test_51SEgCYDxHsNPCfyDeY7QoPFPX7jQWPE4tD7BhvJB0IgOoVKv3593uDkrBkTxXBXCl2xpASz23wywOy2FFc5rpimZ00r2oYaX75";
       const checkOut = async () => {
         try {
           //https://miel-et-huile-api-production.up.railway.app
-          const res = await fetch(
-            "http://localhost:3000/api/checkout",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                shippingCost: 45,
-                userId: "8395e8cb-b3b6-45b4-b750-788f10f80c8a",
-                items: [
-                  {
-                    productId: "42b6302b-4e6d-45d0-9f79-c2865465b720",
-                    variantId: "577e8b2b-1c13-46f7-8c04-9f4b95410b2a",
-                    quantity: 3,
-                  },
-                  {
-                    productId: "370b81c0-20be-4625-b997-b27107ae79ff",
-                    variantId: "38777d59-042e-45e6-b155-d7a74eb7ded2",
-                    quantity: 5,
-                  },
-                ],
-              }),
-            }
-          );
-          const { id } = await res.json();
-          console.log("Session ID:", id);
+          const res = await fetch("http://localhost:3000/api/checkout", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              shippingCost: 45,
+              userId: "8395e8cb-b3b6-45b4-b750-788f10f80c8a",
+              items: [
+                {
+                  productId: "42b6302b-4e6d-45d0-9f79-c2865465b720",
+                  variantId: "577e8b2b-1c13-46f7-8c04-9f4b95410b2a",
+                  quantity: 3,
+                },
+                {
+                  productId: "370b81c0-20be-4625-b997-b27107ae79ff",
+                  variantId: "38777d59-042e-45e6-b155-d7a74eb7ded2",
+                  quantity: 5,
+                },
+              ],
+            }),
+            credentials: "include",
+          });
+          const data = await res.json();
+          console.log("Session ID:", data);
+          if(data?.success === false) {
+            console.error("Checkout error:", data.message);
+            return;
+          }
           const stripe = Stripe(pk_k);
-          await stripe.redirectToCheckout({ sessionId: id });
+          await stripe.redirectToCheckout({ sessionId: data.id });
         } catch (error) {
           console.error("Error during checkout:", error);
         }

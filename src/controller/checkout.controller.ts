@@ -7,10 +7,11 @@ import { Request, Response } from "express";
 
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
-    const { userId, items, shippingCost } = req.body;
-    console.log(userId, items, " userId, items");
-    const order: OrderWithRelations = await createOrder(userId, items);
-    const id = await createStripeSession(order,shippingCost);
+    const {  items, shippingCost } = req.body;
+    console.log(req.user)
+    console.log("Items received in createCheckoutSession:", items);
+    const order: OrderWithRelations = await createOrder(req.user?.id!, items);
+    const id = await createStripeSession(order,shippingCost,req.user?.email!);
     res
       .status(StatusCodes.OK)
       .json({ success: true, message: "Commande créée avec succès", id });

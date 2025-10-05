@@ -24,3 +24,8 @@ export interface Order{
   totalAmount:number;
   items : CartItem[];
 }
+interface OrderItem {
+  productId: string;
+  variantId?: string;
+  quantity: number;
+}
