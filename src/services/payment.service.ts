@@ -34,7 +34,7 @@ export const createStripeSession = async (
     },
     quantity: 1,
   });
-  console.log(line_items,shippingCost);
+  console.log(line_items, shippingCost);
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items,
@@ -50,23 +50,55 @@ export const createStripeSession = async (
 export const handleStripeWebhook = async (event: Stripe.Event) => {
   try {
     switch (event.type) {
+      // Événements de paiement réussis
       case "checkout.session.completed":
-        const session = event.data.object as Stripe.Checkout.Session;
-        console.log("📋 Métadonnées de la session:", session.metadata);
-        console.log("🔍 Session complète:", JSON.stringify(session, null, 2));
-        await WebhookService.handleCheckoutSessionCompleted(event.data.object);
-        break;
-
       case "checkout.session.async_payment_succeeded":
-        await WebhookService.handleCheckoutSessionCompleted(event.data.object);
+        await WebhookService.handleCheckoutSessionCompleted(
+          event.data.object as Stripe.Checkout.Session
+        );
         break;
 
+      // Événements d'échec de paiement
       case "checkout.session.async_payment_failed":
-        await WebhookService.handlePaymentFailed(event.data.object);
+      case "payment_intent.payment_failed":
+        await WebhookService.handlePaymentFailed(
+          event.data.object as Stripe.PaymentIntent | Stripe.Checkout.Session
+        );
         break;
 
-      case "payment_intent.payment_failed":
-        console.log("❌ Paiement échoué:", event.data.object);
+      // NOUVEAUX ÉVÉNEMENTS CRITIQUES POUR LA PRODUCTION
+      case "payment_intent.succeeded":
+        await WebhookService.handlePaymentIntentSucceeded(
+          event.data.object as Stripe.PaymentIntent
+        );
+        break;
+
+      // case "payment_intent.requires_action":
+      //   await WebhookService.handlePaymentRequiresAction(event.data.object  as Stripe.PaymentIntent);
+      //   break;
+
+      case "payment_intent.canceled":
+        await WebhookService.handlePaymentCanceled(event.data.object as Stripe.PaymentIntent);
+        break;
+
+      // Événements de remboursement
+      case "charge.dispute.created":
+        await WebhookService.handleDisputeCreated(event.data.object as Stripe.Dispute);
+        break;
+
+      // case "invoice.payment_failed":
+      //   await WebhookService.handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+      //   break;
+      // Événements de session expirée
+      case "checkout.session.expired":
+        await WebhookService.handleSessionExpired(event.data.object as Stripe.Checkout.Session); 
+        break;
+
+      // Événements de remboursement
+      case "charge.refunded":
+        await WebhookService.handleChargeRefunded(
+          event.data.object as Stripe.Charge
+        );
         break;
 
       default:

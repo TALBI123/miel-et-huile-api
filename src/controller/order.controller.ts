@@ -1,6 +1,6 @@
 import { handleServerError } from "../utils/helpers";
 import { StatusCodes } from "http-status-codes";
-import { PrismaClient } from "@prisma/client";
+import { OrderStatus, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 const prisma = new PrismaClient();
 export const getOrders = async (req: Request, res: Response) => {
@@ -52,7 +52,7 @@ export const cancelOrder = async (req: Request, res: Response) => {
   const { id } = req.params;
   const order = await prisma.order.update({
     where: { id },
-    data: { status: "CANCELLED" },
+    data: { status: OrderStatus.CANCELED },
   });
   res.json(order);
 };

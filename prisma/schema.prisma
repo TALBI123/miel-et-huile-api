@@ -258,7 +258,7 @@ enum OrderStatus {
   CONFIRMED
   SHIPPED
   DELIVERED
-  CANCELLED
+  CANCELED
   REFUNDED
 }
 
@@ -266,6 +266,8 @@ enum PaymentStatus {
   PENDING
   PAID
   FAILED
+  DISPUTED
+  EXPIRED
   REFUNDED
 }
 
