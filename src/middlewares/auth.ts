@@ -40,7 +40,7 @@ export const verifyAdmin = (
   res: Response,
   next: NextFunction
 ) => {
-  console.log(req.user);
+  console.log(" Accès refusé - Vous n'êtes pas administrateur "+req.user);
   if (req.user?.role !== ROLE.ADMIN) {
     return res.status(StatusCodes.FORBIDDEN).json({
       success: false,
