@@ -96,14 +96,14 @@
           <h2 style="color: #022855; margin-bottom: 20px; font-size: 22px">
             Paiement Réussi !
           </h2>
-          
+
           <p style="margin-bottom: 20px; font-size: 16px">
             Bonjour
             <span style="color: #f9892a; font-weight: 600"
               ><%= customerName %></span
             >,
           </p>
-          
+
           <p style="margin-bottom: 25px; font-size: 16px">
             Votre commande <strong>#<%= orderId %></strong> a été
             <span style="color: #28a745; font-weight: 600"
@@ -134,7 +134,7 @@
             >
               DÉTAILS DE LA COMMANDE
             </h3>
-            
+
             <!-- Produits -->
             <% orderItems.forEach(item => { %>
             <div
@@ -147,13 +147,18 @@
                 border-bottom: 1px solid #e9ecef;
               "
             >
-              <div style="flex: 2; font-weight: 500">
-                <%= item.name %>
-              </div>
+              <div style="flex: 2; font-weight: 500"><%= item.name %></div>
               <div style="flex: 1; text-align: center; color: #666">
                 Qté: <%= item.quantity %>
               </div>
-              <div style="flex: 1; text-align: right; font-weight: 600; color: #172132">
+              <div
+                style="
+                  flex: 1;
+                  text-align: right;
+                  font-weight: 600;
+                  color: #172132;
+                "
+              >
                 <%= item.price %> €
               </div>
             </div>
@@ -171,9 +176,16 @@
               "
             >
               <div style="flex: 2; font-weight: 500">Frais de livraison</div>
-              <div style="flex: 1; text-align: center; color: #666">-</div>
-              <div style="flex: 1; text-align: right; font-weight: 600; color: #172132">
-                <%= shippingCost %> €
+              <div style="flex: 1; text-align: center; color: #666; margin-inline: 5px;">:</div>
+              <div
+                style="
+                  flex: 1;
+                  text-align: right;
+                  font-weight: 600;
+                  color: #172132;
+                "
+              >
+                <%= shippingCost %>
               </div>
             </div>
 
@@ -194,11 +206,18 @@
               "
             >
               <div style="flex: 2; font-weight: 700; color: #022855">
-                TOTAL
+                TOTAL :
               </div>
-              <div style="flex: 1; text-align: center">-</div>
-              <div style="flex: 1; text-align: right; font-weight: 700; color: #f9892a">
-                <%= totalAmount %> €
+              <div style="flex: 1; text-align: center;margin-inline: 5px;"></div>
+              <div
+                style="
+                  flex: 1;
+                  text-align: right;
+                  font-weight: 700;
+                  color: #f9892a;
+                "
+              >
+                <%= totalAmount %>
               </div>
             </div>
           </div>
@@ -224,16 +243,28 @@
             >
               📦 Informations de Livraison
             </h4>
-            <div style="display: flex; align-items: flex-start; margin-bottom: 8px">
+            <div
+              style="display: flex; align-items: flex-start; margin-bottom: 8px"
+            >
               <span style="min-width: 120px; font-weight: 600">Statut :</span>
-              <span style="color: #28a745; font-weight: 600">En préparation</span>
+              <span style="color: #28a745; font-weight: 600"
+                >En préparation</span
+              >
             </div>
-            <div style="display: flex; align-items: flex-start; margin-bottom: 8px">
-              <span style="min-width: 120px; font-weight: 600">Délai estimé :</span>
+            <div
+              style="display: flex; align-items: flex-start; margin-bottom: 8px"
+            >
+              <span style="min-width: 120px; font-weight: 600"
+                >Délai estimé :</span
+              >
               <span>2-3 jours ouvrés</span>
             </div>
-            <div style="display: flex; align-items: flex-start; margin-bottom: 0">
-              <span style="min-width: 120px; font-weight: 600">Livraison :</span>
+            <div
+              style="display: flex; align-items: flex-start; margin-bottom: 0"
+            >
+              <span style="min-width: 120px; font-weight: 600"
+                >Livraison :</span
+              >
               <span>Adresse enregistrée</span>
             </div>
           </div>

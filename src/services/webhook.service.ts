@@ -69,6 +69,15 @@ export class WebhookService {
       console.log(`✅ Commande ${orderId} marquée comme payée`);
       // Ici vous pouvez ajouter :
       // - Envoyer un email de confirmation
+      console.log(
+        "-----  ✅ Envoi email de confirmation à:",
+        email,
+        order.items.map((item) => ({
+          title: item.product.title,
+          quantity: item.quantity,
+          price: item.price,
+        }))
+      );
       await sendEmail({
         to: email,
         subject: "✅ Confirmation de votre commande",
