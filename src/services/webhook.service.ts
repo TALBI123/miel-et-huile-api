@@ -20,36 +20,76 @@ export class WebhookService {
       console.error("❌ Erreur mise à jour stock/confirmation commande:", err);
     }
   }
+  /**
+   * Handle checkout.session.completed - Version ULTRA ROBUSTE
+   */
   static async handleCheckoutSessionCompleted(
     session: Stripe.Checkout.Session
   ) {
-    const { orderId, email } = session.metadata || {};
-    console.log(" ------ Session Metadata:", session.metadata);
-    if (!orderId || !session.payment_intent)
-      throw new Error("❌ No orderId found in session metadata");
+    const sessionId = session.id;
+    const paymentIntentId = session.payment_intent as string;
     try {
+      const { orderId, email, customerName } = session.metadata || {};
+      if (!orderId) {
+        console.error(`🚨 CRITIQUE: orderId manquant mais paiement réussi`, {
+          sessionId,
+          paymentIntentId,
+          metadata: session.metadata,
+        });
+
+      }
       const order = await prisma.order.findUnique({
         where: { id: orderId },
         select: {
           paymentStatus: true,
+          stripePaymentIntentId: true,
           items: {
             select: {
-              product: { select: { title: true } },
+              product: { select: { id: true, title: true } },
               quantity: true,
               price: true,
+              variant: { select: { id: true, stock: true } },
             },
           },
         },
       });
       if (!order) {
-        console.error(`❌ Order ${orderId} introuvable`);
-        return;
+        console.error(`❌ Commande introuvable`, {
+          orderId,
+          sessionId: session.id,
+        });
+        throw new Error(`Commande ${orderId} introuvable`);
       }
       if (order.paymentStatus === "PAID") {
         console.log(`Commande ${orderId} déjà traitée, webhook ignoré`);
         return;
       }
+      // Vérification de cohérence des payment_intent
+      if (
+        order.stripePaymentIntentId &&
+        order.stripePaymentIntentId !== session.payment_intent
+      ) {
+        console.error(`❌ Incohérence payment_intent`, {
+          orderId,
+          orderPaymentIntent: order.stripePaymentIntentId,
+          sessionPaymentIntent: session.payment_intent,
+        });
+        throw new Error("Incohérence dans les payment_intent");
+      }
 
+      // Vérification des stocks avant finalisation
+      for (const item of order.items) {
+        if (item.variant && item.variant.stock < item.quantity) {
+          console.error(`❌ Stock insuffisant pour finaliser la commande`, {
+            orderId,
+            productId: item.product.id,
+            variantId: item.variant.id,
+            requestedQuantity: item.quantity,
+            availableStock: item.variant.stock,
+          });
+          throw new Error(`Stock insuffisant pour ${item.product.title}`);
+        }
+      }
       await prisma.$transaction(async (tx) => {
         // Met à jour le statut de la commande
         await tx.order.update({
@@ -67,30 +107,36 @@ export class WebhookService {
       });
 
       console.log(`✅ Commande ${orderId} marquée comme payée`);
-      // Ici vous pouvez ajouter :
-      // - Envoyer un email de confirmation
-      console.log(
-        "-----  ✅ Envoi email de confirmation à:",
-        email,
-        order.items.map((item) => ({
-          title: item.product.title,
-          quantity: item.quantity,
-          price: item.price,
-        }))
-      );
-      await sendEmail({
-        to: email,
-        subject: "✅ Confirmation de votre commande",
-        htmlFileName: "order-confirmation-email.ejs",
-        context: createOrderData({
+      // 3. Envoi de l'email de confirmation (hors transaction)
+      try {
+        const orderData = createOrderData({
           customerEmail: email,
+          customerName,
+          // orderId: orderId,
           items: order.items.map((item) => ({
             title: item.product.title,
             quantity: item.quantity,
             price: item.price,
           })),
-        }),
-      });
+        });
+
+        await sendEmail({
+          to: email,
+          subject: "✅ Confirmation de votre commande",
+          htmlFileName: "order-confirmation-email.ejs",
+          context: orderData,
+        });
+
+        console.log(`📧 Email de confirmation envoyé`, { orderId, email });
+      } catch (emailError) {
+        // L'email ne doit pas faire échouer le webhook
+        console.error(`⚠️ Erreur envoi email (commande confirmée)`, {
+          orderId,
+          email,
+          error: emailError,
+        });
+      }
+
       // - Notifier l'équipe
     } catch (err) {
       this.handleChargeRefunded(session as unknown as Stripe.Charge);
@@ -217,25 +263,85 @@ export class WebhookService {
       console.error("Erreur handleChargeRefunded:", err);
     }
   }
-  private static async sendCustomRefundEmail(paymentIntentId: string) {
-    const order = await prisma.order.findFirst({
-      where: { stripePaymentIntentId: paymentIntentId },
-      include: { user: true },
-    });
+  // Notification équipe pour intervention manuelle
+  private async notifyTeamCriticalIssue(session: Stripe.Checkout.Session) {
+    try {
+      // Email d'alerte à l'équipe
+      await sendEmail({
+        to: process.env.ADMIN_EMAIL || "morocostudent@gmail.com",
+        subject: "🚨 INTERVENTION REQUISE - Paiement sans commande",
+        htmlFileName: "critical-alert.ejs", // Créer ce template
+        context: {
+          sessionId: session.id,
+          paymentIntentId: session.payment_intent,
+          amount: session.amount_total,
+          customerEmail: session.customer_details?.email,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      console.error(`❌ Échec notification équipe`, { error });
+    }
+  }
+    /**
+   * Traitement principal de confirmation de commande
+   */
+  /**
+   * Gestion des situations critiques
+   */
+  private async handleCriticalPaymentWithoutOrder(session: Stripe.Checkout.Session){
+    try{
+      
+    }catch(error){
+      console.error(`🚨 Impossible de créer commande d'urgence`, { 
+        error,
+        sessionId: session.id 
+      });
+    }
+  }
+  private static async sendConfirmationEmailSafely(
+    orderId: string,
+    email: string,
+    customerName: string,
+    order: any
+  ) {
+    try {
+      if (!email || !email.includes("@")) {
+        console.warn(`⚠️ Email invalide pour commande ${orderId}: ${email}`);
+        return;
+      }
 
-    if (!order) return;
+      const orderData = createOrderData({
+        customerEmail: email,
+        customerName: customerName || "Client",
+        items: order.items.map((item: any) => ({
+          title: item.product.title,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      });
 
-    // Votre email avec votre branding
-    // await sendEmail({
-    //   to: order.user.email,
-    //   subject: '💰 Remboursement effectué',
-    //   html: `
-    //     <div style="votre-design">
-    //       <h1>Cher ${order.user.name},</h1>
-    //       <p>Votre remboursement de <strong>${order.amount}€</strong> est confirmé.</p>
-    //       <a href="https://votresite.com">Retourner sur notre site</a>
-    //     </div>
-    //   `
-    // });
+      await sendEmail({
+        to: email,
+        subject: "✅ Confirmation de votre commande",
+        htmlFileName: "order-confirmation-email.ejs",
+        context: orderData,
+      });
+
+      console.log(`📧 Email de confirmation envoyé`, { orderId, email });
+    } catch (emailError) {
+      console.error(`⚠️ Échec envoi email pour commande ${orderId}`, {
+        email,
+        error: emailError,
+      });
+
+      // Enregistrer l'échec pour retry ultérieur
+      // await prisma.order.update({
+      //   where: { id: orderId },
+      //   data: {
+      //     notes: `Échec envoi email: ${emailError instanceof Error ? emailError.message : 'Erreur inconnue'}`
+      //   }
+      // }).catch(() => {}); // Ignore les erreurs de logging
+    }
   }
 }

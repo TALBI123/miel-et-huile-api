@@ -45,6 +45,7 @@ export const createStripeSession = async (
     metadata: {
       orderId: order.id,
       email,
+      customerName: `${order.user?.firstName} ${order.user?.lastName}`,
     },
   });
   return session.id;

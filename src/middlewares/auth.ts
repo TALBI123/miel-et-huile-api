@@ -40,6 +40,7 @@ export const verifyAdmin = (
   res: Response,
   next: NextFunction
 ) => {
+  console.log(req.user);
   if (req.user?.role !== ROLE.ADMIN) {
     return res.status(StatusCodes.FORBIDDEN).json({
       success: false,

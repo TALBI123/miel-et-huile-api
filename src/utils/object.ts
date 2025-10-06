@@ -64,7 +64,9 @@ export const createOrderData = ({
       style: "currency",
       currency: "EUR",
     }).format(totalAmount),
-    dashboardUrl: "https://ecommercemiel-production.up.railway.app",
-    supportEmail: "support@lanouvelleruche.fr",
+    dashboardUrl:
+      process.env.DASHBOARD_CLIENT_URL ||
+      "https://ecommercemiel-production.up.railway.app",
+    supportEmail: process.env.SUPPORT_EMAIL || "support@lanouvelleruche.fr",
   };
 };

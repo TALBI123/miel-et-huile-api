@@ -1,16 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import { CartItem } from "../types/order.type";
+import { CartItem, OrderWithRelations } from "../types/order.type";
 const prisma = new PrismaClient();
-export type OrderWithRelations = Prisma.OrderGetPayload<{
-  include: {
-    items: {
-      include: {
-        product: { include: { images: true } };
-        variant: true;
-      };
-    };
-  };
-}>;
 
 export const createOrder = async (
   userId: string,
@@ -27,7 +17,7 @@ export const createOrder = async (
       throw new Error(
         `Le produit avec l’ID ${item.variantId} n’existe plus. Veuillez choisir un autre variant.`
       );
-    
+
     const price = productVariant?.isOnSale
       ? productVariant.discountPrice
       : productVariant?.price;
@@ -54,8 +44,19 @@ export const createOrder = async (
           },
         },
         include: {
+          user: { select: { firstName: true, lastName: true } },
           items: {
-            include: { product: { include: { images: true } }, variant: true },
+            include: {
+              product: { include: { images: true } },
+              variant: {
+                select: {
+                  price: true,
+                  stock: true,
+                  discountPrice: true,
+                  isOnSale: true,
+                },
+              },
+            },
           },
         },
       });

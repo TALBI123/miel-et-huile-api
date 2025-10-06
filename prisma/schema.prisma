@@ -108,18 +108,19 @@ model ProductVariant {
 }
 
 model Order {
-  id            String         @id @default(dbgenerated("gen_random_uuid()"))
-  userId        String
-  totalAmount   Float
-  status        OrderStatus    @default(PENDING)
-  paymentMethod PaymentMethod? @default(CARD)
-  paymentStatus PaymentStatus  @default(PENDING)
-  stripeSessionId String?      @unique
-  stripePaymentIntentId String? @unique
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  user          User           @relation(fields: [userId], references: [id])
-  items         OrderItem[]
+  id                    String         @id @default(dbgenerated("gen_random_uuid()"))
+  userId                String
+  totalAmount           Float
+  status                OrderStatus    @default(PENDING)
+  paymentMethod         PaymentMethod? @default(CARD)
+  paymentStatus         PaymentStatus  @default(PENDING)
+  stripeSessionId       String?        @unique
+  stripePaymentIntentId String?        @unique
+  notes                 String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  user                  User           @relation(fields: [userId], references: [id])
+  items                 OrderItem[]
 
   @@index([userId])
   @@index([status])
@@ -138,6 +139,7 @@ model OrderItem {
   order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product        @relation(fields: [productId], references: [id])
   variant   ProductVariant @relation(fields: [variantId], references: [id])
+
   @@index([orderId])
   @@index([productId])
 }
@@ -253,22 +255,27 @@ enum Role {
 }
 
 enum OrderStatus {
-  PENDING
-  PROCESSING
-  CONFIRMED
-  SHIPPED
-  DELIVERED
-  CANCELED
-  REFUNDED
+  PENDING // Commande créée, en attente de paiement
+  CONFIRMED // ✅ Paiement validé, commande confirmée
+  PROCESSING // En préparation (stock réservé, en cours de traitement)
+  READY_FOR_SHIPMENT // Prêt pour expédition
+  SHIPPED // Expédié - numéro de suivi ajouté
+  IN_TRANSIT // En cours de livraison
+  DELIVERED // Livrée avec succès
+  CANCELLED // Annulée avant paiement
+  REFUNDED // Remboursée après paiement
+  REQUIRES_MANUAL_REVIEW // ⚠️ Nécessite intervention manuelle
+  FAILED // Échec du traitement
 }
 
 enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  DISPUTED
-  EXPIRED
-  REFUNDED
+  PENDING           // En attente de paiement
+  PAID              // ✅ Paiement confirmé
+  FAILED            // Échec du paiement
+  REFUNDED          // Remboursé totalement
+  PARTIALLY_REFUNDED // Remboursé partiellement
+  DISPUTED          // Litige ouvert
+  REQUIRES_ACTION   // Action requise (3DS, etc.)
 }
 
 enum PaymentMethod {
