@@ -91,7 +91,7 @@ export const getProducts = async (
     res.status(StatusCodes.OK).json({
       success: true,
       data: newProducts,
-      len : newProducts.length
+      len: newProducts.length,
     });
   } catch (err) {
     handleServerError(res, err);
@@ -123,6 +123,14 @@ export const createProduct = async (
 ) => {
   let imagesInfo: UploadResult[] = [];
   try {
+    const existingCategory = await prisma.category.findUnique({
+      where: { id: req.body.categoryId },
+    });
+    if (!existingCategory)
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Catégorie non trouvée",
+      });
     const existingProduct = await prisma.product.findFirst({
       where: { title: req.body.title },
       select: { id: true },
