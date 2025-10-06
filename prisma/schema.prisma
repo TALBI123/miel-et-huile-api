@@ -275,6 +275,7 @@ enum PaymentStatus {
   REFUNDED          // Remboursé totalement
   PARTIALLY_REFUNDED // Remboursé partiellement
   DISPUTED          // Litige ouvert
+  EXPIRED          // Paiement expiré
   REQUIRES_ACTION   // Action requise (3DS, etc.)
 }
 

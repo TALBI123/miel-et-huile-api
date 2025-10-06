@@ -1,4 +1,4 @@
-import { OrderStatus, PrismaClient } from "@prisma/client";
+import { OrderStatus, PrismaClient ,PaymentStatus} from "@prisma/client";
 import { stripe, Stripe } from "../config/stripe";
 import { sendEmail } from "./emailService.service";
 import { InventoryService } from "./inventory.service";
@@ -158,7 +158,7 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: "FAILED", status: OrderStatus.CANCELED },
+          data: { paymentStatus: "FAILED", status: OrderStatus.CANCELLED },
         });
       }
       console.log(`❌ Commande ${orderId} marquée comme échouée`);
@@ -201,7 +201,7 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: "FAILED", status: OrderStatus.CANCELED },
+          data: { paymentStatus: PaymentStatus.FAILED, status: OrderStatus.CANCELLED },
         });
         console.log(`❌ Commande ${orderId} annulée`);
       }
@@ -215,7 +215,7 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: "DISPUTED", status: "PENDING" },
+          data: { paymentStatus: PaymentStatus.DISPUTED, status: OrderStatus.PENDING },
         });
         console.log(`⚠️ Commande ${orderId} en litige`);
       }
@@ -229,7 +229,7 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: "EXPIRED", status: OrderStatus.CANCELED },
+          data: { paymentStatus: PaymentStatus.EXPIRED, status: OrderStatus.CANCELLED },
         });
         console.log(`⏰ Commande ${orderId} expirée`);
       }
@@ -254,7 +254,7 @@ export class WebhookService {
 
       await prisma.order.update({
         where: { stripePaymentIntentId: paymentIntentId },
-        data: { paymentStatus: "REFUNDED", status: OrderStatus.CANCELED },
+        data: { paymentStatus: "REFUNDED", status: OrderStatus.CANCELLED },
       });
       console.log(
         `↩️ Commande avec PaymentIntent ${paymentIntentId} remboursée`
@@ -291,7 +291,7 @@ export class WebhookService {
    */
   private async handleCriticalPaymentWithoutOrder(session: Stripe.Checkout.Session){
     try{
-      
+
     }catch(error){
       console.error(`🚨 Impossible de créer commande d'urgence`, { 
         error,

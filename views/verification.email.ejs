@@ -1,38 +1,208 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Email Verification</title>
+    <title>Vérification d'Email - La Nouvelle Ruche</title>
   </head>
-  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9f9f9; height: 100vh; color: #222;">
-    <table width="100%" height="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f9f9f9;">
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f8f8;
+      color: #172132;
+    "
+  >
+    <table
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="background-color: #f8f8f8; padding: 20px"
+    >
       <tr>
         <td align="center" valign="middle">
-          <table cellpadding="20" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          <table
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="100%"
+            style="
+              max-width: 600px;
+              background-color: #ffffff;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            "
+          >
+            <!-- Header -->
             <tr>
-              <td align="center" style="padding: 40px 30px;">
-                <h2 style="color: #111111;">Welcome to Our App</h2>
-                <p style="font-size: 16px; color: #444;">Thanks for signing up! Please verify your email by clicking the button below:</p>
+              <td
+                style="
+                  background: linear-gradient(135deg, #022855 0%, #1e293b 100%);
+                  padding: 30px 20px;
+                  text-align: center;
+                  color: white;
+                "
+              >
+                <div
+                  style="
+                    font-size: 28px;
+                    font-weight: 900;
+                    letter-spacing: 3px;
+                    color: #fcb92c;
+                    margin-bottom: 10px;
+                  "
+                >
+                  LA NOUVELLE RUCHE
+                </div>
+                <h1
+                  style="
+                    font-size: 24px;
+                    font-weight: 600;
+                    margin: 10px 0 0 0;
+                    color: white;
+                  "
+                >
+                  Vérification de votre email
+                </h1>
+              </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+              <td style="padding: 40px 30px; text-align: center">
+                <!-- Icon -->
+                <div
+                  style="
+                    width: 80px;
+                    height: 80px;
+                    background-color: #e7f3ff;
+                    border-radius: 50%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin: 0 auto 25px;
+                  "
+                >
+                  <div style="font-size: 35px; color: #022855">✉️</div>
+                </div>
+
+                <h2
+                  style="color: #022855; margin-bottom: 20px; font-size: 22px"
+                >
+                  Bienvenue chez La Nouvelle Ruche !
+                </h2>
+
+                <p
+                  style="
+                    font-size: 16px;
+                    color: #444;
+                    line-height: 1.6;
+                    margin-bottom: 25px;
+                  "
+                >
+                  Merci de vous être inscrit ! Pour finaliser votre inscription,
+                  veuillez vérifier votre adresse email en cliquant sur le
+                  bouton ci-dessous :
+                </p>
+
+                <!-- Verification Button -->
                 <a
                   href="<%= link %>"
                   style="
                     display: inline-block;
-                    padding: 12px 24px;
-                    margin: 20px 0;
-                    background-color: #2ecc71;
-                    color: #ffffff;
+                    background: linear-gradient(to right, #f9892a, #fcb92c);
+                    color: white;
                     text-decoration: none;
+                    padding: 14px 35px;
                     border-radius: 6px;
-                    font-weight: bold;
+                    font-weight: 600;
+                    font-size: 16px;
+                    margin: 20px 0;
+                    box-shadow: 0 4px 15px rgba(249, 137, 42, 0.3);
                   "
                   target="_blank"
                 >
-                  Verify Email
+                  Vérifier mon email
                 </a>
-                <p style="font-size: 14px; color: #666;">If the button doesn't work, copy and paste this link into your browser:</p>
-                <p style="word-break: break-all; color: #2c3e50;"><%= link %></p>
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
-                <p style="font-size: 12px; color: #999;">If you didn’t request this email, you can safely ignore it.</p>
+
+                <!-- Alternative Link -->
+                <div
+                  style="
+                    background-color: #f8f9fa;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 25px 0;
+                    text-align: left;
+                  "
+                >
+                  <p style="font-size: 14px; color: #666; margin: 0 0 10px 0">
+                    Si le bouton ne fonctionne pas, copiez et collez ce lien
+                    dans votre navigateur :
+                  </p>
+                  <p
+                    style="
+                      word-break: break-all;
+                      color: #022855;
+                      background-color: white;
+                      padding: 12px;
+                      border-radius: 4px;
+                      border: 1px solid #e9ecef;
+                      margin: 0;
+                      font-size: 14px;
+                      font-family: monospace;
+                    "
+                  >
+                    <%= link %>
+                  </p>
+                </div>
+
+                <!-- Security Note -->
+                <div style="border-top: 1px solid #eee; padding-top: 25px">
+                  <p style="font-size: 14px; color: #999; margin: 0">
+                    ⏱️ Ce lien expirera dans 24 heures
+                  </p>
+                  <p style="font-size: 12px; color: #999; margin: 8px 0 0 0">
+                    Si vous n'êtes pas à l'origine de cette demande, vous pouvez
+                    ignorer cet email en toute sécurité.
+                  </p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  background-color: #f5f5f5;
+                  padding: 25px 20px;
+                  text-align: center;
+                  font-size: 14px;
+                  color: #666;
+                  border-top: 1px solid #eee;
+                "
+              >
+                <p style="margin: 0 0 8px 0">
+                  © 2025 La Nouvelle Ruche. Tous droits réservés.
+                </p>
+                <p style="margin: 0 0 8px 0">
+                  Des questions ? Contactez-nous à
+                  <a
+                    href="mailto:support@lanouvelleruche.fr"
+                    style="
+                      color: #f9892a;
+                      text-decoration: none;
+                      font-weight: 500;
+                    "
+                  >
+                    support@lanouvelleruche.fr
+                  </a>
+                </p>
+                <p style="margin: 0; font-size: 12px">
+                  Cet email a été envoyé à votre demande pour vérifier votre
+                  compte.
+                </p>
               </td>
             </tr>
           </table>

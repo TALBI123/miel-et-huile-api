@@ -52,7 +52,7 @@ export const cancelOrder = async (req: Request, res: Response) => {
   const { id } = req.params;
   const order = await prisma.order.update({
     where: { id },
-    data: { status: OrderStatus.CANCELED },
+    data: { status: OrderStatus.CANCELLED },
   });
   res.json(order);
 };
