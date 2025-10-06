@@ -136,15 +136,13 @@
                 border-bottom: 1px solid #eee;
               "
             >
-             <span style="font-weight: 500"
-                ><%= item.name %> </span
-              >
-              <span style="font-weight: 500"
-                ><%= item.quantity %> *</span
-              >
-              <span style="color: #f9892a; font-weight: 600"
-                ><%= item.price %> </span
-              >
+              <span style="font-weight: 500; margin-right: 12px"
+                ><%= item.name %>
+              </span>
+              <span style="font-weight: 500; margin-right: 5px"><%= item.quantity %> * </span>
+              <span style="color: #f9892a; font-weight: 600; margin-left: 12px"
+                ><%= item.price %>
+              </span>
             </div>
             <% }); %>
             <div
@@ -166,7 +164,7 @@
                 display: flex;
                 justify-content: space-between;
                 font-weight: 700;
-                gap:10px;
+                gap: 10px;
                 font-size: 18px;
                 color: #022855;
                 margin-top: 10px;
@@ -176,8 +174,8 @@
             >
               <span style="font-weight: 700">TOTAL</span>
               <span style="color: #f9892a; font-weight: 700"
-                ><%= totalAmount %> </span
-              >
+                ><%= totalAmount %>
+              </span>
             </div>
           </div>
 
