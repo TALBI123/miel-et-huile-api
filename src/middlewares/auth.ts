@@ -45,6 +45,7 @@ export const verifyAdmin = (
     return res.status(StatusCodes.FORBIDDEN).json({
       success: false,
       message: "Accès refusé - Vous n'êtes pas administrateur",
+      user : req.user
     });
   }
   next();
