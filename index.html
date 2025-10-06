@@ -15,13 +15,15 @@
 
     <script src="https://js.stripe.com/v3/"></script>
     <script>
+      const apiUrlProd = "https://miel-et-huile-api-production.up.railway.app";
+      const apiUrlDev = "http://localhost:3000";
       const changeColor = (color) => {
         console.log(color);
       };
 
       const fetchData = async () => {
         // const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
-        const data = await fetch("http://localhost:3000/api/auth/login", {
+        const data = await fetch(`${apiUrlProd}/api/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -40,8 +42,7 @@
         "pk_test_51SEgCYDxHsNPCfyDeY7QoPFPX7jQWPE4tD7BhvJB0IgOoVKv3593uDkrBkTxXBXCl2xpASz23wywOy2FFc5rpimZ00r2oYaX75";
       const checkOut = async () => {
         try {
-          //https://miel-et-huile-api-production.up.railway.app
-          const res = await fetch("http://localhost:3000/api/checkout", {
+          const res = await fetch(`${apiUrlProd}/api/checkout`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -66,7 +67,7 @@
           });
           const data = await res.json();
           console.log("Session ID:", data);
-          if(data?.success === false) {
+          if (data?.success === false) {
             console.error("Checkout error:", data.message);
             return;
           }
