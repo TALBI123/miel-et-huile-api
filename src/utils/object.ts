@@ -56,6 +56,8 @@ export const createOrderData = ({
     })),
     shippingCost: new Intl.NumberFormat("fr-FR", {
       minimumFractionDigits: 2,
+       style: "currency",
+      currency: "EUR",
     }).format(shippingCost),
     totalAmount: new Intl.NumberFormat("fr-FR", {
       minimumFractionDigits: 2,
