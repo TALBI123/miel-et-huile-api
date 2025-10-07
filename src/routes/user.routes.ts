@@ -225,7 +225,7 @@ router.get("/me", verifyToken, getCurrentUser);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.delete("/", verifyToken, deleteUser);
+router.delete("/users/me", verifyToken, deleteUser);
 
 /**
  * @swagger
