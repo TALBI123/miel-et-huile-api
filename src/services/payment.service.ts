@@ -37,11 +37,13 @@ export const createStripeSession = async (
   });
   // console.log(line_items, shippingCost);
   const session = await stripe.checkout.sessions.create({
+    ui_mode:'embedded',
     payment_method_types: ["card"],
     line_items,
     mode: "payment",
-    success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+    return_url: `${process.env.FRONTEND_URL}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+    // success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+    // cancel_url: `${process.env.FRONTEND_URL}/cancel`,
     metadata: {
       orderId: order.id,
       email,
