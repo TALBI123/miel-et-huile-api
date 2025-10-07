@@ -75,8 +75,103 @@ const router = Router();
  *                 success: false
  */
 
-router.get("/", verifyToken, verifyAdmin, getAllUsers);
-router.get("/profile", verifyToken, getProffile);
+router.get("/users", verifyToken, verifyAdmin, getAllUsers);
+/**
+ * @swagger
+ * /api/users/me:
+ *   get:
+ *     summary: Récupère le profil de l'utilisateur connecté
+ *     description: |
+ *       Cette route retourne les informations du profil de l'utilisateur actuellement authentifié.
+ *       Le token JWT doit être envoyé dans les cookies (HttpOnly) ou dans les en-têtes d'autorisation.
+ *     tags:
+ *       - Utilisateurs
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profil de l'utilisateur récupéré avec succès.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "b3c0a7c2-9f6e-4b55-b4dc-88e77f3b3a2a"
+ *                     email:
+ *                       type: string
+ *                       example: "user@example.com"
+ *                     firstName:
+ *                       type: string
+ *                       example: "John"
+ *                     lastName:
+ *                       type: string
+ *                       example: "Doe"
+ *                     role:
+ *                       type: string
+ *                       enum: [ADMIN, USER]
+ *                       example: "USER"
+ *                     phoneNumber:
+ *                       type: string
+ *                       example: "+212600000000"
+ *                     postalCode:
+ *                       type: string
+ *                       example: "75001"
+ *                     country:
+ *                       type: string
+ *                       example: "Maroc"
+ *                     city:
+ *                       type: string
+ *                       example: "Casablanca"
+ *                     address:
+ *                       type: string
+ *                       example: "123 Rue Exemple"
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2025-09-29T10:15:30.000Z"
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2025-10-02T11:45:00.000Z"
+ *       404:
+ *         description: Utilisateur non trouvé.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Utilisateur non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+
+
+router.get("/users/me", verifyToken, getProffile);
 /**
  * @openapi
  * /users/me:

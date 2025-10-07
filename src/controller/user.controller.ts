@@ -29,6 +29,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+
 export const getProffile = async (req: Request, res: Response) => {
   try {
     const ALLOWED_User_FIELDS = [
