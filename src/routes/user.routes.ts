@@ -78,7 +78,7 @@ const router = Router();
 router.get("/users", verifyToken, verifyAdmin, getAllUsers);
 /**
  * @swagger
- * /api/users/me:
+ * /users/me:
  *   get:
  *     summary: Récupère le profil de l'utilisateur connecté
  *     description: |
@@ -172,9 +172,9 @@ router.get("/users", verifyToken, verifyAdmin, getAllUsers);
 
 
 router.get("/users/me", verifyToken, getProffile);
-/**
+/**git commit -m' 
  * @openapi
- * /users/me:
+ * /me:
  *   get:
  *     summary: Récupérer l'utilisateur connecté
  *     description: Retourne les infos de l'utilisateur basé sur le cookie JWT.
