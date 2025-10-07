@@ -1,17 +1,70 @@
-import { OrderStatus, PrismaClient } from "@prisma/client";
+import { OrderStatus, PaymentStatus, PrismaClient } from "@prisma/client";
 import { Stripe } from "../config/stripe";
 import { sendEmail } from "./emailService.service";
 import { createOrderData } from "../utils/object";
-
 const prisma = new PrismaClient();
 
 export class OrderProcessingService {
-
   /**
    * Transaction atomique pour la confirmation de commande
    */
-  static async executeOrderConfirmationTransaction(){
-    
+  static async executeOrderConfirmationTransaction(
+    orderId: string,
+    session: Stripe.Checkout.Session
+  ) {
+    const maxRetries = 3;
+    let retryCount = 0;
+    while (retryCount < maxRetries) {
+      try {
+        return await prisma.$transaction(async (tx) => {
+          // 🔒 Verrou explicite sur la commande
+          const [order] = await tx.$queryRawUnsafe<any[]>(
+            `SELECT * FROM "Order" WHERE id = $1 FOR UPDATE`,
+            orderId
+          );
+          if (!order) throw new Error("Order not found");
+          if (order.status === "CONFIRMED") return order; // ✅ déjà confirmé, rien à faire
+          const updateOrder = await tx.order.update({
+            where: { id: orderId },
+            data: {
+              status: OrderStatus.CONFIRMED,
+              paymentStatus: PaymentStatus.PAID,
+              stripePaymentIntentId: session.id,
+              notes: `Traité par webhook ${
+                session.id
+              } à ${new Date().toISOString()}`,
+            },
+            include: {},
+          });
+        });
+      } catch (err) {
+        const transientErrors = [
+          "deadlock",
+          "serialization",
+          "timeout",
+          "lock",
+        ];
+
+        // Vérifie si l’erreur est "transiente" (temporaire)
+        // const isTransientError = transientErrors.some((word) =>
+        //   err.message.toLowerCase().includes(word)
+        // );
+
+        // if (isTransientError && retryCount < maxRetries - 1) {
+        //   retryCount++;
+        //   const delay = Math.pow(2, retryCount) * 500; // backoff exponentiel
+        //   console.warn(
+        //     `⚠️ Retry #${retryCount} après ${delay}ms pour cause : ${err.message }`
+        //   );
+        //   await new Promise((res) => setTimeout(res, delay));
+        // } else {
+        //   // ❌ Erreur métier → pas de retry
+        //   throw new Error(
+        //     `Transaction échouée après ${retryCount} tentative(s) : ${err.message}`
+        //   );
+        // }
+      }
+    }
   }
 
   /**

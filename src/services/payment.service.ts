@@ -48,7 +48,7 @@ export const createStripeSession = async (
       customerName: `${order.user?.firstName} ${order.user?.lastName}`,
     },
   });
-  return session.id;
+  return session.client_secret;
 };
 export const handleStripeWebhook = async (event: Stripe.Event) => {
   try {

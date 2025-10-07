@@ -3,7 +3,7 @@ import { stripe, Stripe } from "../config/stripe";
 import { sendEmail } from "./emailService.service";
 import { InventoryService } from "./inventory.service";
 import { createOrderData } from "../utils/object";
-
+import { OrderProcessingService } from "./order-processing.service";
 const prisma = new PrismaClient();
 
 export class WebhookService {
@@ -38,6 +38,8 @@ export class WebhookService {
         });
 
       }
+      // OrderProcessingService.sendConfirmationEmailSafely(orderId, email, customerName, order);
+      // 1. Récupère la commande
       const order = await prisma.order.findUnique({
         where: { id: orderId },
         select: {

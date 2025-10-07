@@ -1,5 +1,6 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { generateToken } from "../utils/helpers";
 import { CartItem, OrderWithRelations } from "../types/order.type";
+import { Prisma, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const createOrder = async (
@@ -35,6 +36,7 @@ export const createOrder = async (
       console.log("Total Amount: ", totalAmount);
       const order = await tx.order.create({
         data: {
+          id: `cmd-${generateToken()}`,
           userId,
           totalAmount,
           status: "PENDING",

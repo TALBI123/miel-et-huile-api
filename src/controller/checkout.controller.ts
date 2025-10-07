@@ -11,10 +11,10 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     console.log(req.user)
     console.log("Items received in createCheckoutSession:", items);
     const order: OrderWithRelations = await createOrder(req.user?.id!, items);
-    const id = await createStripeSession(order,shippingCost,req.user?.email!);
+    const clientSecret = await createStripeSession(order, shippingCost, req.user?.email!);
     res
       .status(StatusCodes.OK)
-      .json({ success: true, message: "Commande créée avec succès", id });
+      .json({ success: true, message: "Commande créée avec succès", clientSecret });
   } catch (err) {
     handleServerError(res, err);
   }
