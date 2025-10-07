@@ -29,7 +29,45 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+export const getProffile = async (req: Request, res: Response) => {
+  try {
+    const ALLOWED_User_FIELDS = [
+      "id",
+      "email",
+      "firstName",
+      "lastName",
+      "role",
+      "phoneNumber",
+      "postalCode",
+      "country",
+      "city",
+      "address",
+      "createdAt",
+      "updatedAt",
+    ];
+    const selectUserFields = ALLOWED_User_FIELDS.reduce(
+      (acc, field) => ({ ...acc, [field]: true }),
+      {}
+    );
+    const user = await prisma.user.findUnique({
+      where: { id: req.user?.id },
+      select: selectUserFields,
+    });
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Utilisateur non trouvé",
+      });
+    }
 
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: user,
+    });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+};
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const data = await prisma.user.findMany();

@@ -7,7 +7,55 @@ const prisma = new PrismaClient();
 
 export class OrderProcessingService {
 
-  
+  /**
+   * Transaction atomique pour la confirmation de commande
+   */
+  static async executeOrderConfirmationTransaction(){
+    
+  }
+
+  /**
+   * Actions post-confirmation non-bloquantes
+   */
+  static async executePostConfirmationActions(
+    orderId: string,
+    email: string,
+    customerName: string | undefined,
+    order: any
+  ) {
+    // Exécution asynchrone pour ne pas bloquer la réponse webhook
+    this.runInBackground(async () => {
+      try {
+        // 1. Envoi email de confirmation
+        await this.sendConfirmationEmailSafely(
+          orderId,
+          email,
+          customerName,
+          order
+        );
+        if (order.totalAmount > 1000) {
+          await this.notifyTeamLargeOrder(order);
+        }
+
+        // 3. Log de succès pour monitoring
+        console.log(
+          `🎉 Actions post-confirmation terminées pour commande ${orderId}`,
+          {
+            orderId,
+            email,
+            amount: order.totalAmount,
+            itemsCount: order.items?.length || 0,
+          }
+        );
+      } catch (error) {
+        console.error(`⚠️ Erreur actions post-confirmation`, {
+          orderId,
+          error: error instanceof Error ? error.message : error,
+        });
+      }
+    });
+  }
+
   /**
    * Créer une commande d'urgence en cas de paiement sans commande
    */
@@ -19,7 +67,7 @@ export class OrderProcessingService {
       customerEmail: session.customer_details?.email,
     });
     try {
-       const emergencyOrder = await prisma.order.create({
+      const emergencyOrder = await prisma.order.create({
         data: {
           id: `emergency-${session.id.slice(-8)}-${Date.now()}`,
           paymentStatus: "PAID",
@@ -29,12 +77,12 @@ export class OrderProcessingService {
           userId: "emergency-user", // Utilisateur par défaut pour les urgences
           notes: `🚨 COMMANDE D'URGENCE - Paiement réussi sans commande originale.
                   SessionId: ${session.id}
-                  Customer: ${session.customer_details?.email || 'N/A'}
+                  Customer: ${session.customer_details?.email || "N/A"}
                   Amount: ${session.amount_total}
                   PaymentIntent: ${session.payment_intent}
                   Timestamp: ${new Date().toISOString()}`,
           // Pas d'items pour les commandes d'urgence - géré manuellement
-        }
+        },
       });
 
       console.log(`📋 Commande d'urgence créée: ${emergencyOrder.id}`);
@@ -151,5 +199,49 @@ export class OrderProcessingService {
         error: error instanceof Error ? error.message : error,
       });
     }
+  }
+  /**
+   * Envoi d'email de confirmation sécurisé
+   */
+  static async sendConfirmationEmailSafely(
+    orderId: string,
+    email: string,
+    customerName: string | undefined,
+    order: any
+  ) {
+    try {
+      const orderData = createOrderData({
+        customerEmail: email,
+        customerName: customerName || this.getCustomerName(order.user),
+        items:
+          order.items?.map((item: any) => ({
+            title: item.product?.title || "Produit",
+            quantity: item.quantity,
+            price: item.price,
+          })) || [],
+      });
+      await sendEmail({
+        to: email,
+        subject: `✅ Confirmation de commande - ${order.id}`,
+        htmlFileName: "order-confirmation.ejs",
+        context: orderData,
+      });
+
+      console.log(`✅ Email de confirmation envoyé`, {
+        orderId: order.id,
+        email,
+      });
+    } catch (error) {
+      console.error(`❌ Échec envoi email de confirmation`, {
+        orderId: order.id,
+        email,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+  static runInBackground(fn: () => Promise<void>) {
+    setImmediate(() => {
+      fn().catch((error) => console.error("Erreur background task:", error));
+    });
   }
 }
