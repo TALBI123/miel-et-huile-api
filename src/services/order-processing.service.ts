@@ -1,10 +1,121 @@
 import { OrderStatus, PaymentStatus, PrismaClient } from "@prisma/client";
-import { Stripe } from "../config/stripe";
+import { CartItem, OrderWithRelations } from "../types/order.type";
 import { sendEmail } from "./emailService.service";
 import { createOrderData } from "../utils/object";
+import { generateToken } from "../utils/helpers";
+import { Stripe } from "../config/stripe";
+import { InventoryService } from "./inventory.service";
 const prisma = new PrismaClient();
 
+interface ProcessOrder {
+  orderId: string;
+  email: string;
+  customerName: string | undefined;
+  session: Stripe.Checkout.Session;
+  order: any;
+}
 export class OrderProcessingService {
+  /**
+   * Traitement principal de confirmation de commande
+   */
+  static async processOrderConfirmation({
+    orderId,
+    email,
+    customerName,
+    session,
+    order,
+  }: ProcessOrder) {
+    // Vérification d'idempotence
+    if (order.paymentStatus === "PAID") {
+      console.warn(`⚠️ Commande ${orderId} déjà traitée`, {
+        sessionId: session.id,
+        currentStatus: order.paymentStatus,
+      });
+      return order;
+    }
+
+    // Transaction atomique avec retry logic
+    const confirmedOrder = await this.executeOrderConfirmationTransaction(
+      orderId,
+      session
+    );
+    console.log(`✅ Commande ${orderId} confirmée avec succès`);
+    // Actions post-confirmation (non-bloquantes)
+    this.executePostConfirmationActions(
+      orderId,
+      email,
+      customerName,
+      confirmedOrder
+    );
+    return confirmedOrder;
+  }
+  /**
+   * Créer une nouvelle commande
+   */
+  static async createOrder(
+    userId: string,
+    cart: CartItem[]
+  ): Promise<OrderWithRelations> {
+    const productVariants = await prisma.productVariant.findMany({
+      where: { id: { in: cart.map((item) => item.variantId) } },
+    });
+    let totalAmount: number = 0;
+    const productVariantsMap = new Map(productVariants.map((p) => [p.id, p]));
+    const items = cart.map((item) => {
+      const productVariant = productVariantsMap.get(item.variantId);
+      if (!productVariant)
+        throw new Error(
+          `Le produit avec l’ID ${item.variantId} n’existe plus. Veuillez choisir un autre variant.`
+        );
+
+      const price = productVariant?.isOnSale
+        ? productVariant.discountPrice
+        : productVariant?.price;
+      totalAmount += price! * item.quantity;
+      return {
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        price: price!,
+      };
+    });
+
+    return prisma.$transaction(
+      async (tx) => {
+        console.log("Total Amount: ", totalAmount);
+        const order = await tx.order.create({
+          data: {
+            id: `cmd-${generateToken()}`,
+            userId,
+            totalAmount,
+            status: "PENDING",
+            paymentStatus: "PENDING",
+            items: {
+              create: items,
+            },
+          },
+          include: {
+            user: { select: { firstName: true, lastName: true } },
+            items: {
+              include: {
+                product: { include: { images: true } },
+                variant: {
+                  select: {
+                    price: true,
+                    stock: true,
+                    discountPrice: true,
+                    isOnSale: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+        return order;
+      },
+      { timeout: 10000 }
+    );
+  }
   /**
    * Transaction atomique pour la confirmation de commande
    */
@@ -14,6 +125,7 @@ export class OrderProcessingService {
   ) {
     const maxRetries = 3;
     let retryCount = 0;
+
     while (retryCount < maxRetries) {
       try {
         return await prisma.$transaction(async (tx) => {
@@ -24,20 +136,45 @@ export class OrderProcessingService {
           );
           if (!order) throw new Error("Order not found");
           if (order.status === "CONFIRMED") return order; // ✅ déjà confirmé, rien à faire
+          // Vérification de cohérence des payment_intent
+          if (
+            order.stripePaymentIntentId &&
+            order.stripePaymentIntentId !== session.payment_intent
+          ) {
+            console.error(`❌ Incohérence payment_intent`, {
+              orderId,
+              orderPaymentIntent: order.stripePaymentIntentId,
+              sessionPaymentIntent: session.payment_intent,
+            });
+            throw new Error("Incohérence dans les payment_intent");
+          }
+          // 1. Mise à jour de la commande
           const updateOrder = await tx.order.update({
             where: { id: orderId },
             data: {
               status: OrderStatus.CONFIRMED,
               paymentStatus: PaymentStatus.PAID,
-              stripePaymentIntentId: session.id,
+              stripePaymentIntentId: session.payment_intent as string,
               notes: `Traité par webhook ${
                 session.id
               } à ${new Date().toISOString()}`,
             },
-            include: {},
+            include: {
+              items: {
+                include: {
+                  product: { select: { id: true, title: true } },
+                  variant: { select: { id: true, stock: true } },
+                },
+              },
+            },
           });
+          // 2. Mise à jour du stock pour chaque item
+          await InventoryService.decrementStock(updateOrder, tx);
+          // Log détaillé pour monitoring
+          console.log(`📦 Stock mis à jour pour commande ${orderId}`);
+          return updateOrder;
         });
-      } catch (err) {
+      } catch (err: any) {
         const transientErrors = [
           "deadlock",
           "serialization",
@@ -46,23 +183,23 @@ export class OrderProcessingService {
         ];
 
         // Vérifie si l’erreur est "transiente" (temporaire)
-        // const isTransientError = transientErrors.some((word) =>
-        //   err.message.toLowerCase().includes(word)
-        // );
+        const isTransientError = transientErrors.some((word) =>
+          err.message.toLowerCase().includes(word)
+        );
 
-        // if (isTransientError && retryCount < maxRetries - 1) {
-        //   retryCount++;
-        //   const delay = Math.pow(2, retryCount) * 500; // backoff exponentiel
-        //   console.warn(
-        //     `⚠️ Retry #${retryCount} après ${delay}ms pour cause : ${err.message }`
-        //   );
-        //   await new Promise((res) => setTimeout(res, delay));
-        // } else {
-        //   // ❌ Erreur métier → pas de retry
-        //   throw new Error(
-        //     `Transaction échouée après ${retryCount} tentative(s) : ${err.message}`
-        //   );
-        // }
+        if (isTransientError && retryCount < maxRetries - 1) {
+          retryCount++;
+          const delay = Math.pow(2, retryCount) * 500; // backoff exponentiel
+          console.warn(
+            `⚠️ Retry #${retryCount} après ${delay}ms pour cause : ${err.message}`
+          );
+          await new Promise((res) => setTimeout(res, delay));
+        } else {
+          // ❌ Erreur métier → pas de retry
+          throw new Error(
+            `Transaction échouée après ${retryCount} tentative(s) : ${err.message}`
+          );
+        }
       }
     }
   }
@@ -158,7 +295,9 @@ export class OrderProcessingService {
   static async findOrderByPaymentIntent(paymentIntentId: string) {
     return await prisma.order.findFirst({
       where: { stripePaymentIntentId: paymentIntentId },
-      include: {
+      select: {
+        paymentStatus: true,
+        stripePaymentIntentId: true,
         user: {
           select: {
             id: true,
@@ -296,5 +435,32 @@ export class OrderProcessingService {
     setImmediate(() => {
       fn().catch((error) => console.error("Erreur background task:", error));
     });
+  }
+  static async resolveOrder(session: Stripe.Checkout.Session) {
+    const { orderId } = session.metadata || {};
+    const paymentIntentId = session.payment_intent as string;
+    // Essaye d'abord via paymentIntent
+    let order = await OrderProcessingService.findOrderByPaymentIntent(
+      paymentIntentId
+    );
+
+    // Si pas trouvé, essaye via orderId
+    if (!order && orderId) {
+      order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          user: {
+            select: { id: true, email: true, firstName: true, lastName: true },
+          },
+          items: {
+            include: {
+              product: { select: { id: true, title: true } },
+              variant: { select: { id: true, stock: true } },
+            },
+          },
+        },
+      });
+    }
+    return order;
   }
 }

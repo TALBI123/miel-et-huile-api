@@ -42,15 +42,15 @@ export const createStripeSession = async (
     line_items,
     mode: "payment",
     return_url: `${process.env.FRONTEND_URL}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-    // success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-    // cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+    success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.FRONTEND_URL}/cancel`,
     metadata: {
       orderId: order.id,
       email,
       customerName: `${order.user?.firstName} ${order.user?.lastName}`,
     },
   });
-  return session.client_secret;
+  return {clientSecret : session.client_secret,id : session.id};
 };
 export const handleStripeWebhook = async (event: Stripe.Event) => {
   try {

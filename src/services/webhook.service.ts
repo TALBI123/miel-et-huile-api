@@ -1,4 +1,4 @@
-import { OrderStatus, PrismaClient ,PaymentStatus} from "@prisma/client";
+import { OrderStatus, PrismaClient, PaymentStatus } from "@prisma/client";
 import { stripe, Stripe } from "../config/stripe";
 import { sendEmail } from "./emailService.service";
 import { InventoryService } from "./inventory.service";
@@ -28,125 +28,46 @@ export class WebhookService {
   ) {
     const sessionId = session.id;
     const paymentIntentId = session.payment_intent as string;
-    try {
-      const { orderId, email, customerName } = session.metadata || {};
-      if (!orderId) {
-        console.error(`🚨 CRITIQUE: orderId manquant mais paiement réussi`, {
-          sessionId,
-          paymentIntentId,
-          metadata: session.metadata,
-        });
-
-      }
-      // OrderProcessingService.sendConfirmationEmailSafely(orderId, email, customerName, order);
-      // 1. Récupère la commande
-      const order = await prisma.order.findUnique({
-        where: { id: orderId },
-        select: {
-          paymentStatus: true,
-          stripePaymentIntentId: true,
-          items: {
-            select: {
-              product: { select: { id: true, title: true } },
-              quantity: true,
-              price: true,
-              variant: { select: { id: true, stock: true } },
-            },
-          },
-        },
+    const { orderId, email, customerName } = session.metadata || {};
+    if (!orderId) {
+      console.error(`🚨 CRITIQUE: orderId manquant mais paiement réussi`, {
+        sessionId,
+        paymentIntentId,
+        metadata: session.metadata,
       });
+    }
+    try {
+      // OrderProcessingService.sendConfirmationEmailSafely(orderId, email, customerName, order);
+      // Tentative de récupération par payment_intent
+      const order = await OrderProcessingService.resolveOrder(session);
       if (!order) {
-        console.error(`❌ Commande introuvable`, {
-          orderId,
-          sessionId: session.id,
-        });
-        throw new Error(`Commande ${orderId} introuvable`);
-      }
-      if (order.paymentStatus === "PAID") {
-        console.log(`Commande ${orderId} déjà traitée, webhook ignoré`);
-        return;
-      }
-      // Vérification de cohérence des payment_intent
-      if (
-        order.stripePaymentIntentId &&
-        order.stripePaymentIntentId !== session.payment_intent
-      ) {
-        console.error(`❌ Incohérence payment_intent`, {
-          orderId,
-          orderPaymentIntent: order.stripePaymentIntentId,
-          sessionPaymentIntent: session.payment_intent,
-        });
-        throw new Error("Incohérence dans les payment_intent");
-      }
-
-      // Vérification des stocks avant finalisation
-      for (const item of order.items) {
-        if (item.variant && item.variant.stock < item.quantity) {
-          console.error(`❌ Stock insuffisant pour finaliser la commande`, {
+        console.error(
+          `🚨 CRITIQUE: Commande ${orderId} introuvable mais paiement réussi`,
+          {
             orderId,
-            productId: item.product.id,
-            variantId: item.variant.id,
-            requestedQuantity: item.quantity,
-            availableStock: item.variant.stock,
-          });
-          throw new Error(`Stock insuffisant pour ${item.product.title}`);
-        }
+            sessionId,
+            paymentIntentId,
+          }
+        );
+        return await OrderProcessingService.createEmergencyOrder(session);
       }
-      await prisma.$transaction(async (tx) => {
-        // Met à jour le statut de la commande
-        await tx.order.update({
-          where: { id: orderId },
-          data: {
-            paymentStatus: "PAID",
-            status: OrderStatus.CONFIRMED,
-            // paymentMethod: session.payment_method_types?.[0] || "CARD" ,
-            stripePaymentIntentId: session.payment_intent as string,
-          },
-        });
-
-        // - Mettre à jour le stock
-        await InventoryService.decrementStock(orderId, tx);
+      await OrderProcessingService.processOrderConfirmation({
+        orderId,
+        email,
+        customerName,
+        session,
+        order,
       });
 
       console.log(`✅ Commande ${orderId} marquée comme payée`);
-      // 3. Envoi de l'email de confirmation (hors transaction)
-      try {
-        const orderData = createOrderData({
-          customerEmail: email,
-          customerName,
-          // orderId: orderId,
-          items: order.items.map((item) => ({
-            title: item.product.title,
-            quantity: item.quantity,
-            price: item.price,
-          })),
-        });
-
-        await sendEmail({
-          to: email,
-          subject: "✅ Confirmation de votre commande",
-          htmlFileName: "order-confirmation-email.ejs",
-          context: orderData,
-        });
-
-        console.log(`📧 Email de confirmation envoyé`, { orderId, email });
-      } catch (emailError) {
-        // L'email ne doit pas faire échouer le webhook
-        console.error(`⚠️ Erreur envoi email (commande confirmée)`, {
-          orderId,
-          email,
-          error: emailError,
-        });
-      }
-
-      // - Notifier l'équipe
     } catch (err) {
-      this.handleChargeRefunded(session as unknown as Stripe.Charge);
+      // this.handleChargeRefunded(session as unknown as Stripe.Charge);
       console.error(
         "❌ Erreur lors du traitement de checkout.session.completed:",
         err
       );
-      throw err;
+      // ⚠️ JAMAIS throw après un paiement réussi - gérer manuellement
+      await OrderProcessingService.notifyTeamCriticalIssue(session, orderId);
     }
   }
   static async handlePaymentFailed(
@@ -203,7 +124,10 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: PaymentStatus.FAILED, status: OrderStatus.CANCELLED },
+          data: {
+            paymentStatus: PaymentStatus.FAILED,
+            status: OrderStatus.CANCELLED,
+          },
         });
         console.log(`❌ Commande ${orderId} annulée`);
       }
@@ -217,7 +141,10 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: PaymentStatus.DISPUTED, status: OrderStatus.PENDING },
+          data: {
+            paymentStatus: PaymentStatus.DISPUTED,
+            status: OrderStatus.PENDING,
+          },
         });
         console.log(`⚠️ Commande ${orderId} en litige`);
       }
@@ -231,7 +158,10 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: PaymentStatus.EXPIRED, status: OrderStatus.CANCELLED },
+          data: {
+            paymentStatus: PaymentStatus.EXPIRED,
+            status: OrderStatus.CANCELLED,
+          },
         });
         console.log(`⏰ Commande ${orderId} expirée`);
       }
@@ -285,19 +215,20 @@ export class WebhookService {
       console.error(`❌ Échec notification équipe`, { error });
     }
   }
-    /**
+  /**
    * Traitement principal de confirmation de commande
    */
   /**
    * Gestion des situations critiques
    */
-  private async handleCriticalPaymentWithoutOrder(session: Stripe.Checkout.Session){
-    try{
-
-    }catch(error){
-      console.error(`🚨 Impossible de créer commande d'urgence`, { 
+  private async handleCriticalPaymentWithoutOrder(
+    session: Stripe.Checkout.Session
+  ) {
+    try {
+    } catch (error) {
+      console.error(`🚨 Impossible de créer commande d'urgence`, {
         error,
-        sessionId: session.id 
+        sessionId: session.id,
       });
     }
   }
