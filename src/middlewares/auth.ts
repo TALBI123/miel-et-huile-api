@@ -10,7 +10,7 @@ export const verifyToken = (
   res: Response<ApiResponse>,
   next: NextFunction
 ) => {
-  console.log(req.cookies," from auth middleware");
+  // console.log(req.cookies," from auth middleware");
   const token = req.cookies?.access_token;
   if (!token)
     return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -40,7 +40,7 @@ export const verifyAdmin = (
   res: Response,
   next: NextFunction
 ) => {
-  console.log(" Accès refusé - Vous n'êtes pas administrateur "+req.user);
+  // console.log(" Accès refusé - Vous n'êtes pas administrateur "+req.user);
   if (req.user?.role !== ROLE.ADMIN) {
     return res.status(StatusCodes.FORBIDDEN).json({
       success: false,

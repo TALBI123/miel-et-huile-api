@@ -1,5 +1,5 @@
 import { createCheckoutSession } from "../controller/checkout.controller";
-import { validateOrderItems } from "../middlewares/validationOrders";
+import { checkItemsArray  } from "../middlewares/checkItemsArray ";
 import { CheckoutSchema } from "../schema/checkout.schema";
 import { validate } from "../middlewares/validate";
 import { verifyToken } from "../middlewares/auth";
@@ -99,7 +99,7 @@ router.post(
   "/",
     verifyToken,
   validate({ schema: CheckoutSchema, skipSave: true }),
-  validateOrderItems,
+  checkItemsArray,
   createCheckoutSession
 );
 

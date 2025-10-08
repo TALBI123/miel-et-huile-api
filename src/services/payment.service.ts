@@ -72,11 +72,11 @@ export const handleStripeWebhook = async (event: Stripe.Event) => {
         break;
 
       // NOUVEAUX ÉVÉNEMENTS CRITIQUES POUR LA PRODUCTION
-      case "payment_intent.succeeded":
-        await WebhookService.handlePaymentIntentSucceeded(
-          event.data.object as Stripe.PaymentIntent
-        );
-        break;
+      // case "payment_intent.succeeded":
+      //   await WebhookService.handlePaymentIntentSucceeded(
+      //     event.data.object as Stripe.PaymentIntent
+      //   );
+      //   break;
 
       // case "payment_intent.requires_action":
       //   await WebhookService.handlePaymentRequiresAction(event.data.object  as Stripe.PaymentIntent);

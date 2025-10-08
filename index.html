@@ -17,13 +17,14 @@
     <script>
       const apiUrlProd = "https://miel-et-huile-api-production.up.railway.app";
       const apiUrlDev = "http://localhost:3000";
+      const url = apiUrlDev;
       const changeColor = (color) => {
         console.log(color);
       };
 
       const fetchData = async () => {
         // const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
-        const data = await fetch(`${apiUrlProd}/api/auth/login`, {
+        const data = await fetch(`${url}/api/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -42,24 +43,23 @@
         "pk_test_51SEgCYDxHsNPCfyDeY7QoPFPX7jQWPE4tD7BhvJB0IgOoVKv3593uDkrBkTxXBXCl2xpASz23wywOy2FFc5rpimZ00r2oYaX75";
       const checkOut = async () => {
         try {
-          const res = await fetch(`${apiUrlProd}/api/checkout`, {
+          const res = await fetch(`${url}/api/checkout`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              shippingCost: 45,
-              userId: "8395e8cb-b3b6-45b4-b750-788f10f80c8a",
+              shippingCost: Math.floor(Math.random() * 10) + 3,
               items: [
                 {
-                  productId: "42b6302b-4e6d-45d0-9f79-c2865465b720",
-                  variantId: "577e8b2b-1c13-46f7-8c04-9f4b95410b2a",
-                  quantity: 3,
+                  productId: "162cf1c5-d378-4b51-baf2-827f9a39a416",
+                  variantId: "f7a66e29-a1dc-48dc-9448-3f9cad1a5927",
+                  quantity: Math.floor(Math.random() * 3) + 1,
                 },
                 {
-                  productId: "370b81c0-20be-4625-b997-b27107ae79ff",
-                  variantId: "38777d59-042e-45e6-b155-d7a74eb7ded2",
-                  quantity: 5,
+                  productId: "2b5bcde8-aa90-48e1-a821-c5121372c62c",
+                  variantId: "535dbabc-0912-461a-b9c0-758d03ffbb12",
+                  quantity: Math.floor(Math.random() * 3) + 1,
                 },
               ],
             }),
