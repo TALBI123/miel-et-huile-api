@@ -65,7 +65,7 @@ export class OrderProcessingService {
       const productVariant = productVariantsMap.get(item.variantId);
       if (!productVariant)
         throw new Error(
-          `Le produit avec l’ID ${item.variantId} n’existe plus. Veuillez choisir un autre variant.`
+          `createOrder (OPS) :  Le produit avec l’ID ${item.variantId} n’existe plus. Veuillez choisir un autre variant.`
         );
 
       const price = productVariant?.isOnSale

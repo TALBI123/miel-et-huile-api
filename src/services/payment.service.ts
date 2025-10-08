@@ -23,6 +23,7 @@ export const createStripeSession = async (
     },
     quantity: item.quantity,
   }));
+
   line_items.push({
     price_data: {
       currency: "eur",
@@ -35,22 +36,28 @@ export const createStripeSession = async (
     },
     quantity: 1,
   });
+  const isModeDev = process.env.NODE_ENV === "development";
   // console.log(line_items, shippingCost);
-  const session = await stripe.checkout.sessions.create({
-    ui_mode:'embedded',
+  const sessionParams: any = {
     payment_method_types: ["card"],
     line_items,
     mode: "payment",
-    return_url: `${process.env.FRONTEND_URL}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-    success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.FRONTEND_URL}/cancel`,
     metadata: {
       orderId: order.id,
       email,
       customerName: `${order.user?.firstName} ${order.user?.lastName}`,
     },
-  });
-  return {clientSecret : session.client_secret,id : session.id};
+  };
+  if (!isModeDev) {
+    sessionParams.ui_mode = "embedded";
+    // sessionParams.return_url = `${process.env.FRONTEND_URL}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`;
+  } else {
+    sessionParams.success_url = `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`;
+    sessionParams.cancel_url = `${process.env.FRONTEND_URL}/cancel`;
+  }
+  
+  const session = await stripe.checkout.sessions.create(sessionParams);
+  return { clientSecret: session.client_secret, id: session.id };
 };
 export const handleStripeWebhook = async (event: Stripe.Event) => {
   try {

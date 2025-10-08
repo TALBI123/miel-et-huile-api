@@ -1,11 +1,19 @@
-import { handleServerError } from "../utils/helpers";
-import { StatusCodes } from "http-status-codes";
 import { OrderStatus, PrismaClient } from "@prisma/client";
+import { handleServerError } from "../utils/helpers";
+import { buildProductQuery } from "../utils/filter";
+import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
+import { EnumTables } from "../data/allowedNames";
 const prisma = new PrismaClient();
 export const getOrders = async (req: Request, res: Response) => {
   try {
-    const orders = await prisma.order.findMany();
+    console.log(res.locals.validated)
+    const query = buildProductQuery({
+      ...(res.locals.validated || {}),
+      relationName: EnumTables.ORDER,
+    });
+    console.log(query);
+    const orders = await prisma.order.findMany(query);
     if (!orders.length)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
@@ -47,7 +55,7 @@ export const updateOrder = async (req: Request, res: Response) => {
   } catch (err) {
     handleServerError(res, err);
   }
-}
+};
 export const cancelOrder = async (req: Request, res: Response) => {
   const { id } = req.params;
   const order = await prisma.order.update({

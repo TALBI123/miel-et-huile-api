@@ -27,6 +27,7 @@ export interface ApiResponse<T = any> {
   message?: string;
   errors?: string;
   data?: T;
+  lastPage?: number;
   len?: number;
 }
 

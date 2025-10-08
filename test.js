@@ -1,7 +1,3 @@
-const name = "mohamed talbi";
-console.log(
-  name
-    .split(" ")
-    .map((elm) => elm.at(0))
-    .join("").toUpperCase()
-);
+
+const num = 1.01;
+console.log(Math.ceil(num));

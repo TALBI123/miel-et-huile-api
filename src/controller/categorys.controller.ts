@@ -25,6 +25,7 @@ export const getAllCategorys = async (
       ...(res.locals.validated || {}),
       // ...(mode ? { relationFilter: { relation: "products", mode } } : {}),
       relationName: "products",
+      isNestedPrice: true,
       ...(nestedIsActive ? { nested: { isActive: true } } : {}),
       include: {
         _count: {
@@ -33,7 +34,9 @@ export const getAllCategorys = async (
       },
       // extraWhere: { isActive: true}
     });
-     
+    prisma.order.findMany({
+      where: {},
+    });
     const data = await prisma.category.findMany(query);
     if (!data)
       return res
@@ -258,4 +261,3 @@ export const deleteCategory = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
-

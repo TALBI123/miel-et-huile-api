@@ -9,8 +9,8 @@ import { Request, Response } from "express";
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
     const { items, shippingCost } = req.body;
-    console.log(req.user);
-    console.log("Items received in createCheckoutSession:", items);
+    // console.log(req.user);
+    // console.log("Items received in createCheckoutSession:", items);
     const validationResponse = await ProductValidationService.validateItems(
       items
     );
@@ -30,7 +30,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Commande créée avec succès",
-      clientSecret,
+      ...clientSecret,
     });
   } catch (err) {
     handleServerError(res, err);

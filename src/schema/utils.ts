@@ -1,11 +1,10 @@
 import { FieldOptions } from "../types/type";
 import { z, ZodType } from "zod";
 
-
 // --- UTILITIES SCHEMAS
 
-
-
+export const optionalPriceSchema = (message: string) =>
+  z.string().regex(/^\d+$/, { message }).transform(Number).optional();
 export const createFieldConfig = (options: FieldOptions) => {
   const {
     type = "string",
@@ -45,7 +44,6 @@ export const createFieldConfig = (options: FieldOptions) => {
   }
 };
 
-
 export function createFieldSchema(options: FieldOptions): ZodType<any> {
   const {
     type = "string",
@@ -64,13 +62,23 @@ export function createFieldSchema(options: FieldOptions): ZodType<any> {
         if (typeof val === "string") return val.trim();
         return val;
       }, z.any())
-      .refine((val) => {
-        if (!required && (val === undefined || val === "")) return true;
-        return val !== undefined && val !== "";
-      }, { message: messages.required || `Le ${name} est requis` })
-      .transform((val) => (val === "" || val === undefined ? undefined : Number(val)))
-      .refine((val) => val === undefined || !isNaN(val), { message: messages.invalid || `Le ${name} doit être un nombre` })
-      .refine((val) => val === undefined || (min !== undefined ? val >= min : true), { message: messages.min || `La valeur de ${name} doit être ≥ ${min}` })
+      .refine(
+        (val) => {
+          if (!required && (val === undefined || val === "")) return true;
+          return val !== undefined && val !== "";
+        },
+        { message: messages.required || `Le ${name} est requis` }
+      )
+      .transform((val) =>
+        val === "" || val === undefined ? undefined : Number(val)
+      )
+      .refine((val) => val === undefined || !isNaN(val), {
+        message: messages.invalid || `Le ${name} doit être un nombre`,
+      })
+      .refine(
+        (val) => val === undefined || (min !== undefined ? val >= min : true),
+        { message: messages.min || `La valeur de ${name} doit être ≥ ${min}` }
+      );
   } else if (type === "string") {
     let schema = z
       .preprocess((val) => {
@@ -78,23 +86,37 @@ export function createFieldSchema(options: FieldOptions): ZodType<any> {
         if (typeof val === "string") return val.trim();
         return val;
       }, z.any())
-      .refine((val) => {
-        if (!required && (val === undefined || val === "")) return true;
-        return typeof val === "string" && val !== "";
-      }, { message: messages.required || `Le ${name} est requis` })
-      .refine((val) => val === undefined || (minLength !== undefined ? val.length >= minLength : true), { message: messages.minLength || (minLength ? `Le ${name} doit contenir au moins ${minLength} caractères` : undefined) })
+      .refine(
+        (val) => {
+          if (!required && (val === undefined || val === "")) return true;
+          return typeof val === "string" && val !== "";
+        },
+        { message: messages.required || `Le ${name} est requis` }
+      )
+      .refine(
+        (val) =>
+          val === undefined ||
+          (minLength !== undefined ? val.length >= minLength : true),
+        {
+          message:
+            messages.minLength ||
+            (minLength
+              ? `Le ${name} doit contenir au moins ${minLength} caractères`
+              : undefined),
+        }
+      );
 
-  if (isUUID) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (isUUID) {
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    schema = schema.refine(
-      val => val === undefined || uuidRegex.test(val),
-      { message: messages.invalid || `Le ${name} doit être un UUID valide` }
-    );
-  }
+      schema = schema.refine(
+        (val) => val === undefined || uuidRegex.test(val),
+        { message: messages.invalid || `Le ${name} doit être un UUID valide` }
+      );
+    }
 
-  return schema;
-
+    return schema;
   }
 
   throw new Error("Type de champ non supporté");

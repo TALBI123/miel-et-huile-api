@@ -1,11 +1,15 @@
 export const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"] as const;
-export const ALLOWED_CATEGORY_PROPERTIES = ["name", "description","isActive"] as const;
+export const ALLOWED_CATEGORY_PROPERTIES = [
+  "name",
+  "description",
+  "isActive",
+] as const;
 export const ALLOWED_PRODUCT_PROPERTIES = [
   "title",
   "categoryId",
   "description",
   "subDescription",
-  "isActive"
+  "isActive",
 ] as const;
 export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [
   "amount",
@@ -15,6 +19,34 @@ export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [
   "discountPercentage",
   "stock",
   "isOnSale",
-  "isActive"
+  "isActive",
 ] as const;
 export const ALLOWED_USER_UNITS = ["g", "kg", "ml", "L"];
+export const ALLOWED_FILTERING_TABLES = ["variants", "orders"] as const;
+export enum EnumTables {
+  PRODUCT = "products",
+  CATEGORY = "categories",
+  VARIANT = "variants",
+  ORDER = "orders",
+}
+export type AllowedFilteringTables = (typeof ALLOWED_FILTERING_TABLES)[number];
+export const ALLOWED_ORDER_STATUSES = [
+  "CONFIRMED",
+  "PROCESSING",
+  "PENDING",
+  "FAILED",
+  "SHIPPED",
+  "REFUNDED",
+  "DELIVERED",
+  "CANCELLED",
+] as const;
+export const ALLOWED_ORDER_PAYMENT_STATUSES = [
+  "PENDING",
+  "PAID",
+  "FAILED",
+  "REFUNDED",
+  "PARTIALLY_REFUNDED",
+  "DISPUTED",
+  "EXPIRED",
+  "REQUIRES_ACTION",
+] as const;

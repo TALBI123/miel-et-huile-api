@@ -32,6 +32,7 @@ export const getProducts = async (
   req: Request,
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
+  console.log("   ---------------------   ");
   const { categorySlug, ...rest } = res.locals.validated;
   let categoryId: string | undefined;
   try {
@@ -53,6 +54,7 @@ export const getProducts = async (
     //   extraWhere.category = { isActive: true };
     const query = buildProductQuery({
       ...(rest || {}),
+      isNestedPrice: true,
       // ...(mode ? { relationFilter: { relation: "variants", mode } } : {}),
       relationName: "variants",
       include: {
@@ -64,9 +66,17 @@ export const getProducts = async (
             price: true,
             discountPrice: true,
             discountPercentage: true,
+            amount: true,
+            unit: true,
+            stock: true,
           },
         },
-        images: true,
+        images: {
+          take: 1,
+          select: {
+            image: true,
+          },
+        },
       },
       extraWhere,
       // ...(categoryId ? { extraWhere: { categoryId } } : {}),
@@ -78,8 +88,12 @@ export const getProducts = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });
+    console.log("", query.where);
+    const lastPage = await prisma.product.count({ where: query.where });
+    console.log(lastPage);
     const newProducts = products.map((p) => {
       const { images, createdAt, updatedAt, variants, ...rest } = p;
+      console.log(images, images.length);
       return {
         ...rest,
         image: images.length && "image" in images[0] ? images[0]?.image : "",
@@ -91,7 +105,8 @@ export const getProducts = async (
     res.status(StatusCodes.OK).json({
       success: true,
       data: newProducts,
-      len: newProducts.length,
+      len: lastPage,
+      lastPage: Math.ceil(lastPage / (res.locals.validated.limit || 5)),
     });
   } catch (err) {
     handleServerError(res, err);

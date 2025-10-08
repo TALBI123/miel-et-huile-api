@@ -1,7 +1,7 @@
-import { booleanFromString } from "./utils";
+import { booleanFromString, optionalPriceSchema } from "./utils";
+import { ALLOWED_ORDER_STATUSES } from "../data/allowedNames";
 import { z } from "zod";
 
-// --- SHEMAS PRODUCT
 export const booleanFromStringSchema = z
   .string()
   .optional()
@@ -12,6 +12,29 @@ export const booleanFromStringSchema = z
     if (val === "false") return false;
     return undefined; // ou une valeur par défaut
   });
+// --- UTILITIES SCHEMAS
+
+// --- SHEMAS PRODUCT
+export const categorySlug = z.object({
+  categorySlug: z
+    .string()
+    .regex(/^[a-z0-9-]+$/i)
+    .optional(),
+});
+const minMaxPrice = z.object({
+  minPrice: optionalPriceSchema("Le prix minimum doit être un nombre"),
+  maxPrice: optionalPriceSchema("Le prix maximum doit être un nombre"),
+});
+export const isActiveModeOptionsSchema = z.object({
+  mode: z
+    .enum(["with", "without", "all"], {
+      message: "Veuillez sélectionner une unité valide",
+    })
+    .default("with"),
+  isActive: booleanFromStringSchema,
+  nestedIsActive: booleanFromStringSchema,
+});
+
 // --- SHEMAS VALIDATION PAGINATION
 export const FilterSchema = z.object({
   page: z
@@ -31,20 +54,8 @@ export const FilterSchema = z.object({
     .min(2)
     .max(100)
     .optional(),
-  mode: z
-    .enum(["with", "without", "all"], {
-      message: "Veuillez sélectionner une unité valide",
-    })
-    .default("with"),
-  isActive: booleanFromStringSchema,
-  nestedIsActive: booleanFromStringSchema,
 });
-export const categorySlug = z.object({
-  categorySlug: z
-    .string()
-    .regex(/^[a-z0-9-]+$/i)
-    .optional(),
-});
+
 // --- SHEMAS VALIDATION QUERY
 
 export const QuerySchema = z
@@ -57,23 +68,32 @@ export const QuerySchema = z
     onSale: booleanFromString(
       "La valeur de onSale doit être true ou false"
     ).optional(),
-    minPrice: z
-      .string()
-      .regex(/^\d+$/, { message: "Le prix minimum doit être un nombre" })
-      .transform(Number)
-      .optional(),
-
-    maxPrice: z
-      .string()
-      .regex(/^\d+$/, { message: "Le prix maximum doit être un nombre" })
-      .transform(Number)
-      .optional(),
-
     inStock: booleanFromString(
       "La valeur de inStock doit être true ou false"
     ).optional(),
   })
+  .merge(isActiveModeOptionsSchema)
   .merge(FilterSchema)
+  .merge(minMaxPrice)
+  .refine(
+    (data) =>
+      data.minPrice === undefined ||
+      data.maxPrice === undefined ||
+      data.minPrice <= data.maxPrice,
+    {
+      message: "Le prix minimum ne peut pas être supérieur au prix maximum",
+    }
+  );
+export const queryOrderSchema = z
+  .object({
+    status: z
+      .enum(ALLOWED_ORDER_STATUSES, { message: "Statut de commande invalide" })
+      .optional(),
+    paymentStatus: z
+      .enum(["paid", "unpaid"], { message: "Statut de paiement invalide" })
+      .optional(),
+  })
+  .merge(FilterSchema).merge(minMaxPrice)
   .refine(
     (data) =>
       data.minPrice === undefined ||
