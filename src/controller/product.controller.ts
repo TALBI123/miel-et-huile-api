@@ -89,8 +89,7 @@ export const getProducts = async (
     console.log(lastPage);
     const newProducts = products.map((p) => {
       const { images, createdAt, updatedAt, variants, ...rest } = p;
-      console.log(variants);
-      const { id, ...variant } = variants[0];
+      const { id, ...variant } = variants[0] || {};
       return {
         ...rest,
         image: images.length && "image" in images[0] ? images[0]?.image : "",
