@@ -20,7 +20,9 @@ type FilterOptions = {
 };
 
 export class QueryBuilderService {
-
+  buildNothing(){
+    
+  }
   private buildRelationFilter = (
     relationName: string,
     mode: RelationMode,
