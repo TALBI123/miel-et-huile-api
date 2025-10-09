@@ -13,7 +13,7 @@ export const getOrders = async (req: Request, res: Response) => {
       champPrice: "totalAmount",
       relationName: EnumTables.ORDER,
     });
-    console.log(query);
+    // console.log(query);
     const orders = await prisma.order.findMany(query);
     if (!orders.length)
       return res.status(StatusCodes.NOT_FOUND).json({
