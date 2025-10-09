@@ -50,3 +50,6 @@ export const ALLOWED_ORDER_PAYMENT_STATUSES = [
   "EXPIRED",
   "REQUIRES_ACTION",
 ] as const;
+
+export const ALLOWED_TABLES_WITH_MODE = ["products", "variants"];
+export type AllowedTablesWithMode = (typeof ALLOWED_TABLES_WITH_MODE)[number];

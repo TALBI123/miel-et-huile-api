@@ -7,11 +7,7 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import {
-  cleanUploadedFiles,
-  handleServerError,
-  paginate,
-} from "../utils/helpers";
+import { cleanUploadedFiles, handleServerError } from "../utils/helpers";
 import {
   deleteFromCloudinary,
   deletePathToCloudinary,
@@ -62,7 +58,7 @@ export const getProducts = async (
           orderBy: { price: "asc" },
           take: 1, // récupère seulement la variante la moins chère
           select: {
-            // id: true,
+            id: true,
             price: true,
             discountPrice: true,
             discountPercentage: true,
@@ -93,11 +89,13 @@ export const getProducts = async (
     console.log(lastPage);
     const newProducts = products.map((p) => {
       const { images, createdAt, updatedAt, variants, ...rest } = p;
-      console.log(images, images.length);
+      console.log(variants);
       return {
         ...rest,
         image: images.length && "image" in images[0] ? images[0]?.image : "",
-        ...(variants.length ? { ...variants[0] } : {}),
+        ...(variants.length
+          ? { variantId: variants[0]?.id, ...variants[0] }
+          : {}),
         createdAt,
         updatedAt,
       };

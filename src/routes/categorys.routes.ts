@@ -278,7 +278,7 @@ router.get(
 router.post(
   "/",
   verifyToken,
-  // verifyAdmin,
+  verifyAdmin,
   uploadMemoryStorage,
   uploadHandler,
   validate({ schema: CreateCategorySchema }),

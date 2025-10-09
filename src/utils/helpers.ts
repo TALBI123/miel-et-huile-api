@@ -28,13 +28,7 @@ export const generateSlug = (name: string): string => {
   return slugify(name, { lower: true, strict: true });
 };
 
-export const paginate = ({
-  page,
-  limit,
-}: Pick<FilterType, "page" | "limit">) => {
-  const offset = (page - 1) * limit;
-  return { skip: offset, take: limit };
-};
+
 
 export function isExpired(date: Date) {
   return date.getTime() < Date.now();

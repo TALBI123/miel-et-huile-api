@@ -1,8 +1,9 @@
+import { is } from "zod/v4/locales";
 import {
   ALLOWED_FILTERING_TABLES,
   AllowedFilteringTables,
 } from "../data/allowedNames";
-import { paginate } from "./helpers";
+import { QueryBuilderService } from "../services/queryBuilder.service";
 type OrderOptions = {
   orderBy: "price" | "stock" | "name";
   orderDirection: "asc" | "desc";
@@ -26,6 +27,7 @@ interface ProductFilterOptions {
   isNestedPrice?: boolean;
   mode?: RelationMode;
   nested?: any;
+  champPrice?: "price" | "totalAmount";
   // relationName?: string | string[];
   relationName?: string;
   include?: Record<string, any>;
@@ -79,13 +81,14 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
     mode = "all",
     isNestedPrice = false,
     // relationFilter,
+    champPrice = "price",
     relationName,
     nested,
     orderBy,
     include,
     extraWhere,
   } = options;
-  let where: any = {
+  let where: Record<string, any> = {
     ...(category ? { categoryId: category } : {}),
     ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
     ...(isActive !== undefined ? { isActive } : {}),
@@ -96,37 +99,28 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
       ? buildRelationFilter(relationName, mode, nested)
       : {}),
   };
-  console.log(
-    ALLOWED_FILTERING_TABLES.includes(relationName as AllowedFilteringTables),
-    minPrice,
-    maxPrice
-  );
+
   if (
     ALLOWED_FILTERING_TABLES.includes(relationName as AllowedFilteringTables) &&
     (minPrice !== undefined || maxPrice !== undefined)
   ) {
-    const filteryPriceQuery = {
-      some: {
-        ...(isNestedPrice
-          ? where[relationName as AllowedFilteringTables]?.some ?? {}
-          : where.some ?? {}),
-        price: {
-          ...(minPrice !== undefined ? { gte: minPrice } : {}),
-          ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
-        },
+    const priceFilter = {
+      [champPrice]: {
+        ...(minPrice ? { gte: minPrice } : {}),
+        ...(maxPrice ? { lte: maxPrice } : {}),
       },
     };
-    console.log(filteryPriceQuery, "filteryPriceQuery");
-    where = {
-      ...where,
-      ...(isNestedPrice
-        ? {
-            [relationName as AllowedFilteringTables]: filteryPriceQuery,
-          }
-        : filteryPriceQuery),
-    };
+
+    if (isNestedPrice) {
+      where[relationName as AllowedFilteringTables] = {
+        some: {
+          ...(where[relationName as AllowedFilteringTables]?.some ?? {}),
+          ...priceFilter,
+        },
+      };
+    } else Object.assign(where, priceFilter);
   }
-  const { skip, take } = paginate({ page, limit });
+  const { skip, take } = QueryBuilderService.paginate({ page, limit });
   return {
     where,
     skip,

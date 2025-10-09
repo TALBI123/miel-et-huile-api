@@ -7,9 +7,10 @@ import { EnumTables } from "../data/allowedNames";
 const prisma = new PrismaClient();
 export const getOrders = async (req: Request, res: Response) => {
   try {
-    console.log(res.locals.validated)
+    console.log(res.locals.validated);
     const query = buildProductQuery({
       ...(res.locals.validated || {}),
+      champPrice: "totalAmount",
       relationName: EnumTables.ORDER,
     });
     console.log(query);
@@ -19,10 +20,14 @@ export const getOrders = async (req: Request, res: Response) => {
         success: false,
         message: "Aucune commande trouvée",
       });
-
+    const lastPage = await prisma.order.count({
+      where: query.where,
+    });
     res.status(StatusCodes.OK).json({
       success: true,
       data: orders,
+      len: lastPage,
+      lastPage: Math.ceil(lastPage / (res.locals.validated.limit || 5)),
     });
   } catch (err) {
     handleServerError(res, err);
@@ -33,6 +38,30 @@ export const getOrderById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const order = await prisma.order.findUnique({
       where: { id },
+      select: {
+        id: true,
+        totalAmount: true,
+        createdAt: true,
+        status: true,
+        paymentStatus: true,
+        user: { select: { firstName: true, lastName: true, email: true } },
+        items: {
+          include: {
+            product: {
+              select: { title: true, subDescription: true },
+            },
+            variant: {
+              select: {
+                amount: true,
+                unit: true,
+                price: true,
+                discountPrice: true,
+                isOnSale: true,
+              },
+            },
+          },
+        },
+      },
     });
     if (!order)
       return res
