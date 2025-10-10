@@ -1,3 +1,8 @@
+import { cleanUploadedFiles, handleServerError } from "../utils/helpers";
+import { QueryBuilderService } from "../services/queryBuilder.service";
+import { filterObjectByKeys, isEmptyObject } from "../utils/object";
+import { buildProductQuery, objFiltered } from "../utils/filter";
+import { Prisma, PrismaClient } from "@prisma/client";
 import {
   ApiResponse,
   Product,
@@ -5,9 +10,9 @@ import {
   UploadResult,
 } from "../types/type";
 import { StatusCodes } from "http-status-codes";
-import { PrismaClient } from "@prisma/client";
+
 import { Request, Response } from "express";
-import { cleanUploadedFiles, handleServerError } from "../utils/helpers";
+
 import {
   deleteFromCloudinary,
   deletePathToCloudinary,
@@ -18,8 +23,8 @@ import {
   ALLOWED_PRODUCT_PROPERTIES,
   ALLOWED_PRODUCT_VARIANT_PROPERTIES,
 } from "../data/allowedNames";
-import { filterObjectByKeys, isEmptyObject } from "../utils/object";
-import { buildProductQuery, objFiltered } from "../utils/filter";
+import { ProductWithRelations } from "../types/prisma.type";
+
 const prisma = new PrismaClient();
 
 // --- PUBLIC PRODUCT Controller
@@ -45,18 +50,70 @@ export const getProducts = async (
     }
     // console.log(categorySlug, rest, categoryId);
     let extraWhere: any = {};
-    if (categoryId) extraWhere.categoryId = categoryId;
+    // if (categoryId) extraWhere.categoryId = categoryId;
     // else if (res.locals.validated?.mode === "with")
     //   extraWhere.category = { isActive: true };
-    const query = buildProductQuery({
+    // const query = buildProductQuery({
+    //   ...(rest || {}),
+    //   isNestedPrice: true,
+    //   // ...(mode ? { relationFilter: { relation: "variants", mode } } : {}),
+    //   relationName: "variants",
+    //   include: {
+    //     variants: {
+    //       orderBy: { price: "asc" },
+    //       take: 1, // récupère seulement la variante la moins chère
+    //       select: {
+    //         id: true,
+    //         price: true,
+    //         discountPrice: true,
+    //         discountPercentage: true,
+    //         amount: true,
+    //         unit: true,
+    //         stock: true,
+    //       },
+    //     },
+    //     images: {
+    //       take: 1,
+    //       select: {
+    //         image: true,
+    //       },
+    //     },
+    //   },
+    //   extraWhere,
+    //   // ...(categoryId ? { extraWhere: { categoryId } } : {}),
+    //   // ...(res.locals.validated?.mode ? { category: { isActive: true } } : {}),
+    // });
+
+    const include = {
+      variants: {
+        orderBy: { price: "asc" },
+        take: 1,
+        select: {
+          id: true,
+          price: true,
+          discountPrice: true,
+          discountPercentage: true,
+          amount: true,
+          unit: true,
+          stock: true,
+        },
+      },
+      images: {
+        take: 1,
+        select: {
+          image: true,
+        },
+      },
+    };
+
+    const query = QueryBuilderService.buildAdvancedQuery("product", {
       ...(rest || {}),
       isNestedPrice: true,
-      // ...(mode ? { relationFilter: { relation: "variants", mode } } : {}),
-      relationName: "variants",
+      categoryId,
       include: {
         variants: {
           orderBy: { price: "asc" },
-          take: 1, // récupère seulement la variante la moins chère
+          take: 1,
           select: {
             id: true,
             price: true,
@@ -74,12 +131,11 @@ export const getProducts = async (
           },
         },
       },
-      extraWhere,
-      // ...(categoryId ? { extraWhere: { categoryId } } : {}),
-      // ...(res.locals.validated?.mode ? { category: { isActive: true } } : {}),
     });
-
-    const products = await prisma.product.findMany(query);
+    console.log("----> Query : ", query);
+    const products = (await prisma.product.findMany(
+      query
+    )) as ProductWithRelations[];
     if (!products.length)
       return res
         .status(StatusCodes.NOT_FOUND)

@@ -57,7 +57,7 @@ passport.use(
         // Create a user object based on the Google profile
         let existingUser = await prisma.user.findFirst({
           where: { OR: [{ email: email }, { googleId: googleId }] },
-          select: { id: true, googleId: true },
+          select: { id: true, googleId: true,role:true },
         });
         //🚨 2. GESTION DES CONFLITS
         if (existingUser) {
@@ -98,7 +98,7 @@ passport.use(
         const user: UserTokenPayload = {
           id: existingUser.id,
           email,
-          role: "USER",
+          role: existingUser.role,
         };
         done(null, user as UserTokenPayload);
       } catch (error) {
