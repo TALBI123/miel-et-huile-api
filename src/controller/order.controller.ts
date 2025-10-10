@@ -3,15 +3,15 @@ import { handleServerError } from "../utils/helpers";
 import { buildProductQuery } from "../utils/filter";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
-import { EnumTables } from "../data/allowedNames";
+import { Model } from "../data/allowedNames";
+import { QueryBuilderService } from "../services/queryBuilder.service";
 const prisma = new PrismaClient();
 export const getOrders = async (req: Request, res: Response) => {
   try {
-    console.log(res.locals.validated);
-    const query = buildProductQuery({
+    const query = QueryBuilderService.buildAdvancedQuery(Model.ORDER, {
       ...(res.locals.validated || {}),
       champPrice: "totalAmount",
-      relationName: EnumTables.ORDER,
+      
     });
     // console.log(query);
     const orders = await prisma.order.findMany(query);

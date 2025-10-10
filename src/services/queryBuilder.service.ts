@@ -1,8 +1,10 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import {
   ALLOWED_FILTERING_TABLES,
+  ALLOWED_ORDER_STATUSES,
   AllowedFilteringTables,
-  EnumTables,
+  AllowedOrderStatuses,
+  EnumRelationTables,
 } from "../data/allowedNames";
 
 type RelationMode = "with" | "without" | "all";
@@ -27,6 +29,7 @@ type FilterOptions = {
   mode?: RelationMode;
   relationFilter?: RelationFilter;
   orderBy?: any;
+  status?: AllowedOrderStatuses;
   include?: Prisma.ProductInclude;
 };
 
@@ -36,15 +39,20 @@ export class QueryBuilderService {
     allowedFilters: string[] = []
   ): Record<string, any> {
     const where: Record<string, any> = {};
-    if (allowedFilters.includes("isActive") && options.isActive !== undefined)
-      where.isActive = options.isActive;
+    const { status, isActive, inStock, search, extraWhere } = options;
+    if (allowedFilters.includes("isActive") && isActive !== undefined)
+      where.isActive = isActive;
 
-    if (allowedFilters.includes("inStock") && options.inStock !== undefined)
-      where.inStock = options.inStock;
-    if (options.search)
-      where.name = { contains: options.search, mode: "insensitive" };
-
-    if (options.extraWhere) Object.assign(where, options.extraWhere);
+    if (
+      allowedFilters.includes("inStock") &&
+      inStock !== undefined &&
+      ALLOWED_ORDER_STATUSES.includes(status as AllowedOrderStatuses)
+    )
+      where.inStock = inStock;
+    if (search) where.name = { contains: search, mode: "insensitive" };
+    if (allowedFilters.includes("status") && status !== undefined)
+      where.status = status;
+    if (extraWhere) Object.assign(where, extraWhere);
 
     return where;
   }
@@ -80,12 +88,12 @@ export class QueryBuilderService {
         where = {
           ...(options.categoryId ? { categoryId: options.categoryId } : {}),
           ...this.buildCommonFilters(options, ["isActive", "inStock"]),
-          ...this.buildRelationFilter(EnumTables.VARIANT, mode),
+          ...this.buildRelationFilter(EnumRelationTables.VARIANT, mode),
         };
 
         Object.assign(
           where,
-          this.buildFilterPrice("variants", priceOptions, where)
+          this.buildFilterPrice(EnumRelationTables.VARIANT, priceOptions, where)
         );
         console.log("----> Where : ", where);
         break;
@@ -93,13 +101,18 @@ export class QueryBuilderService {
         Object.assign(where, this.buildCommonFilters(options, ["isActive"]));
         Object.assign(
           where,
-          this.buildRelationFilter(EnumTables.PRODUCT, mode)
+          this.buildRelationFilter(EnumRelationTables.PRODUCT, mode)
         );
         break;
       case "order":
         where = {
           ...where,
-          ...this.buildFilterPrice("variants", priceOptions, where),
+          ...this.buildFilterPrice(
+            EnumRelationTables.ORDER,
+            priceOptions,
+            where
+          ),
+          ...this.buildCommonFilters(options, ["status"]),
         };
         break;
     }
@@ -125,7 +138,7 @@ export class QueryBuilderService {
     const {
       minPrice,
       champPrice = "price",
-      isNestedPrice,
+      isNestedPrice = false,
       maxPrice,
       mode,
     } = options;

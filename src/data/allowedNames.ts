@@ -23,11 +23,17 @@ export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [
 ] as const;
 export const ALLOWED_USER_UNITS = ["g", "kg", "ml", "L"];
 export const ALLOWED_FILTERING_TABLES = ["variants", "orders"] as const;
-export enum EnumTables {
+export enum EnumRelationTables {
   PRODUCT = "products",
   CATEGORY = "categories",
   VARIANT = "variants",
   ORDER = "orders",
+}
+export enum Model {
+  PRODUCT = "product",
+  CATEGORY = "category",
+  VARIANT = "variant",
+  ORDER = "order",
 }
 export type AllowedFilteringTables = (typeof ALLOWED_FILTERING_TABLES)[number];
 export const ALLOWED_ORDER_STATUSES = [
@@ -40,6 +46,7 @@ export const ALLOWED_ORDER_STATUSES = [
   "DELIVERED",
   "CANCELLED",
 ] as const;
+export type AllowedOrderStatuses = (typeof ALLOWED_ORDER_STATUSES)[number];
 export const ALLOWED_ORDER_PAYMENT_STATUSES = [
   "PENDING",
   "PAID",

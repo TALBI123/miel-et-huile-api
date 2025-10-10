@@ -22,6 +22,7 @@ import {
 import {
   ALLOWED_PRODUCT_PROPERTIES,
   ALLOWED_PRODUCT_VARIANT_PROPERTIES,
+  Model,
 } from "../data/allowedNames";
 import { ProductWithRelations } from "../types/prisma.type";
 
@@ -48,65 +49,8 @@ export const getProducts = async (
           .json({ success: false, message: "Catégorie non trouvée" });
       categoryId = existingSlug?.id;
     }
-    // console.log(categorySlug, rest, categoryId);
-    let extraWhere: any = {};
-    // if (categoryId) extraWhere.categoryId = categoryId;
-    // else if (res.locals.validated?.mode === "with")
-    //   extraWhere.category = { isActive: true };
-    // const query = buildProductQuery({
-    //   ...(rest || {}),
-    //   isNestedPrice: true,
-    //   // ...(mode ? { relationFilter: { relation: "variants", mode } } : {}),
-    //   relationName: "variants",
-    //   include: {
-    //     variants: {
-    //       orderBy: { price: "asc" },
-    //       take: 1, // récupère seulement la variante la moins chère
-    //       select: {
-    //         id: true,
-    //         price: true,
-    //         discountPrice: true,
-    //         discountPercentage: true,
-    //         amount: true,
-    //         unit: true,
-    //         stock: true,
-    //       },
-    //     },
-    //     images: {
-    //       take: 1,
-    //       select: {
-    //         image: true,
-    //       },
-    //     },
-    //   },
-    //   extraWhere,
-    //   // ...(categoryId ? { extraWhere: { categoryId } } : {}),
-    //   // ...(res.locals.validated?.mode ? { category: { isActive: true } } : {}),
-    // });
 
-    const include = {
-      variants: {
-        orderBy: { price: "asc" },
-        take: 1,
-        select: {
-          id: true,
-          price: true,
-          discountPrice: true,
-          discountPercentage: true,
-          amount: true,
-          unit: true,
-          stock: true,
-        },
-      },
-      images: {
-        take: 1,
-        select: {
-          image: true,
-        },
-      },
-    };
-
-    const query = QueryBuilderService.buildAdvancedQuery("product", {
+    const query = QueryBuilderService.buildAdvancedQuery(Model.PRODUCT, {
       ...(rest || {}),
       isNestedPrice: true,
       categoryId,

@@ -9,191 +9,603 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', 'Arial', sans-serif;
         }
         
         body {
-            background-color: #f8f8f8;
-            color: #172132;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-color: #f0f2f5;
+            color: #2C2C2C;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
+            flex-direction: column;
         }
         
         .container {
-            max-width: 600px;
             width: 100%;
-            background-color: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            padding: 48px 16px;
         }
         
+        .max-width-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Header Section - Style similaire à Orders */
         .header {
-            background: linear-gradient(135deg, #022855 0%, #1e293b 100%);
-            padding: 30px 20px;
             text-align: center;
-            color: white;
+            margin-bottom: 64px;
         }
         
-        .logo {
+        .logo-container {
+            margin-bottom: 24px;
+        }
+        
+        .logo-image {
+            width: 140px;
+            height: auto;
+            margin: 0 auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-image:hover {
+            transform: scale(1.05);
+        }
+        
+        .logo-text {
             font-size: 28px;
-            font-weight: 900;
-            letter-spacing: 3px;
-            margin-bottom: 10px;
-            color: #fcb92c;
+            font-weight: 300;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #2C2C2C;
+            margin-top: 20px;
         }
         
         .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-top: 10px;
+            font-size: 48px;
+            font-weight: 300;
+            color: #2C2C2C;
+            margin-top: 24px;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
         }
         
+        .header-subtitle {
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #B8925A;
+            margin-top: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .header-description {
+            font-size: 16px;
+            color: #666666;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        /* Main Content - Style card épuré comme Orders */
         .content {
-            padding: 40px 30px;
+            background-color: white;
+            padding: 64px 24px;
             text-align: center;
+            max-width: 900px;
+            margin: 0 auto 48px;
+            transition: all 0.3s ease;
+        }
+        
+        .content:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
         }
         
         .icon-container {
-            width: 100px;
-            height: 100px;
-            background-color: #fcdb9c;
-            border-radius: 50%;
+            width: 160px;
+            height: 160px;
+            background-color: #F5F3F0;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 0 auto 25px;
+            margin: 0 auto 48px;
             position: relative;
+            border: 3px solid #B8925A;
+            transition: all 0.4s ease;
+        }
+        
+        .icon-container:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(184, 146, 90, 0.2);
         }
         
         .icon {
-            font-size: 50px;
-            color: #f9892a;
+            font-size: 72px;
+            color: #B8925A;
         }
         
         .checkmark {
             position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background-color: #022855;
+            bottom: -12px;
+            right: -12px;
+            background-color: #B8925A;
             color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+            width: 52px;
+            height: 52px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 18px;
+            font-size: 28px;
             font-weight: bold;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         h2 {
-            color: #022855;
-            margin-bottom: 15px;
-            font-size: 28px;
+            color: #2C2C2C;
+            margin-bottom: 16px;
+            font-size: 42px;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #B8925A;
+            margin-bottom: 32px;
         }
         
         p {
-            line-height: 1.6;
+            line-height: 1.8;
             margin-bottom: 20px;
             font-size: 16px;
+            color: #666666;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .highlight {
-            color: #f9892a;
-            font-weight: 600;
+            color: #B8925A;
+            font-weight: 500;
         }
+        
         .button {
             display: inline-block;
-            background: linear-gradient(to right, #f9892a, #fcb92c);
-            color: white;
+            background-color: transparent;
+            color: #2C2C2C;
             text-decoration: none;
-            padding: 14px 30px;
-            border-radius: 3px;
+            padding: 16px 60px;
             font-weight: 600;
-            font-size: 16px;
-            margin-top: 20px;
+            font-size: 11px;
+            margin-top: 40px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(249, 137, 42, 0.3);
+            border: 2px solid #2C2C2C;
+            letter-spacing: 3px;
+            text-transform: uppercase;
         }
         
         .button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(249, 137, 42, 0.4);
+            background-color: #B8925A;
+            border-color: #B8925A;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(184, 146, 90, 0.3);
         }
         
+        .divider {
+            width: 80px;
+            height: 2px;
+            background-color: #B8925A;
+            margin: 40px auto;
+        }
+        
+        /* Stats Cards - Style épuré comme Orders */
+        .info-cards {
+            max-width: 1100px;
+            margin: 0 auto 64px;
+            padding: 0 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+        
+        .info-card {
+            background-color: white;
+            padding: 40px 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            transform: translateY(-4px);
+        }
+        
+        .info-card-icon {
+            color: #B8925A;
+            font-size: 42px;
+            margin-bottom: 20px;
+        }
+        
+        .info-card-title {
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #B8925A;
+            margin-bottom: 16px;
+        }
+        
+        .info-card-value {
+            font-size: 18px;
+            color: #2C2C2C;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+        
+        /* Additional Features Section */
+        .features-section {
+            background-color: white;
+            max-width: 900px;
+            margin: 0 auto 48px;
+            padding: 48px 24px;
+        }
+        
+        .features-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 300;
+            color: #2C2C2C;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+        
+        .features-subtitle {
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #B8925A;
+            margin-bottom: 40px;
+        }
+        
+        .features-list {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        
+        .feature-icon {
+            color: #B8925A;
+            font-size: 24px;
+            margin-right: 16px;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        
+        .feature-text {
+            font-size: 15px;
+            color: #666666;
+            line-height: 1.7;
+        }
+        
+        /* Progress Bar Style */
+        .progress-section {
+            background-color: white;
+            max-width: 900px;
+            margin: 0 auto 48px;
+            padding: 40px 24px;
+        }
+        
+        .progress-title {
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #B8925A;
+            margin-bottom: 24px;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            background-color: #F5F3F0;
+            height: 4px;
+            margin-bottom: 24px;
+        }
+        
+        .progress-bar {
+            background-color: #B8925A;
+            height: 4px;
+            width: 100%;
+            transition: width 1s ease;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .progress-step {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #B8925A;
+            font-weight: 600;
+        }
+        
+        /* Footer */
         .footer {
-            background-color: #f5f5f5;
-            padding: 20px;
+            background-color: white;
+            padding: 48px 24px;
             text-align: center;
             font-size: 14px;
-            color: #666;
-            border-top: 1px solid #eee;
+            color: #666666;
+            border-top: 1px solid #e5e7eb;
+            margin-top: auto;
+        }
+        
+        .footer p {
+            margin-bottom: 12px;
+            font-size: 14px;
+            max-width: 100%;
         }
         
         .footer a {
-            color: #f9892a;
+            color: #B8925A;
             text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s ease;
         }
         
-        @media (max-width: 480px) {
-            .content {
-                padding: 30px 20px;
+        .footer a:hover {
+            border-bottom-color: #B8925A;
+        }
+        
+        .footer-links {
+            margin-top: 32px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        
+        .footer-links a {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+        
+        .footer-copyright {
+            margin-top: 32px;
+            font-size: 12px;
+            color: #999999;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 32px 16px;
+            }
+            
+            .header {
+                margin-bottom: 48px;
+            }
+            
+            .header h1 {
+                font-size: 36px;
+            }
+            
+            .logo-text {
+                font-size: 22px;
+                letter-spacing: 4px;
             }
             
             h2 {
-                font-size: 24px;
+                font-size: 32px;
+            }
+            
+            .content {
+                padding: 48px 20px;
+                margin-bottom: 32px;
             }
             
             .icon-container {
-                width: 80px;
-                height: 80px;
+                width: 130px;
+                height: 130px;
             }
             
             .icon {
-                font-size: 40px;
+                font-size: 60px;
             }
             
             .checkmark {
-                width: 25px;
-                height: 25px;
-                font-size: 14px;
+                width: 44px;
+                height: 44px;
+                font-size: 24px;
+            }
+            
+            .button {
+                padding: 14px 48px;
+                font-size: 10px;
+                letter-spacing: 2px;
+            }
+            
+            .info-cards {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                margin-bottom: 48px;
+            }
+            
+            .info-card {
+                padding: 32px 24px;
+            }
+            
+            .logo-image {
+                width: 110px;
+            }
+            
+            .features-section {
+                padding: 40px 20px;
+            }
+            
+            .features-title {
+                font-size: 28px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 16px;
             }
         }
-        img{
-            width: 60px;
-            height: 60px;
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            h2 {
+                font-size: 28px;
+            }
+            
+            .logo-text {
+                font-size: 18px;
+                letter-spacing: 3px;
+            }
+            
+            p {
+                font-size: 15px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="logo">LA NOUVELLE RUCHE</div>
-            <h1>Vérification d'email réussie</h1>
-        </div>
-        
-        <div class="content">
-            <div class="icon-container">
-                <div class="icon">✉️</div>
-                 <!-- <img src="../assets/logo.png" alt=""> -->
-                <div class="checkmark">✓</div>
+        <div class="max-width-container">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo-container">
+                    <img src="src/assets/nv.png" alt="La Nouvelle Ruche" class="logo-image">
+                </div>
+                <div class="logo-text">La Nouvelle Ruche</div>
+                <p class="header-subtitle">Vérification réussie</p>
+                <h1>Bienvenue dans notre communauté</h1>
+                <p class="header-description">
+                    Découvrez l'univers de l'apiculture française et profitez de nos produits naturels authentiques
+                </p>
             </div>
             
-            <h2>Félicitations !</h2>
-            <p>Votre adresse email a été <span class="highlight">vérifiée avec succès</span>.</p>
-            <p>Votre compte est maintenant entièrement activé. Vous pouvez profiter de toutes les fonctionnalités de notre plateforme.</p>
-            <p>Merci de nous avoir rejoint !</p>
+            <!-- Main Content -->
+            <div class="content">
+                <div class="icon-container">
+                    <div class="icon">✉</div>
+                    <div class="checkmark">✓</div>
+                </div>
+                
+                <h2>Félicitations !</h2>
+                <p class="subtitle">Votre compte est activé</p>
+                
+                <div class="divider"></div>
+                
+                <p>Votre adresse email a été <span class="highlight">vérifiée avec succès</span>.</p>
+                <p>Votre compte est maintenant entièrement activé et vous pouvez profiter de toutes les fonctionnalités de notre plateforme.</p>
+                <p>Découvrez nos produits authentiques et naturels issus de l'apiculture française.</p>
+                
+                <a href="https://ecommercemiel-production.up.railway.app/auth" class="button">Accéder à mon compte</a>
+            </div>
             
-            <a href="https://ecommercemiel-production.up.railway.app/auth" class="button">Accéder à mon compte</a>
-        </div>
-        
-        <div class="footer">
-            <p>© 2025 La Nouvelle Ruche. Tous droits réservés.</p>
-            <p>Si vous rencontrez des problèmes, contactez-nous à <a href="mailto:support@lanouvelleruche.fr">support@lanouvelleruche.fr</a></p>
+            <!-- Progress Bar -->
+            <div class="progress-section">
+                <p class="progress-title">Votre parcours</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar"></div>
+                </div>
+                <div class="progress-steps">
+                    <span class="progress-step">✓ Inscription</span>
+                    <span class="progress-step">✓ Vérification</span>
+                    <span class="progress-step">✓ Activation</span>
+                    <span class="progress-step">Prêt à commander</span>
+                </div>
+            </div>
+            
+            <!-- Info Cards -->
+            <div class="info-cards">
+                <div class="info-card">
+                    <div class="info-card-icon">📦</div>
+                    <p class="info-card-title">Livraison</p>
+                    <p class="info-card-value">Livraison soignée en 3-5 jours ouvrés partout en France</p>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-card-icon">🔒</div>
+                    <p class="info-card-title">Paiement sécurisé</p>
+                    <p class="info-card-value">Transactions 100% protégées et cryptées</p>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-card-icon">🌿</div>
+                    <p class="info-card-title">Qualité</p>
+                    <p class="info-card-value">Produits naturels et authentiques certifiés</p>
+                </div>
+            </div>
+            
+            <!-- Features Section -->
+            <div class="features-section">
+                <h3 class="features-title">Ce que vous pouvez faire maintenant</h3>
+                <p class="features-subtitle">Découvrez toutes les fonctionnalités</p>
+                
+                <div class="features-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">🛍</div>
+                        <p class="feature-text">Parcourir notre boutique et découvrir nos miels préparés, produits de la ruche et cosmétiques naturels</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">❤</div>
+                        <p class="feature-text">Ajouter vos produits préférés à votre liste de favoris pour les retrouver facilement</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">📋</div>
+                        <p class="feature-text">Suivre vos commandes en temps réel et consulter votre historique d'achats</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">🎁</div>
+                        <p class="feature-text">Profiter d'offres exclusives et de promotions réservées aux membres</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">👤</div>
+                        <p class="feature-text">Personnaliser votre profil et gérer vos préférences de livraison</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="footer">
+                <div class="divider"></div>
+                <p class="footer-copyright">© 2025 La Nouvelle Ruche. Tous droits réservés.</p>
+                <p>Si vous rencontrez des problèmes, n'hésitez pas à nous contacter.</p>
+                <p>Email : <a href="mailto:contact@lanouvelleruche.fr">contact@lanouvelleruche.fr</a> | Téléphone : <a href="tel:+33123456789">+33 1 23 45 67 89</a></p>
+                
+                <div class="footer-links">
+                    <a href="#">Conditions générales</a>
+                    <a href="#">Politique de confidentialité</a>
+                    <a href="#">Besoin d'aide</a>
+                    <a href="#">À propos</a>
+                </div>
+            </div>
         </div>
     </div>
 </body>

@@ -20,7 +20,8 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
 
     const order: OrderWithRelations = await OrderProcessingService.createOrder(
       req.user?.id!,
-      items
+      items,
+      shippingCost,
     );
     const clientSecret = await createStripeSession(
       order,

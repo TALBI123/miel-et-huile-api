@@ -54,12 +54,13 @@ export class OrderProcessingService {
    */
   static async createOrder(
     userId: string,
-    cart: CartItem[]
+    cart: CartItem[],
+    shippingCost : number
   ): Promise<OrderWithRelations> {
     const productVariants = await prisma.productVariant.findMany({
       where: { id: { in: cart.map((item) => item.variantId) } },
     });
-    let totalAmount: number = 0;
+    let totalAmount: number = shippingCost;
     const productVariantsMap = new Map(productVariants.map((p) => [p.id, p]));
     const items = cart.map((item) => {
       const productVariant = productVariantsMap.get(item.variantId);

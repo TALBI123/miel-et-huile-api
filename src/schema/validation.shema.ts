@@ -15,10 +15,11 @@ export const booleanFromStringSchema = z
 // --- UTILITIES SCHEMAS
 
 // --- SHEMAS PRODUCT
+
 export const categorySlug = z.object({
   categorySlug: z
     .string()
-    .regex(/^[a-z0-9-]+$/i)
+    // .regex(/^[a-z0-9-]+$/i)
     .optional(),
 });
 const minMaxPrice = z.object({
@@ -93,7 +94,8 @@ export const queryOrderSchema = z
       .enum(["paid", "unpaid"], { message: "Statut de paiement invalide" })
       .optional(),
   })
-  .merge(FilterSchema).merge(minMaxPrice)
+  .merge(FilterSchema)
+  .merge(minMaxPrice)
   .refine(
     (data) =>
       data.minPrice === undefined ||

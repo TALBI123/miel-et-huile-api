@@ -8,9 +8,9 @@
     style="
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f8f8f8;
-      color: #172132;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', 'Arial', sans-serif;
+      background-color: #f0f2f5;
+      color: #2C2C2C;
     "
   >
     <table
@@ -18,7 +18,7 @@
       cellpadding="0"
       cellspacing="0"
       border="0"
-      style="background-color: #f8f8f8; padding: 20px"
+      style="background-color: #f0f2f5; padding: 40px 20px"
     >
       <tr>
         <td align="center" valign="middle">
@@ -30,144 +30,340 @@
             style="
               max-width: 600px;
               background-color: #ffffff;
-              border-radius: 12px;
-              overflow: hidden;
-              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             "
           >
-            <!-- Header -->
+            <!-- Header with Logo -->
             <tr>
               <td
                 style="
-                  background: linear-gradient(135deg, #022855 0%, #1e293b 100%);
-                  padding: 30px 20px;
+                  padding: 40px 30px;
                   text-align: center;
-                  color: white;
+                  border-bottom: 1px solid #e5e7eb;
                 "
               >
-                <div
-                  style="
-                    font-size: 28px;
-                    font-weight: 900;
-                    letter-spacing: 3px;
-                    color: #fcb92c;
-                    margin-bottom: 10px;
-                  "
-                >
-                  LA NOUVELLE RUCHE
-                </div>
+                <img 
+                  src="https://ecommercemiel-production.up.railway.app/src/assets/nv.png" 
+                  alt="La Nouvelle Ruche" 
+                  style="width: 100px; height: auto; display: block; margin: 0 auto 20px;"
+                />
                 <h1
                   style="
-                    font-size: 24px;
-                    font-weight: 600;
-                    margin: 10px 0 0 0;
-                    color: white;
+                    margin: 0;
+                    font-size: 22px;
+                    font-weight: 300;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    color: #2C2C2C;
                   "
                 >
-                  Vérification de votre email
+                  La Nouvelle Ruche
                 </h1>
+                <p
+                  style="
+                    margin: 10px 0 0;
+                    font-size: 10px;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    color: #B8925A;
+                  "
+                >
+                  Vérification de compte
+                </p>
               </td>
             </tr>
 
-            <!-- Content -->
+            <!-- Main Content -->
             <tr>
-              <td style="padding: 40px 30px; text-align: center">
-                <!-- Icon -->
-                <div
+              <td style="padding: 50px 30px; text-align: center">
+                
+                <!-- Icon with border -->
+                <table
+                  role="presentation"
+                  cellspacing="0"
+                  cellpadding="0"
+                  border="0"
+                  style="margin: 0 auto 30px"
+                >
+                  <tr>
+                    <td
+                      style="
+                        width: 100px;
+                        height: 100px;
+                        background-color: #F5F3F0;
+                        border: 2px solid #B8925A;
+                        text-align: center;
+                        vertical-align: middle;
+                      "
+                    >
+                      <span style="font-size: 50px; color: #B8925A; line-height: 100px">✉</span>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Title -->
+                <h2
                   style="
-                    width: 80px;
-                    height: 80px;
-                    background-color: #e7f3ff;
-                    border-radius: 50%;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin: 0 auto 25px;
+                    color: #2C2C2C;
+                    margin: 0 0 10px;
+                    font-size: 32px;
+                    font-weight: 300;
+                    letter-spacing: -0.5px;
                   "
                 >
-                  <div style="font-size: 35px; color: #022855">✉️</div>
-                </div>
-
-                <h2
-                  style="color: #022855; margin-bottom: 20px; font-size: 22px"
-                >
-                  Bienvenue chez La Nouvelle Ruche !
+                  Bienvenue !
                 </h2>
-
                 <p
                   style="
-                    font-size: 16px;
-                    color: #444;
-                    line-height: 1.6;
-                    margin-bottom: 25px;
+                    margin: 0 0 30px;
+                    font-size: 10px;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    color: #B8925A;
                   "
                 >
-                  Merci de vous être inscrit ! Pour finaliser votre inscription,
-                  veuillez vérifier votre adresse email en cliquant sur le
-                  bouton ci-dessous :
+                  Confirmez votre adresse email
                 </p>
 
-                <!-- Verification Button -->
-                <a
-                  href="<%= link %>"
-                  style="
-                    display: inline-block;
-                    background: linear-gradient(to right, #f9892a, #fcb92c);
-                    color: white;
-                    text-decoration: none;
-                    padding: 14px 35px;
-                    border-radius: 6px;
-                    font-weight: 600;
-                    font-size: 16px;
-                    margin: 20px 0;
-                    box-shadow: 0 4px 15px rgba(249, 137, 42, 0.3);
-                  "
-                  target="_blank"
-                >
-                  Vérifier mon email
-                </a>
-
-                <!-- Alternative Link -->
+                <!-- Divider -->
                 <div
                   style="
-                    background-color: #f8f9fa;
-                    border-radius: 8px;
-                    padding: 20px;
-                    margin: 25px 0;
+                    width: 60px;
+                    height: 2px;
+                    background-color: #B8925A;
+                    margin: 30px auto;
+                  "
+                ></div>
+
+                <!-- Message -->
+                <p
+                  style="
+                    font-size: 15px;
+                    color: #666666;
+                    line-height: 1.8;
+                    margin: 0 0 20px;
+                  "
+                >
+                  Merci de vous être inscrit sur <span style="color: #B8925A; font-weight: 500;">La Nouvelle Ruche</span>.
+                </p>
+                <p
+                  style="
+                    font-size: 15px;
+                    color: #666666;
+                    line-height: 1.8;
+                    margin: 0 0 30px;
+                  "
+                >
+                  Pour finaliser votre inscription et accéder à tous nos produits naturels, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.
+                </p>
+
+                <!-- Verification Button - Style minimal -->
+                <table
+                  role="presentation"
+                  cellspacing="0"
+                  cellpadding="0"
+                  border="0"
+                  style="margin: 30px auto"
+                >
+                  <tr>
+                    <td
+                      style="
+                        border: 2px solid #B8925A;
+                        background-color: #B8925A;
+                      "
+                    >
+                      <a
+                        href="<%= link %>"
+                        style="
+                          display: inline-block;
+                          padding: 16px 50px;
+                          font-size: 12px;
+                          font-weight: 500;
+                          letter-spacing: 2px;
+                          text-transform: uppercase;
+                          color: #ffffff;
+                          text-decoration: none;
+                        "
+                        target="_blank"
+                      >
+                        Vérifier mon email
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Alternative Link Section -->
+                <div
+                  style="
+                    background-color: #F5F3F0;
+                    padding: 25px 20px;
+                    margin: 30px 0;
                     text-align: left;
                   "
                 >
-                  <p style="font-size: 14px; color: #666; margin: 0 0 10px 0">
-                    Si le bouton ne fonctionne pas, copiez et collez ce lien
-                    dans votre navigateur :
+                  <p
+                    style="
+                      font-size: 12px;
+                      color: #666666;
+                      margin: 0 0 12px 0;
+                      text-transform: uppercase;
+                      letter-spacing: 1px;
+                    "
+                  >
+                    Le bouton ne fonctionne pas ?
+                  </p>
+                  <p
+                    style="
+                      font-size: 13px;
+                      color: #666666;
+                      margin: 0 0 10px 0;
+                      line-height: 1.6;
+                    "
+                  >
+                    Copiez et collez ce lien dans votre navigateur :
                   </p>
                   <p
                     style="
                       word-break: break-all;
-                      color: #022855;
+                      color: #B8925A;
                       background-color: white;
                       padding: 12px;
-                      border-radius: 4px;
-                      border: 1px solid #e9ecef;
+                      border: 1px solid #B8925A;
                       margin: 0;
-                      font-size: 14px;
-                      font-family: monospace;
+                      font-size: 13px;
+                      font-family: 'Courier New', monospace;
                     "
                   >
                     <%= link %>
                   </p>
                 </div>
 
-                <!-- Security Note -->
-                <div style="border-top: 1px solid #eee; padding-top: 25px">
-                  <p style="font-size: 14px; color: #999; margin: 0">
-                    ⏱️ Ce lien expirera dans 24 heures
-                  </p>
-                  <p style="font-size: 12px; color: #999; margin: 8px 0 0 0">
-                    Si vous n'êtes pas à l'origine de cette demande, vous pouvez
-                    ignorer cet email en toute sécurité.
-                  </p>
-                </div>
+              </td>
+            </tr>
+
+            <!-- Info Cards -->
+            <tr>
+              <td style="padding: 30px">
+                <table
+                  role="presentation"
+                  cellspacing="0"
+                  cellpadding="0"
+                  border="0"
+                  width="100%"
+                >
+                  <tr>
+                    <td
+                      width="33.33%"
+                      style="
+                        padding: 15px;
+                        text-align: center;
+                        background-color: #F5F3F0;
+                      "
+                    >
+                      <div style="font-size: 24px; margin-bottom: 10px">⏱</div>
+                      <p
+                        style="
+                          margin: 0 0 5px;
+                          font-size: 10px;
+                          letter-spacing: 1.5px;
+                          text-transform: uppercase;
+                          color: #B8925A;
+                        "
+                      >
+                        Expiration
+                      </p>
+                      <p
+                        style="margin: 0; font-size: 13px; color: #2C2C2C"
+                      >
+                        24 heures
+                      </p>
+                    </td>
+                    <td
+                      width="33.33%"
+                      style="
+                        padding: 15px;
+                        text-align: center;
+                        background-color: #F5F3F0;
+                      "
+                    >
+                      <div style="font-size: 24px; margin-bottom: 10px">🔒</div>
+                      <p
+                        style="
+                          margin: 0 0 5px;
+                          font-size: 10px;
+                          letter-spacing: 1.5px;
+                          text-transform: uppercase;
+                          color: #B8925A;
+                        "
+                      >
+                        Sécurisé
+                      </p>
+                      <p
+                        style="margin: 0; font-size: 13px; color: #2C2C2C"
+                      >
+                        100%
+                      </p>
+                    </td>
+                    <td
+                      width="33.33%"
+                      style="
+                        padding: 15px;
+                        text-align: center;
+                        background-color: #F5F3F0;
+                      "
+                    >
+                      <div style="font-size: 24px; margin-bottom: 10px">🌿</div>
+                      <p
+                        style="
+                          margin: 0 0 5px;
+                          font-size: 10px;
+                          letter-spacing: 1.5px;
+                          text-transform: uppercase;
+                          color: #B8925A;
+                        "
+                      >
+                        Naturel
+                      </p>
+                      <p
+                        style="margin: 0; font-size: 13px; color: #2C2C2C"
+                      >
+                        Bio
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Security Note -->
+            <tr>
+              <td
+                style="
+                  padding: 30px;
+                  text-align: center;
+                  border-top: 1px solid #F5F3F0;
+                  background-color: #FAFAFA;
+                "
+              >
+                <p
+                  style="
+                    font-size: 13px;
+                    color: #666666;
+                    margin: 0 0 10px 0;
+                    line-height: 1.6;
+                  "
+                >
+                  Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email en toute sécurité.
+                </p>
+                <p
+                  style="
+                    font-size: 12px;
+                    color: #999999;
+                    margin: 0;
+                    font-style: italic;
+                  "
+                >
+                  Aucune action ne sera effectuée sur votre compte.
+                </p>
               </td>
             </tr>
 
@@ -175,33 +371,41 @@
             <tr>
               <td
                 style="
-                  background-color: #f5f5f5;
-                  padding: 25px 20px;
+                  padding: 40px 30px;
                   text-align: center;
-                  font-size: 14px;
-                  color: #666;
-                  border-top: 1px solid #eee;
+                  border-top: 1px solid #e5e7eb;
                 "
               >
-                <p style="margin: 0 0 8px 0">
+                <!-- Divider -->
+                <div
+                  style="
+                    width: 60px;
+                    height: 2px;
+                    background-color: #B8925A;
+                    margin: 0 auto 30px;
+                  "
+                ></div>
+
+                <p style="margin: 0 0 10px; font-size: 13px; color: #666666">
                   © 2025 La Nouvelle Ruche. Tous droits réservés.
                 </p>
-                <p style="margin: 0 0 8px 0">
+                <p style="margin: 0 0 10px; font-size: 13px; color: #666666">
                   Des questions ? Contactez-nous à
                   <a
-                    href="mailto:support@lanouvelleruche.fr"
-                    style="
-                      color: #f9892a;
-                      text-decoration: none;
-                      font-weight: 500;
-                    "
+                    href="mailto:contact@lanouvelleruche.fr"
+                    style="color: #B8925A; text-decoration: none"
                   >
-                    support@lanouvelleruche.fr
+                    contact@lanouvelleruche.fr
                   </a>
                 </p>
-                <p style="margin: 0; font-size: 12px">
-                  Cet email a été envoyé à votre demande pour vérifier votre
-                  compte.
+                <p style="margin: 0; font-size: 12px; color: #999999">
+                  Téléphone :
+                  <a
+                    href="tel:+33123456789"
+                    style="color: #B8925A; text-decoration: none"
+                  >
+                    +33 1 23 45 67 89
+                  </a>
                 </p>
               </td>
             </tr>
