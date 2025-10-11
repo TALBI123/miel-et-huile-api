@@ -71,7 +71,7 @@ export const register = async (
     );
     const emailOptions: MailOptions<{ link: string }> = {
       to: email,
-      subject: "verifacation de l'eamil",
+      subject: "verification de votre email",
       htmlFileName: "verification.email.ejs",
       context: { link },
     };
