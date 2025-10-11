@@ -66,7 +66,7 @@ export const isActiveModeOptionsSchema = z.object({
     })
     .default("with"),
   isActive: booleanFromStringSchema,
-  nestedIsActive: booleanFromStringSchema,
+  isNestedActive: booleanFromStringSchema,
 });
 
 // --- SHEMAS VALIDATION PAGINATION
@@ -85,7 +85,7 @@ export const FilterSchema = z.object({
     .string({
       message: "La recherche /search/ doit être une chaîne de caractères",
     })
-    .min(2)
+    .min(1)
     .max(100)
     .optional(),
 });

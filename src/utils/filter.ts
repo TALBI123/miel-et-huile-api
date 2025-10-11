@@ -24,6 +24,7 @@ interface ProductFilterOptions {
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
+  isNestedActive?: boolean;
   isNestedPrice?: boolean;
   mode?: RelationMode;
   nested?: any;
@@ -68,7 +69,6 @@ export const buildRelationsFilter = (
   return filters;
 };
 export const buildProductQuery = (options: ProductFilterOptions) => {
-  
   const {
     page = 1,
     limit = 5,

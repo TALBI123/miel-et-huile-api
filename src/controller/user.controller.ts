@@ -13,6 +13,12 @@ export const getCurrentUser = async (req: Request, res: Response) => {
       where: { id: req.user?.id },
       select: { id: true, email: true, role: true }, // rôle ici
     });
+    prisma.category.findMany({
+      where:{
+        
+      },
+      include:{products:true}
+    });
     console.log(req.user);
     if (!user) {
       return res.status(StatusCodes.NOT_FOUND).json({

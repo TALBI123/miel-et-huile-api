@@ -21,3 +21,10 @@ export type ProductWithRelations = Prisma.ProductGetPayload<{
     };
   };
 }>;
+export type CategoryWithRelations = Prisma.CategoryGetPayload<{
+  include: {
+    _count: {
+      select: { products: true };
+    };
+  };
+}>;

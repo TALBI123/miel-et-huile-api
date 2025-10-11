@@ -1,8 +1,10 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import {
   ALLOWED_FILTERING_TABLES,
+  ALLOWED_ORDER_PAYMENT_STATUSES,
   ALLOWED_ORDER_STATUSES,
   AllowedFilteringTables,
+  AllowedOrderPaymentStatuses,
   AllowedOrderStatuses,
   EnumRelationTables,
 } from "../data/allowedNames";
@@ -25,7 +27,9 @@ type FilterOptions = {
   maxPrice?: number;
   minPrice?: number;
   isNestedPrice?: boolean;
+  isNestedActive?: boolean;
   champPrice?: "price" | "totalAmount";
+  nestedModelActive?: AllowedFilteringTables;
   extraWhere?: Record<string, any>;
   mode?: RelationMode;
   startDate?: Date;
@@ -33,6 +37,8 @@ type FilterOptions = {
   relationFilter?: RelationFilter;
   orderBy?: any;
   status?: AllowedOrderStatuses;
+  nestedIsActive?: Record<string, any>;
+  paymentStatus?: AllowedOrderPaymentStatuses;
   include?: Prisma.ProductInclude;
 };
 
@@ -40,26 +46,66 @@ export class QueryBuilderService {
   static buildCommonFilters(
     options: Pick<
       FilterOptions,
-      "isActive" | "search" | "status" | "extraWhere" | "startDate" | "endDate"
+      | "isActive"
+      | "search"
+      | "status"
+      | "extraWhere"
+      | "paymentStatus"
+      | "startDate"
+      | "endDate"
+      | "isNestedActive"
+      | "nestedIsActive"
+      | "nestedModelActive"
     >,
-    allowedFilters: string[] = []
+    allowedFilters: string[] = [],
+    searchName: string = "title"
   ): Record<string, any> {
     const where: Record<string, any> = {};
-    const { status, isActive, search, extraWhere, startDate, endDate } =
-      options;
+    const {
+      status,
+      paymentStatus,
+      isActive,
+      search,
+      extraWhere,
+      startDate,
+      endDate,
+      isNestedActive,
+      nestedModelActive,
+      nestedIsActive,
+    } = options;
     if (allowedFilters.includes("isActive") && isActive !== undefined)
       where.isActive = isActive;
 
     if (allowedFilters.includes("search") && search)
-      where.name = { contains: search, mode: "insensitive" };
-    if (allowedFilters.includes("status") && status) where.status = status;
+      where[searchName] = { contains: search, mode: "insensitive" };
+    if (
+      allowedFilters.includes("status") &&
+      status &&
+      ALLOWED_ORDER_STATUSES.includes(status)
+    )
+      where.status = status;
+    if (
+      allowedFilters.includes("paymentStatus") &&
+      paymentStatus &&
+      ALLOWED_ORDER_PAYMENT_STATUSES.includes(paymentStatus)
+    )
+      where.paymentStatus = paymentStatus;
+    if (
+      allowedFilters.includes("isNestedActive") &&
+      isNestedActive &&
+      nestedIsActive
+    )
+      where[nestedModelActive as AllowedFilteringTables] = {
+        some: {
+          ...nestedIsActive,
+        },
+      };
     if (startDate !== undefined || endDate !== undefined)
       where.createdAt = {
         ...(startDate ? { gte: new Date(startDate as Date) } : {}),
         ...(endDate ? { lte: new Date(endDate as Date) } : {}),
       };
     if (extraWhere) Object.assign(where, extraWhere);
-
     return where;
   }
 
@@ -76,6 +122,9 @@ export class QueryBuilderService {
       isNestedPrice,
       champPrice,
       mode = "all",
+      nestedIsActive,
+      nestedModelActive = EnumRelationTables.VARIANT,
+      isNestedActive,
       extraWhere,
       include,
     } = options;
@@ -89,16 +138,30 @@ export class QueryBuilderService {
       champPrice,
       mode,
     };
+    console.log(
+      isNestedActive,
+      nestedIsActive,
+      nestedModelActive,
+      "isNestedActive"
+    );
     switch (table) {
       case "product":
         where = {
           ...(options.categoryId ? { categoryId: options.categoryId } : {}),
-          ...this.buildCommonFilters(options, ["isActive", "search"]),
-          ...this.buildRelationFilter(EnumRelationTables.VARIANT, mode),
+          ...this.buildCommonFilters(options, [
+            "isActive",
+            "search",
+            "isNestedActive",
+          ]),
+        };
+        console.log("After Common Filters: ", where);
+        Object.assign(where, {
           ...(options.inStock !== undefined || options.isOnSale !== undefined
             ? {
                 variants: {
+                  ...(where["variants"] || {}),
                   some: {
+                    ...((where["variants"] && where["variants"].some) || {}),
                     ...(options.inStock !== undefined
                       ? {
                           stock: {
@@ -117,34 +180,57 @@ export class QueryBuilderService {
                 },
               }
             : {}),
-        };
-
+        });
+        console.log("After Stock & OnSale Filters: ", where);
+        Object.assign(
+          where,
+          this.buildRelationFilter(EnumRelationTables.VARIANT, mode, where)
+        );
+        console.log("After Relation Filter: ", where);
         Object.assign(
           where,
           this.buildFilterPrice(EnumRelationTables.VARIANT, priceOptions, where)
         );
         console.log("----> Where : ", where);
         break;
-      case "category":
-        Object.assign(where, this.buildCommonFilters(options, ["isActive"]));
+      case "category": // -------- Categorys
         Object.assign(
           where,
-          this.buildRelationFilter(EnumRelationTables.PRODUCT, mode)
+          this.buildCommonFilters(
+            options,
+            ["isActive", "search", "isNestedActive"],
+            "name"
+          )
+        );
+        console.log("After Common Filters: ", where);
+
+        Object.assign(
+          where,
+          this.buildRelationFilter(EnumRelationTables.PRODUCT, mode, where)
         );
         break;
       case "order":
         where = {
           ...where,
+          ...this.buildCommonFilters(
+            options,
+            ["search", "status", "startDate", "endDate", "paymentStatus"],
+            "id"
+          ),
           ...this.buildFilterPrice(
             EnumRelationTables.ORDER,
             priceOptions,
             where
           ),
-          ...this.buildCommonFilters(options, ["status"]),
         };
         break;
+      case "user":
+        Object.assign(
+          where,
+          this.buildCommonFilters(options, ["isActive", "search"], "email")
+        );
+        break;
     }
-    console.log("Final Where : ", options);
     return {
       where,
       ...QueryBuilderService.paginate({ page, limit }),
@@ -207,14 +293,32 @@ export class QueryBuilderService {
   static buildRelationFilter = (
     relationName: string,
     mode: RelationMode,
+    where: Record<string, any>,
     nested?: any
   ): Record<string, any> => {
     if (!relationName) return {};
+    console.log("Building Relation Filter: ", where[relationName]);
     switch (mode.trim()) {
       case "with":
-        return { [relationName]: { some: nested || {} } };
+        return {
+          [relationName]: {
+            ...(where[relationName] || {}),
+            some: {
+              ...((where[relationName] && where[relationName].some) || {}),
+              ...(nested || {}),
+            },
+          },
+        };
       case "without":
-        return { [relationName]: { none: nested || {} } };
+        return {
+          [relationName]: {
+            ...(where[relationName] || {}),
+            none: {
+              ...((where[relationName] && where[relationName].none) || {}),
+              ...(nested || {}),
+            },
+          },
+        };
       default:
         return {};
     }

@@ -22,7 +22,12 @@ export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [
   "isActive",
 ] as const;
 export const ALLOWED_USER_UNITS = ["g", "kg", "ml", "L"];
-export const ALLOWED_FILTERING_TABLES = ["variants", "orders"] as const;
+export const ALLOWED_FILTERING_TABLES = [
+  "variants",
+  "orders",
+  "products",
+] as const;
+
 export enum EnumRelationTables {
   PRODUCT = "products",
   CATEGORY = "categories",
@@ -57,6 +62,7 @@ export const ALLOWED_ORDER_PAYMENT_STATUSES = [
   "EXPIRED",
   "REQUIRES_ACTION",
 ] as const;
-
+export type AllowedOrderPaymentStatuses =
+  (typeof ALLOWED_ORDER_PAYMENT_STATUSES)[number];
 export const ALLOWED_TABLES_WITH_MODE = ["products", "variants"];
 export type AllowedTablesWithMode = (typeof ALLOWED_TABLES_WITH_MODE)[number];

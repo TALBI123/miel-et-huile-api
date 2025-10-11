@@ -8,9 +8,15 @@ import {
   deletePathToCloudinary,
   uploadBufferToCloudinary,
 } from "../services/upload.service";
-import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
+import {
+  ALLOWED_CATEGORY_PROPERTIES,
+  EnumRelationTables,
+  Model,
+} from "../data/allowedNames";
 import { filterObjectByKeys, isEmptyObject } from "../utils/object";
 import { buildProductQuery, objFiltered } from "../utils/filter";
+import { QueryBuilderService } from "../services/queryBuilder.service";
+import { CategoryWithRelations } from "types/prisma.type";
 const prisma = new PrismaClient();
 
 // --- PUBLIC CATEGORY Controller
@@ -20,24 +26,35 @@ export const getAllCategorys = async (
 ) => {
   try {
     // console.log(res.locals.validated, "res.locals.validated",req.query);
-    const { mode, nestedIsActive } = res.locals.validated;
-    const query = buildProductQuery({
+    console.log(res.locals.validated, "res.locals.validated");
+    const query = QueryBuilderService.buildAdvancedQuery(Model.CATEGORY, {
       ...(res.locals.validated || {}),
-      // ...(mode ? { relationFilter: { relation: "products", mode } } : {}),
-      relationName: "products",
-      isNestedPrice: true,
-      ...(nestedIsActive ? { nested: { isActive: true } } : {}),
+      nestedIsActive: { isActive: true },
+      nestedModelActive: EnumRelationTables.PRODUCT,
       include: {
         _count: {
           select: { products: true },
         },
       },
-      // extraWhere: { isActive: true}
     });
-    prisma.order.findMany({
-      where: {},
-    });
-    const data = await prisma.category.findMany(query);
+    // const query = buildProductQuery({
+    //   ...(res.locals.validated || {}),
+    //   // ...(mode ? { relationFilter: { relation: "products", mode } } : {}),
+    //   relationName: "products",
+    //   isNestedPrice: true,
+    //   ...(nestedIsActive ? { nested: { isActive: true } } : {}),
+    //   include: {
+    //     _count: {
+    //       select: { products: true },
+    //     },
+    //   },
+    //   // extraWhere: { isActive: true}
+    // });
+
+    const data = (await prisma.category.findMany(
+      query
+    )) as CategoryWithRelations[];
+
     if (!data)
       return res
         .status(StatusCodes.NOT_FOUND)

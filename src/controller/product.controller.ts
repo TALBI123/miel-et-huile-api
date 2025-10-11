@@ -22,6 +22,7 @@ import {
 import {
   ALLOWED_PRODUCT_PROPERTIES,
   ALLOWED_PRODUCT_VARIANT_PROPERTIES,
+  EnumRelationTables,
   Model,
 } from "../data/allowedNames";
 import { ProductWithRelations } from "../types/prisma.type";
@@ -35,6 +36,7 @@ export const getProducts = async (
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
   console.log("   ---------------------   ");
+  console.log("options : ",res.locals.validated)
   const { categorySlug, ...rest } = res.locals.validated;
   let categoryId: string | undefined;
   try {
@@ -54,6 +56,8 @@ export const getProducts = async (
       ...(rest || {}),
       isNestedPrice: true,
       categoryId,
+      nestedIsActive: { isActive: true },
+      nestedModelActive: EnumRelationTables.VARIANT,
       include: {
         variants: {
           orderBy: { price: "asc" },
