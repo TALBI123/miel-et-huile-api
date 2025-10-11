@@ -20,6 +20,7 @@ type FilterOptions = {
   search?: string;
   isActive?: boolean;
   inStock?: boolean;
+  isOnSale?: boolean;
   categoryId?: string;
   maxPrice?: number;
   minPrice?: number;
@@ -37,29 +38,20 @@ type FilterOptions = {
 
 export class QueryBuilderService {
   static buildCommonFilters(
-    options: FilterOptions,
+    options: Pick<
+      FilterOptions,
+      "isActive" | "search" | "status" | "extraWhere" | "startDate" | "endDate"
+    >,
     allowedFilters: string[] = []
   ): Record<string, any> {
     const where: Record<string, any> = {};
-    const {
-      status,
-      isActive,
-      inStock,
-      search,
-      extraWhere,
-      startDate,
-      endDate,
-    } = options;
+    const { status, isActive, search, extraWhere, startDate, endDate } =
+      options;
     if (allowedFilters.includes("isActive") && isActive !== undefined)
       where.isActive = isActive;
 
-    if (
-      allowedFilters.includes("inStock") &&
-      inStock !== undefined &&
-      ALLOWED_ORDER_STATUSES.includes(status as AllowedOrderStatuses)
-    )
-      where.inStock = inStock;
-    if (search) where.name = { contains: search, mode: "insensitive" };
+    if (allowedFilters.includes("search") && search)
+      where.name = { contains: search, mode: "insensitive" };
     if (allowedFilters.includes("status") && status) where.status = status;
     if (startDate !== undefined || endDate !== undefined)
       where.createdAt = {
@@ -101,8 +93,30 @@ export class QueryBuilderService {
       case "product":
         where = {
           ...(options.categoryId ? { categoryId: options.categoryId } : {}),
-          ...this.buildCommonFilters(options, ["isActive", "inStock"]),
+          ...this.buildCommonFilters(options, ["isActive", "search"]),
           ...this.buildRelationFilter(EnumRelationTables.VARIANT, mode),
+          ...(options.inStock !== undefined || options.isOnSale !== undefined
+            ? {
+                variants: {
+                  some: {
+                    ...(options.inStock !== undefined
+                      ? {
+                          stock: {
+                            ...(options.inStock ? { gt: 0 } : { equals: 0 }),
+                          },
+                        }
+                      : {}),
+                    ...(options.isOnSale !== undefined
+                      ? {
+                          isOnSale: {
+                            equals: options.isOnSale,
+                          },
+                        }
+                      : {}),
+                  },
+                },
+              }
+            : {}),
         };
 
         Object.assign(

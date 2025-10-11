@@ -32,6 +32,18 @@ export const dateFilterSchema = z.object({
   startDate: shcemaDate,
   endDate: shcemaDate,
 });
+
+// ✅ Fonction utilitaire qui transforme une valeur en boolean ou undefined
+const safeBoolean = z.union([z.boolean(), z.string()]).transform((val) => {
+  if (typeof val === "boolean") return val;
+  if (typeof val === "string") {
+    const normalized = val.toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+  }
+  return undefined; // 🔥 valeur ignorée si ce n’est pas true/false
+});
+
 // .transform((data) => {
 //   return data.startDate && data.endDate && data.startDate > data.endDate
 //     ? undefined
@@ -102,6 +114,8 @@ export const QuerySchema = z
   });
 export const queryOrderSchema = z
   .object({
+    isOnSale: safeBoolean.optional(),
+    inStock: safeBoolean.optional(),
     status: z
       .enum(ALLOWED_ORDER_STATUSES, { message: "Statut de commande invalide" })
       .optional(),

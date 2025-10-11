@@ -109,7 +109,6 @@ export const updateeProductVariantSchema = refineobject(
         .optional(),
       stock: z
         .number({ message: "Le stock est requis" })
-        .min(1, { message: "Le stock est requis" })
         .refine((stock) => stock >= 0, "Le stock ne peut pas être négatif")
         .optional(),
     })

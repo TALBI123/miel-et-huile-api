@@ -1,6 +1,5 @@
 import { OrderStatus, PrismaClient } from "@prisma/client";
 import { handleServerError, timeAgo } from "../utils/helpers";
-import { buildProductQuery } from "../utils/filter";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
 import { Model } from "../data/allowedNames";
