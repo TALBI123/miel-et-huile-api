@@ -27,6 +27,8 @@ type FilterOptions = {
   champPrice?: "price" | "totalAmount";
   extraWhere?: Record<string, any>;
   mode?: RelationMode;
+  startDate?: Date;
+  endDate?: Date;
   relationFilter?: RelationFilter;
   orderBy?: any;
   status?: AllowedOrderStatuses;
@@ -39,7 +41,15 @@ export class QueryBuilderService {
     allowedFilters: string[] = []
   ): Record<string, any> {
     const where: Record<string, any> = {};
-    const { status, isActive, inStock, search, extraWhere } = options;
+    const {
+      status,
+      isActive,
+      inStock,
+      search,
+      extraWhere,
+      startDate,
+      endDate,
+    } = options;
     if (allowedFilters.includes("isActive") && isActive !== undefined)
       where.isActive = isActive;
 
@@ -50,8 +60,12 @@ export class QueryBuilderService {
     )
       where.inStock = inStock;
     if (search) where.name = { contains: search, mode: "insensitive" };
-    if (allowedFilters.includes("status") && status !== undefined)
-      where.status = status;
+    if (allowedFilters.includes("status") && status) where.status = status;
+    if (startDate !== undefined || endDate !== undefined)
+      where.createdAt = {
+        ...(startDate ? { gte: new Date(startDate as Date) } : {}),
+        ...(endDate ? { lte: new Date(endDate as Date) } : {}),
+      };
     if (extraWhere) Object.assign(where, extraWhere);
 
     return where;
@@ -116,12 +130,13 @@ export class QueryBuilderService {
         };
         break;
     }
-
+    console.log("Final Where : ", options);
     return {
       where,
       ...QueryBuilderService.paginate({ page, limit }),
       // ...(options.orderBy ? { orderBy: options.orderBy } : {}),
-      ...(options.include ? { include } : {}),
+      orderBy: options.orderBy || { createdAt: "desc" },
+      ...(include ? { include } : {}),
       ...(extraWhere ? { extraWhere } : {}),
     } as A;
   }

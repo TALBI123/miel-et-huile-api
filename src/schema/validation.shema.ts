@@ -12,10 +12,31 @@ export const booleanFromStringSchema = z
     if (val === "false") return false;
     return undefined; // ou une valeur par défaut
   });
+const shcemaDate = z
+  .string()
+  .optional()
+  .transform((val) => {
+    if (!val) return undefined;
+    const date = new Date(val);
+    return isNaN(date.getTime()) ? undefined : date;
+  });
+const validePrice = (data: { minPrice?: number; maxPrice?: number }) =>
+  data.minPrice === undefined ||
+  data.maxPrice === undefined ||
+  data.minPrice <= data.maxPrice;
 // --- UTILITIES SCHEMAS
 
 // --- SHEMAS PRODUCT
-
+// ------ Date
+export const dateFilterSchema = z.object({
+  startDate: shcemaDate,
+  endDate: shcemaDate,
+});
+// .transform((data) => {
+//   return data.startDate && data.endDate && data.startDate > data.endDate
+//     ? undefined
+//     : data;
+// });
 export const categorySlug = z.object({
   categorySlug: z
     .string()
@@ -76,15 +97,9 @@ export const QuerySchema = z
   .merge(isActiveModeOptionsSchema)
   .merge(FilterSchema)
   .merge(minMaxPrice)
-  .refine(
-    (data) =>
-      data.minPrice === undefined ||
-      data.maxPrice === undefined ||
-      data.minPrice <= data.maxPrice,
-    {
-      message: "Le prix minimum ne peut pas être supérieur au prix maximum",
-    }
-  );
+  .refine(validePrice, {
+    message: "Le prix minimum ne peut pas être supérieur au prix maximum",
+  });
 export const queryOrderSchema = z
   .object({
     status: z
@@ -96,16 +111,19 @@ export const queryOrderSchema = z
   })
   .merge(FilterSchema)
   .merge(minMaxPrice)
-  .refine(
-    (data) =>
-      data.minPrice === undefined ||
-      data.maxPrice === undefined ||
-      data.minPrice <= data.maxPrice,
-    {
-      message: "Le prix minimum ne peut pas être supérieur au prix maximum",
-    }
-  );
-
+  .refine(validePrice, {
+    message: "Le prix minimum ne peut pas être supérieur au prix maximum",
+  })
+  .merge(dateFilterSchema)
+  .refine((data) => {
+    console.log("Date de début:", data.startDate);
+    console.log("Date de fin:", data.endDate);
+    console.log("Data : ", data);
+    return data.startDate && data.endDate && data.startDate > data.endDate
+      ? { startDate: undefined, endDate: undefined }
+      : data;
+    // return true;
+  });
 // --- SHEMAS VALIDATION ID
 export const ValidationId = z.object({
   id: z

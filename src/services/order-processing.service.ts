@@ -156,7 +156,7 @@ export class OrderProcessingService {
               status: OrderStatus.CONFIRMED,
               paymentStatus: PaymentStatus.PAID,
               stripePaymentIntentId: session.payment_intent as string,
-              notes: `Traité par webhook ${
+              notes: `Traité par webhook session id ${
                 session.id
               } à ${new Date().toISOString()}`,
             },

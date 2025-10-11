@@ -1,5 +1,5 @@
 import { OrderStatus, PrismaClient } from "@prisma/client";
-import { handleServerError } from "../utils/helpers";
+import { handleServerError, timeAgo } from "../utils/helpers";
 import { buildProductQuery } from "../utils/filter";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
@@ -11,9 +11,8 @@ export const getOrders = async (req: Request, res: Response) => {
     const query = QueryBuilderService.buildAdvancedQuery(Model.ORDER, {
       ...(res.locals.validated || {}),
       champPrice: "totalAmount",
-      
     });
-    // console.log(query);
+    console.log(query);
     const orders = await prisma.order.findMany(query);
     if (!orders.length)
       return res.status(StatusCodes.NOT_FOUND).json({
@@ -23,16 +22,25 @@ export const getOrders = async (req: Request, res: Response) => {
     const lastPage = await prisma.order.count({
       where: query.where,
     });
+    console.log(
+      " ",
+      orders.map((order) => timeAgo(order.createdAt.toISOString()))
+    );
     res.status(StatusCodes.OK).json({
       success: true,
-      data: orders,
-      len: lastPage,
+      data: orders.map((order) => ({
+        ...order,
+        timeAgo: timeAgo(order.createdAt.toISOString()),
+      })),
+      total: lastPage,
+      len: orders.length,
       lastPage: Math.ceil(lastPage / (res.locals.validated.limit || 5)),
     });
   } catch (err) {
     handleServerError(res, err);
   }
 };
+
 export const getOrderById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
