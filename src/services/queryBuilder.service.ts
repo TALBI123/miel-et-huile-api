@@ -35,11 +35,12 @@ type FilterOptions = {
   startDate?: Date;
   endDate?: Date;
   relationFilter?: RelationFilter;
-  orderBy?: any;
+  orderBy?: Record<string, any>;
   status?: AllowedOrderStatuses;
   nestedIsActive?: Record<string, any>;
   paymentStatus?: AllowedOrderPaymentStatuses;
   include?: Prisma.ProductInclude;
+  select?: Prisma.ProductSelect;
 };
 
 export class QueryBuilderService {
@@ -122,11 +123,10 @@ export class QueryBuilderService {
       isNestedPrice,
       champPrice,
       mode = "all",
-      nestedIsActive,
-      nestedModelActive = EnumRelationTables.VARIANT,
-      isNestedActive,
       extraWhere,
       include,
+      orderBy,
+      select,
     } = options;
     let where: Record<string, any> = {
       ...(extraWhere ? extraWhere : {}),
@@ -138,12 +138,6 @@ export class QueryBuilderService {
       champPrice,
       mode,
     };
-    console.log(
-      isNestedActive,
-      nestedIsActive,
-      nestedModelActive,
-      "isNestedActive"
-    );
     switch (table) {
       case "product":
         where = {
@@ -234,10 +228,9 @@ export class QueryBuilderService {
     return {
       where,
       ...QueryBuilderService.paginate({ page, limit }),
-      // ...(options.orderBy ? { orderBy: options.orderBy } : {}),
-      orderBy: options.orderBy || { createdAt: "desc" },
+      orderBy: orderBy || { createdAt: "desc" },
       ...(include ? { include } : {}),
-      ...(extraWhere ? { extraWhere } : {}),
+      ...(select ? { select } : {}),
     } as A;
   }
 

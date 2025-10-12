@@ -10,17 +10,30 @@ export const getOrders = async (req: Request, res: Response) => {
     const query = QueryBuilderService.buildAdvancedQuery(Model.ORDER, {
       ...(res.locals.validated || {}),
       champPrice: "totalAmount",
+      select: {
+        id: true,
+        totalAmount: true,
+        status: true,
+        user: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        createdAt: true,
+      },
     });
-    console.log(query);
-    const orders = await prisma.order.findMany(query);
+    const [orders, lastPage] = await Promise.all([
+      prisma.order.findMany(query),
+      prisma.order.count({
+        where: query.where,
+      }),
+    ]);
+    //
+    // const orders = await prisma.order.findMany(query);
     if (!orders.length)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: "Aucune commande trouvée",
+        data: orders,
       });
-    const lastPage = await prisma.order.count({
-      where: query.where,
-    });
     console.log(
       " ",
       orders.map((order) => timeAgo(order.createdAt.toISOString()))
@@ -44,12 +57,13 @@ export const getOrderById = async (req: Request, res: Response) => {
   try {
     const { id } = req.user!;
     console.log("User ID:", id);
-    const order = await prisma.order.findUnique({
-      where: { id },
+    const query = QueryBuilderService.buildAdvancedQuery(Model.ORDER, {
+      ...(res.locals.validated || {}),
+      champPrice: "totalAmount",
       select: {
         id: true,
         totalAmount: true,
-        createdAt: true,
+        userId: true,
         status: true,
         paymentStatus: true,
         user: { select: { firstName: true, lastName: true, email: true } },
@@ -69,13 +83,31 @@ export const getOrderById = async (req: Request, res: Response) => {
             },
           },
         },
+        createdAt: true,
       },
+      extraWhere: { userId: id },
     });
-    if (!order)
-      return res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ success: false, message: "Commande non trouvée" });
-    res.status(StatusCodes.OK).json({ success: true, data: order });
+    const [orders, lastPage] = await Promise.all([
+      prisma.order.findMany(query),
+      prisma.order.count({
+        where: query.where,
+      }),
+    ]);
+
+    if (!orders)
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Commande non trouvée",
+        data: orders,
+      });
+    console.log("Last Page Count:", lastPage);
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: orders,
+      total: lastPage,
+      len: orders.length,
+      lastPage: Math.ceil(lastPage / (res.locals.validated.limit || 5)),
+    });
   } catch (err) {
     handleServerError(res, err);
   }

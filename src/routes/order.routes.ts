@@ -171,7 +171,8 @@ router.get(
 router.get(
   "/me",
   verifyToken,
-  validate({ schema: ValidationId }),
+  validate({ schema: queryOrderSchema, skipSave: true, key: "query" }),
+
   getOrderById
 ); // détail d’une commande
 router.put(

@@ -80,18 +80,21 @@ export const getProducts = async (
         },
       },
     });
-    console.log("----> Query : ", query);
-    const products = (await prisma.product.findMany(
-      query
-    )) as ProductWithRelations[];
+    const [products, lastPage] = await Promise.all([
+      prisma.product.findMany(query),
+      prisma.product.count({ where: query.where }),
+    ]);
+    // const products = (await prisma.product.findMany(
+    //   query
+    // )) as ProductWithRelations[];
     if (!products.length)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });
     console.log("", query.where);
-    const lastPage = await prisma.product.count({ where: query.where });
+    // const lastPage = await prisma.product.count({ where: query.where });
     console.log(lastPage);
-    const newProducts = products.map((p) => {
+    const newProducts = (products as ProductWithRelations[]).map((p) => {
       const { images, createdAt, updatedAt, variants, ...rest } = p;
       const { id, ...variant } = variants[0] || {};
       return {

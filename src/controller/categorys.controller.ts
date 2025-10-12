@@ -51,16 +51,17 @@ export const getAllCategorys = async (
     //   // extraWhere: { isActive: true}
     // });
 
-    const data = (await prisma.category.findMany(
-      query
-    )) as CategoryWithRelations[];
+    const [data, lastPage] = await Promise.all([
+      prisma.category.findMany(query),
+      prisma.category.count({ where: query.where }),
+    ]);
 
     if (!data)
       return res
         .status(StatusCodes.NOT_FOUND)
-        .json({ success: false, message: "Catégorie non trouvée" });
+        .json({ success: false, message: "Catégorie non trouvée", data });
 
-    const newData = data.map((cat) => {
+    const newData = (data as CategoryWithRelations[]).map((cat) => {
       const { _count, createdAt, updatedAt, ...rest } = cat;
       const productsCount = "products" in _count ? _count.products : 0;
       return {
@@ -70,7 +71,12 @@ export const getAllCategorys = async (
         updatedAt,
       };
     });
-    res.status(StatusCodes.OK).json({ success: true, data: newData });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: newData,
+      len: data.length,
+      lastPage: Math.ceil(lastPage / (res.locals.validated.limit || 5)),
+    });
   } catch (err) {
     handleServerError(res, err);
   }
