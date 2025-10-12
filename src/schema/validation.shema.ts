@@ -20,7 +20,7 @@ const shcemaDate = z
     const date = new Date(val);
     return isNaN(date.getTime()) ? undefined : date;
   });
-const validePrice = (data: { minPrice?: number; maxPrice?: number }) =>
+export const validePrice = (data: { minPrice?: number; maxPrice?: number }) =>
   data.minPrice === undefined ||
   data.maxPrice === undefined ||
   data.minPrice <= data.maxPrice;
@@ -34,7 +34,7 @@ export const dateFilterSchema = z.object({
 });
 
 // ✅ Fonction utilitaire qui transforme une valeur en boolean ou undefined
-const safeBoolean = z.union([z.boolean(), z.string()]).transform((val) => {
+export const safeBoolean = z.union([z.boolean(), z.string()]).transform((val) => {
   if (typeof val === "boolean") return val;
   if (typeof val === "string") {
     const normalized = val.toLowerCase();
@@ -55,7 +55,7 @@ export const categorySlug = z.object({
     // .regex(/^[a-z0-9-]+$/i)
     .optional(),
 });
-const minMaxPrice = z.object({
+export  const minMaxPrice = z.object({
   minPrice: optionalPriceSchema("Le prix minimum doit être un nombre"),
   maxPrice: optionalPriceSchema("Le prix maximum doit être un nombre"),
 });
@@ -92,26 +92,7 @@ export const FilterSchema = z.object({
 
 // --- SHEMAS VALIDATION QUERY
 
-export const QuerySchema = z
-  .object({
-    category: z
-      .string()
-      .min(1, { message: "La catégorie ne peut pas être vide" })
-      .optional(),
 
-    onSale: booleanFromString(
-      "La valeur de onSale doit être true ou false"
-    ).optional(),
-    inStock: booleanFromString(
-      "La valeur de inStock doit être true ou false"
-    ).optional(),
-  })
-  .merge(isActiveModeOptionsSchema)
-  .merge(FilterSchema)
-  .merge(minMaxPrice)
-  .refine(validePrice, {
-    message: "Le prix minimum ne peut pas être supérieur au prix maximum",
-  });
 export const queryOrderSchema = z
   .object({
     isOnSale: safeBoolean.optional(),

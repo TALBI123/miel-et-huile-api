@@ -36,7 +36,7 @@ export const getProducts = async (
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
   console.log("   ---------------------   ");
-  console.log("options : ",res.locals.validated)
+  console.log("options : ", res.locals.validated);
   const { categorySlug, ...rest } = res.locals.validated;
   let categoryId: string | undefined;
   try {

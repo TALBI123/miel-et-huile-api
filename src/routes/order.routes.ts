@@ -169,9 +169,8 @@ router.get(
   getOrders
 ); // toutes les commandes de l’utilisateur
 router.get(
-  "/:id",
+  "/me",
   verifyToken,
-  verifyAdmin,
   validate({ schema: ValidationId }),
   getOrderById
 ); // détail d’une commande

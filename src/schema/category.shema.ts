@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { booleanFromStringSchema } from "./validation.shema";
+import {
+  booleanFromStringSchema,
+  FilterSchema,
+  isActiveModeOptionsSchema,
+} from "./validation.shema";
 export const CreateCategorySchema = z.object({
   name: z
     .string({ message: 'Le nom "name" est requis' })
@@ -7,3 +11,7 @@ export const CreateCategorySchema = z.object({
   description: z.string().optional(),
   isActive: booleanFromStringSchema,
 });
+export const QueryCategorySchema = z
+  .object({})
+  .merge(FilterSchema)
+  .merge(isActiveModeOptionsSchema);

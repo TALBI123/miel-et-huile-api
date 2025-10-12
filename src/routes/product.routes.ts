@@ -17,17 +17,14 @@ import {
   updateProductVariant,
   deleteProductVariant,
 } from "../controller/product.controller";
-import {
-  categorySlug,
-  QuerySchema,
-  ValidationId,
-} from "../schema/validation.shema";
+import { categorySlug, ValidationId } from "../schema/validation.shema";
 import { verifyAdmin, verifyToken } from "../middlewares/auth";
 import {
   createProductShema,
   createProductVariantSchema,
   productImageSchema,
   productVariantSchema,
+  QueryProductSchema,
   updateeProductVariantSchema,
 } from "../schema/product.shema";
 import { createProductVariant } from "../controller/product.controller";
@@ -41,7 +38,6 @@ const router = Router();
  *     description: Gestion des produits (CRUD, affichage, détails)
  */
 
-
 /**
  * @openapi
  * /products:
@@ -53,8 +49,11 @@ const router = Router();
  *       - Rechercher par nom ou titre
  *       - Filtrer par prix, stock ou promotion
  *       - Filtrer uniquement les produits actifs via `isActive`
- *       - Gérer les variantes via `mode` (all, with, without)
- *       La variante la moins chère est incluse dans le retour.
+ *       - Filtrer selon l'état des variantes via `isNestedActive`
+ *       - Gérer les variantes via `mode` (`all`, `with`, `without`)
+ *       - Combiner plusieurs filtres sans générer d'erreur (même en cas de paramètres invalides)
+ *
+ *       La variante la moins chère est automatiquement incluse dans le retour.
  *     tags:
  *       - Produits
  *     parameters:
@@ -89,13 +88,23 @@ const router = Router();
  *       - name: inStock
  *         in: query
  *         required: false
- *         description: Filtrer uniquement les produits en stock
+ *         description: Filtrer uniquement les produits actuellement en stock
  *         schema:
  *           type: boolean
  *       - name: isActive
  *         in: query
  *         required: false
  *         description: Filtrer uniquement les produits actifs
+ *         schema:
+ *           type: boolean
+ *       - name: isNestedActive
+ *         in: query
+ *         required: false
+ *         description: >
+ *           Filtrer les produits dont **les variantes** (ou entités liées) sont actives.
+ *           - `true` → retourne les produits ayant au moins une variante active
+ *           - `false` → retourne les produits dont toutes les variantes sont inactives
+ *           - Si la valeur est invalide (autre que true/false), le filtre est ignoré.
  *         schema:
  *           type: boolean
  *     responses:
@@ -108,6 +117,7 @@ const router = Router();
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 data:
  *                   type: array
  *                   items:
@@ -133,22 +143,56 @@ const router = Router();
  *                         type: string
  *                       isActive:
  *                         type: boolean
+ *                       isNestedActive:
+ *                         type: boolean
+ *                         example: true
  *                       createdAt:
  *                         type: string
  *                         format: date-time
  *                       updatedAt:
  *                         type: string
  *                         format: date-time
+ *                 total:
+ *                   type: integer
+ *                   example: 120
+ *                 len:
+ *                   type: integer
+ *                   example: 10
+ *                 lastPage:
+ *                   type: integer
+ *                   example: 12
  *       404:
  *         description: Aucun produit trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Aucun produit trouvé"
  *       500:
- *         description: Erreur serveur
+ *         description: Erreur serveur interne
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
  */
 
 router.get(
   "/",
   validate({
-    schema: QuerySchema.merge(categorySlug),
+    schema: QueryProductSchema.merge(categorySlug),
     key: "query",
     skipSave: true,
   }),
@@ -979,8 +1023,7 @@ router.patch(
   verifyAdmin,
   validate({ schema: productVariantSchema, key: "params" }),
   validate({
-    schema: updateeProductVariantSchema
-      .transform(calculateDiscountForVariant),
+    schema: updateeProductVariantSchema.transform(calculateDiscountForVariant),
     skipSave: true,
   }),
   checkEmptyRequestBody,

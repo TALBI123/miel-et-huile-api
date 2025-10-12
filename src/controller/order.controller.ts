@@ -42,7 +42,8 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const getOrderById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.user!;
+    console.log("User ID:", id);
     const order = await prisma.order.findUnique({
       where: { id },
       select: {

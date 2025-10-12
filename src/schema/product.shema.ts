@@ -1,5 +1,7 @@
 import { ALLOWED_USER_UNITS } from "../data/allowedNames";
 import { z } from "zod";
+import { booleanFromString } from "./utils";
+import { FilterSchema, isActiveModeOptionsSchema, minMaxPrice, validePrice } from "./validation.shema";
 interface ProductVariantData {
   amount?: number;
   unit?: string;
@@ -141,3 +143,24 @@ export const productVariantSchema = z.object({
     .string({ message: "variantId de la variante est requis" })
     .uuid({ message: "variantId de la variante doit être un UUID valide" }),
 });
+
+export const QueryProductSchema = z
+  .object({
+    category: z
+      .string()
+      .min(1, { message: "La catégorie ne peut pas être vide" })
+      .optional(),
+
+    onSale: booleanFromString(
+      "La valeur de onSale doit être true ou false"
+    ).optional(),
+    inStock: booleanFromString(
+      "La valeur de inStock doit être true ou false"
+    ).optional(),
+  })
+  .merge(isActiveModeOptionsSchema)
+  .merge(FilterSchema)
+  .merge(minMaxPrice)
+  .refine(validePrice, {
+    message: "Le prix minimum ne peut pas être supérieur au prix maximum",
+  });

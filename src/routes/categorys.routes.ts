@@ -12,12 +12,11 @@ import {
   uploadMemoryStorage,
 } from "../middlewares/uploadMiddleware";
 import { checkEmptyRequestBody, validate } from "../middlewares/validate";
+import { ValidationId } from "../schema/validation.shema";
 import {
-  categorySlug,
-  FilterSchema,
-  ValidationId,
-} from "../schema/validation.shema";
-import { CreateCategorySchema } from "../schema/category.shema";
+  CreateCategorySchema,
+  QueryCategorySchema,
+} from "../schema/category.shema";
 const router = Router();
 
 /**
@@ -38,6 +37,7 @@ const router = Router();
  *         - `productsCount` : le nombre de produits associés à chaque catégorie.
  *         - `createdAt` et `updatedAt` : les dates de création et de mise à jour.
  *       Elle supporte des filtres et options de pagination via les **query params**.
+ *       
  *       Les champs possibles pour filtrer ou trier sont :
  *         - `page` (number) : numéro de page pour la pagination.
  *         - `limit` (number) : nombre de résultats par page.
@@ -46,8 +46,8 @@ const router = Router();
  *             - `all` : récupère toutes les catégories.
  *             - `with` : récupère uniquement les catégories qui contiennent des produits.
  *             - `without` : récupère uniquement les catégories sans produits.
- *       Cette route renvoie un tableau de catégories avec leur nombre de produits.
- *         - Filtrer uniquement les catégories actives via `isActive`
+ *         - `isActive` (boolean) : filtrer uniquement les catégories actives.
+ *         - `isNestedActive` (boolean) : filtrer les catégories dont les produits sont **actifs**.
  *     tags:
  *       - Catégories
  *     parameters:
@@ -61,6 +61,16 @@ const router = Router();
  *         description: Filtrer uniquement les catégories actives
  *         schema:
  *           type: boolean
+ *           example: true
+ *       - name: isNestedActive
+ *         in: query
+ *         required: false
+ *         description: >
+ *           Si `true`, ne renvoie que les catégories dont **au moins un produit** est actif.
+ *           Si `false`, renvoie les catégories dont **tous les produits** sont inactifs.
+ *         schema:
+ *           type: boolean
+ *           example: true
  *     responses:
  *       200:
  *         description: Succès, renvoie la liste des catégories
@@ -92,6 +102,9 @@ const router = Router();
  *                         type: integer
  *                       isActive:
  *                         type: boolean
+ *                       isNestedActive:
+ *                         type: boolean
+ *                         description: Indique si la catégorie contient des produits actifs
  *                       createdAt:
  *                         type: string
  *                         format: date-time
@@ -103,10 +116,11 @@ const router = Router();
  *       500:
  *         description: Erreur serveur
  */
+
 router.get(
   "/",
   validate({
-    schema: FilterSchema,
+    schema: QueryCategorySchema,
     key: "query",
     skipSave: true,
   }),
@@ -180,7 +194,7 @@ router.get(
  */
 
 router.get(
-  "/:id",
+  "/me",
   validate({ schema: ValidationId, key: "params" }),
   getCategoryById
 );
@@ -364,7 +378,7 @@ router.patch(
   verifyToken,
   verifyAdmin,
   uploadMemoryStorage,
-  validate({ schema: CreateCategorySchema.partial() ,skipSave:true}),
+  validate({ schema: CreateCategorySchema.partial(), skipSave: true }),
   validate({ schema: ValidationId, key: "params" }),
   checkEmptyRequestBody,
   updateCategory
