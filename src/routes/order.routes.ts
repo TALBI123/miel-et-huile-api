@@ -11,7 +11,7 @@ const router = Router();
 /**
  * @swagger
  * tags:
- *   - name: Orders
+ *   - name: Commandes
  *     description: >
  *       Gestion complète des commandes clients dans le système e-commerce.
  *       ⚠️ Certains endpoints nécessitent une authentification (token JWT) et un rôle administrateur.
@@ -42,7 +42,7 @@ const router = Router();
  *       - ⚙️ L’administration des commandes pour les administrateurs (mise à jour, suppression)
  *       - ⏱️ L’ajout du champ `timeAgo` pour afficher le temps écoulé depuis la création d’une commande
  *     tags:
- *       - Orders
+ *       - Commandes
  *     parameters:
  *       - in: query
  *         name: search
@@ -167,7 +167,230 @@ router.get(
   verifyAdmin,
   validate({ schema: queryOrderSchema, skipSave: true, key: "query" }),
   getOrders
-); // toutes les commandes de l’utilisateur
+);
+/**
+ * @swagger
+ * /orders/me:
+ *   get:
+ *     summary: Récupérer les commandes de l'utilisateur connecté
+ *     description: >
+ *       Cette route permet à un utilisateur authentifié de récupérer ses commandes.
+ *
+ *       Elle prend en charge plusieurs options :
+ *       - **Filtrer par statut** (`status`)
+ *       - **Filtrer par prix** (`minPrice`, `maxPrice`)
+ *       - **Filtrer par date** (`startDate`, `endDate`)
+ *       - **Rechercher par mot-clé** (`search`)
+ *       - **Pagination** (`page`, `limit`)
+ *
+ *       Chaque commande inclut :
+ *       - Les informations utilisateur
+ *       - Les produits et variantes commandés
+ *       - Les montants et statuts
+ *     tags:
+ *       - Commandes
+ *     security:
+ *       - cookieAuth: []  # Nécessite un JWT valide (HttpOnly cookie)
+ *     parameters:
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - name: status
+ *         in: query
+ *         required: false
+ *         description: Statut de la commande à filtrer
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - CONFIRMED
+ *             - PROCESSING
+ *             - PENDING
+ *             - FAILED
+ *             - SHIPPED
+ *             - REFUNDED
+ *             - DELIVERED
+ *             - CANCELLED
+ *           example: CONFIRMED
+ *       - name: paymentStatus
+ *         in: query
+ *         required: false
+ *         description: Statut du paiement (paid ou unpaid)
+ *         schema:
+ *           type: string
+ *           enum: [paid, unpaid]
+ *           example: paid
+ *       - name: minPrice
+ *         in: query
+ *         required: false
+ *         description: Filtrer les commandes dont le total est supérieur ou égal à cette valeur
+ *         schema:
+ *           type: number
+ *           example: 50
+ *       - name: maxPrice
+ *         in: query
+ *         required: false
+ *         description: Filtrer les commandes dont le total est inférieur ou égal à cette valeur
+ *         schema:
+ *           type: number
+ *           example: 500
+ *       - name: startDate
+ *         in: query
+ *         required: false
+ *         description: Date de début du filtre (inclus). Doit être au format ISO.
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-01-01T00:00:00.000Z"
+ *       - name: endDate
+ *         in: query
+ *         required: false
+ *         description: Date de fin du filtre (inclus). Doit être au format ISO.
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-12-31T23:59:59.000Z"
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: Rechercher une commande par mot-clé (nom du produit, description)
+ *         schema:
+ *           type: string
+ *           example: "miel"
+ *     responses:
+ *       200:
+ *         description: Succès — Retourne la liste des commandes filtrées
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "ord_64f2c5e7b5e7e72f12345678"
+ *                       totalAmount:
+ *                         type: number
+ *                         example: 120.50
+ *                       status:
+ *                         type: string
+ *                         enum:
+ *                           - CONFIRMED
+ *                           - PROCESSING
+ *                           - PENDING
+ *                           - FAILED
+ *                           - SHIPPED
+ *                           - REFUNDED
+ *                           - DELIVERED
+ *                           - CANCELLED
+ *                         example: "CONFIRMED"
+ *                       paymentStatus:
+ *                         type: string
+ *                         enum: [paid, unpaid]
+ *                         example: "paid"
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           firstName:
+ *                             type: string
+ *                             example: "Mohamed"
+ *                           lastName:
+ *                             type: string
+ *                             example: "Amine"
+ *                           email:
+ *                             type: string
+ *                             example: "amine@example.com"
+ *                       items:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             product:
+ *                               type: object
+ *                               properties:
+ *                                 title:
+ *                                   type: string
+ *                                   example: "Miel d’acacia pur"
+ *                                 subDescription:
+ *                                   type: string
+ *                                   example: "Produit 100% naturel et bio"
+ *                             variant:
+ *                               type: object
+ *                               properties:
+ *                                 amount:
+ *                                   type: number
+ *                                   example: 500
+ *                                 unit:
+ *                                   type: string
+ *                                   example: "g"
+ *                                 price:
+ *                                   type: number
+ *                                   example: 25.99
+ *                                 discountPrice:
+ *                                   type: number
+ *                                   example: 20.99
+ *                                 isOnSale:
+ *                                   type: boolean
+ *                                   example: true
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-10-10T14:25:00.000Z"
+ *                 total:
+ *                   type: integer
+ *                   example: 12
+ *                 len:
+ *                   type: integer
+ *                   example: 5
+ *                 lastPage:
+ *                   type: integer
+ *                   example: 3
+ *       401:
+ *         description: Non authentifié — utilisateur non connecté
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Authentification requise"
+ *       404:
+ *         description: Aucune commande trouvée pour les critères donnés
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Aucune commande trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+
 router.get(
   "/me",
   verifyToken,
