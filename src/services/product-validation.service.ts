@@ -14,7 +14,7 @@ export class ProductValidationService {
       where: {
         id: { in: items.map((variant) => variant.variantId) },
       },
-      include: { product: true },
+      include: { product: { select: { title: true } } },
     });
     const variantMap = new Map(
       products.map((variant) => [variant.id, variant])
@@ -22,7 +22,6 @@ export class ProductValidationService {
     let invalidItems = [];
     for (const item of items) {
       const variant = variantMap.get(item.variantId);
-
       if (!variant) {
         invalidItems.push({
           productTitle: "Produit inconnu",
@@ -47,6 +46,7 @@ export class ProductValidationService {
       if (variant.stock < item.quantity)
         invalidItems.push({
           productTitle: variant.product.title,
+          title: variant.product.title,
           variantId: variant.id,
           requestedQuantity: item.quantity,
           availableStock: variant.stock,
