@@ -194,7 +194,7 @@ router.get(
  */
 
 router.get(
-  "/me",
+  "/:id",
   validate({ schema: ValidationId, key: "params" }),
   getCategoryById
 );
