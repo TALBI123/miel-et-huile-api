@@ -15,15 +15,10 @@
 
     <script src="https://js.stripe.com/v3/"></script>
     <script>
-      const apiUrlProd = "https://miel-et-huile-api-production.up.railway.app";
-      const apiUrlDev = "http://localhost:3000";
-      const url = apiUrlDev;
-      const changeColor = (color) => {
-        console.log(color);
-      };
-
+      const localUrl = "http://localhost:3000";
+      const prodUrl = "https://miel-et-huile-api-production-143a.up.railway.app";
+      const url = localUrl;
       const fetchData = async () => {
-        // const url = "https://proactive-rebirth-production-f345.up.railway.app/login";
         const data = await fetch(`${url}/api/auth/login`, {
           method: "POST",
           headers: {
@@ -52,13 +47,13 @@
               shippingCost: Math.floor(Math.random() * 10) + 3,
               items: [
                 {
-                  productId: "2b5bcde8-aa90-48e1-a821-c5121372c62c",
-                  variantId: "535dbabc-0912-461a-b9c0-758d03ffbb12",
+                  productId: "53d37d0e-593a-4785-9980-3030d8660ef5",
+                  variantId: "d25f0a0e-06e3-4ed8-b2dc-3ff907f402ef",
                   quantity: Math.floor(Math.random() * 3) + 1,
                 },
                 {
-                  productId: "300d61a2-3bb8-4b74-83ac-de86e4c2a36e",
-                  variantId: "091c2867-76e5-40a6-8961-5babddc5294c",
+                  productId: "162cf1c5-d378-4b51-baf2-827f9a39a416",
+                  variantId: "ced61bb1-2ca8-4d7b-9eb7-5e80fc528df1",
                   quantity: Math.floor(Math.random() * 3) + 1,
                 },
               ],
@@ -77,6 +72,35 @@
           console.error("Error during checkout:", error);
         }
       };
+      // const PACKLINK_API_KEY =
+      //   "50f2dd6ba10660ecd8f3df871d2bd019dfb0db45c9dc83398b98ec1ea39222bf";
+      // const sandboxUrl = "https://sandbox.packlink.com/v1/services";
+      // const productionUrl = "https://api.packlink.com/v1/services";
+      // const url = productionUrl;
+      // const testPacklink = async () => {
+      //   try {
+      //     const res = await fetch(url, {
+      //       headers: { Authorization: `Bearer ${PACKLINK_API_KEY}` },
+      //     });
+      //     const data = await res.json();
+      //     console.log("✅ Sandbox OK:", data);
+      //   } catch (err) {
+      //     console.error(
+      //       "❌ Sandbox non actif:",
+      //       err.response?.status,
+      //       err.message
+      //     );
+      //   }
+      // };
+
+      // testPacklink();
+
+      // const apiUrlProd = "https://miel-et-huile-api-production.up.railway.app";
+      // const apiUrlDev = "http://localhost:3000";
+      // const url = apiUrlDev;
+      // const changeColor = (color) => {
+      //   console.log(color);
+      // };
     </script>
   </body>
 </html>

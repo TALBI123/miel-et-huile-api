@@ -74,20 +74,60 @@ export class WebhookService {
     session: Stripe.PaymentIntent | Stripe.Checkout.Session
   ) {
     try {
-      // if ('payment_intent' in session) {
-      // La tentative de paiement a échoué
-      console.log("❌ Paiement échoué");
-      const orderId = session.metadata?.orderId;
-      if (orderId) {
-        await prisma.order.update({
-          where: { id: orderId },
-          data: { paymentStatus: "FAILED", status: OrderStatus.CANCELLED },
-        });
+      // ✅ Vérification stricte du type (utile si tu traites à la fois PaymentIntent et Checkout.Session)
+      const isCheckoutSession = "metadata" in session && "id" in session;
+
+      if (!isCheckoutSession) {
+        console.error(
+          "❌ Session Stripe invalide ou format inattendu:",
+          session
+        );
+        return { error: "Session Stripe invalide" };
       }
+
+      const orderId = session.metadata?.orderId;
+
+      if (!orderId) {
+        console.warn("⚠️ Payment failed reçu sans orderId", {
+          paymentIntentId: session.id,
+        });
+        return {
+          warning: `⚠️ payment_failed sans orderId`,
+          paymentIntentId: session.id,
+        };
+      }
+
+      // 🔎 Vérifie si la commande existe
+      const existingOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+      });
+
+      if (!existingOrder) {
+        console.error(`❌ Aucune commande trouvée avec l'ID ${orderId}`);
+        return { error: "Commande introuvable" };
+      }
+
+      // 🚫 Vérifie si la commande est déjà marquée comme payée pour éviter les incohérences
+      if (existingOrder.paymentStatus === PaymentStatus.PAID) {
+        console.warn(
+          `⚠️ La commande ${orderId} est déjà payée, pas de mise à jour`
+        );
+        return { message: "Commande déjà payée" };
+      }
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: PaymentStatus.FAILED,
+          status: OrderStatus.CANCELLED,
+          notes: `Paiement échoué: ${session || "Erreur inconnue"}`,
+        },
+      });
       console.log(`❌ Commande ${orderId} marquée comme échouée`);
-      // }
+      return { success: true, message: "Commande marquée comme échouée" };
     } catch (error) {
-      console.error("❌ Erreur traitement payment failed:", error);
+      console.error("❌ Erreur traitement payment_failed:", error);
+      return { error: "Erreur interne lors du traitement du paiement échoué" };
     }
   }
   static async handlePaymentIntentSucceeded(session: Stripe.PaymentIntent) {
@@ -96,7 +136,10 @@ export class WebhookService {
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { paymentStatus: "PAID", status: OrderStatus.CONFIRMED },
+          data: {
+            paymentStatus: PaymentStatus.PAID,
+            status: OrderStatus.CONFIRMED,
+          },
         });
         console.log(`✅ Commande ${orderId} marquée comme réussie`);
       }
@@ -121,16 +164,40 @@ export class WebhookService {
   static async handlePaymentCanceled(session: Stripe.PaymentIntent) {
     try {
       const orderId = session.metadata?.orderId;
-      if (orderId) {
-        await prisma.order.update({
-          where: { id: orderId },
-          data: {
-            paymentStatus: PaymentStatus.FAILED,
-            status: OrderStatus.CANCELLED,
-          },
-        });
-        console.log(`❌ Commande ${orderId} annulée`);
+      // 🧩 1. Vérifier la présence et validité de l’orderId
+      if (!orderId) {
+        console.warn("⚠️ Aucun orderId trouvé dans metadata du PaymentIntent");
+        return;
       }
+      // 🧩 2. Vérifier si la commande existe
+      const order = await prisma.order.findUnique({ where: { id: orderId } });
+      if (!order) {
+        console.warn(`⚠️ Aucune commande trouvée avec l'id ${orderId}`);
+        return;
+      }
+
+      // 🧩 3. Éviter les doublons (Stripe peut renvoyer le même event)
+      if (order.status === OrderStatus.CANCELLED) {
+        console.log(`ℹ️ Commande ${orderId} déjà annulée — ignorée`);
+        return;
+      }
+
+      // 🧩 4. Vérifier le statut Stripe avant d’agir
+      if (session.status !== "canceled") {
+        console.log(
+          `⚠️ PaymentIntent ${session.id} non annulé (status: ${session.status})`
+        );
+        return;
+      }
+      // 🧩 5. Mettre à jour proprement la command
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: PaymentStatus.FAILED,
+          status: OrderStatus.CANCELLED,
+        },
+      });
+      console.log(`❌ Commande ${orderId} annulée`);
     } catch (error) {
       console.error("❌ Erreur traitement payment canceled:", error);
     }
@@ -215,12 +282,6 @@ export class WebhookService {
       console.error(`❌ Échec notification équipe`, { error });
     }
   }
-  /**
-   * Traitement principal de confirmation de commande
-   */
-  /**
-   * Gestion des situations critiques
-   */
   private async handleCriticalPaymentWithoutOrder(
     session: Stripe.Checkout.Session
   ) {
