@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { handleServerError } from "../../utils/helpers";
 const getCallbackURL = () => {
-  return process.env.NODE_ENV !== "development"
+  return process.env.NODE_ENV === "development"
     ? process.env.FRONTEND_LOCAL_URL
     : process.env.FRONTEND_PROD_URL;
 };
