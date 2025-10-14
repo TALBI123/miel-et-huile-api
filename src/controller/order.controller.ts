@@ -14,8 +14,9 @@ export const getOrders = async (req: Request, res: Response) => {
         id: true,
         totalAmount: true,
         status: true,
+        paymentStatus: true,
         user: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+          select: {  firstName: true, lastName: true, email: true },
         },
         createdAt: true,
       },
@@ -26,7 +27,6 @@ export const getOrders = async (req: Request, res: Response) => {
         where: query.where,
       }),
     ]);
-    //
     // const orders = await prisma.order.findMany(query);
     if (!orders.length)
       return res.status(StatusCodes.NOT_FOUND).json({
