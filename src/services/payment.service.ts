@@ -41,7 +41,7 @@ export const createStripeSession = async (
   const sessionParams: any = {
     // payment_method_types: ["card"],
     line_items,
-    // mode: "payment",
+    mode: "payment",
     metadata: {
       orderId: order.id,
       email,
