@@ -53,7 +53,7 @@ export const getOrders = async (req: Request, res: Response) => {
   }
 };
 
-export const getOrderById = async (req: Request, res: Response) => {
+export const getMyOrders = async (req: Request, res: Response) => {
   try {
     const { id } = req.user!;
     console.log("User ID:", id);
@@ -112,6 +112,60 @@ export const getOrderById = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+export const getOrderById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const order = await prisma.order.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        totalAmount: true,
+        status: true,
+        paymentStatus: true,
+        createdAt: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        items: {
+          select: {
+            quantity: true,
+            product: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+            variant: {
+              select: {
+                amount: true,
+                unit: true,
+                price: true,
+                discountPrice: true,
+                isOnSale: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!order)
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Commande non trouvée",
+      });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: order,
+    });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+};
+
 export const updateOrder = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

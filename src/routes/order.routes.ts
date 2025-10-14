@@ -3,6 +3,7 @@ import { verifyAdmin, verifyToken } from "../middlewares/auth";
 import { validate } from "../middlewares/validate";
 import {
   cancelOrder,
+  getMyOrders,
   getOrderById,
   getOrders,
 } from "../controller/order.controller";
@@ -167,6 +168,14 @@ router.get(
   verifyAdmin,
   validate({ schema: queryOrderSchema, skipSave: true, key: "query" }),
   getOrders
+);
+
+router.get(
+  "/:id",
+  verifyToken,
+  verifyAdmin,
+  validate({ schema: ValidationId, key: "params" }),
+  getOrderById
 );
 /**
  * @swagger
@@ -395,8 +404,7 @@ router.get(
   "/me",
   verifyToken,
   validate({ schema: queryOrderSchema, skipSave: true, key: "query" }),
-
-  getOrderById
+  getMyOrders
 ); // détail d’une commande
 router.put(
   "/:id/cancel",
