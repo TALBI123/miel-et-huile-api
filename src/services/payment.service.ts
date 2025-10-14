@@ -50,7 +50,7 @@ export const createStripeSession = async (
   };
   if (!isModeDev) {
     sessionParams.ui_mode = "embedded";
-    sessionParams.return_url = `${process.env.FRONTEND_PROD_URL}/shipping?session_id={CHECKOUT_SESSION_ID}`;
+    sessionParams.return_url = `${process.env.FRONTEND_PROD_URL}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`;
   } else {
     sessionParams.success_url = `${process.env.FRONTEND_PROD_URL}/success?session_id={CHECKOUT_SESSION_ID}`;
     sessionParams.cancel_url = `${process.env.FRONTEND_PROD_URL}/cancel`;
