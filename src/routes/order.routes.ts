@@ -171,135 +171,6 @@ router.get(
 );
 /**
  * @swagger
- * /orders/{id}:
- *   get:
- *     summary: Récupérer une commande par son identifiant
- *     description: Retourne les détails complets d'une commande, y compris les informations utilisateur et les articles associés.
- *     tags:
- *       - Commandes
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Identifiant unique de la commande
- *     responses:
- *       200:
- *         description: Commande récupérée avec succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       example: "ord_abc123"
- *                     totalAmount:
- *                       type: number
- *                       example: 129.99
- *                     status:
- *                       type: string
- *                       example: "DELIVERED"
- *                     paymentStatus:
- *                       type: string
- *                       example: "PAID"
- *                     createdAt:
- *                       type: string
- *                       format: date-time
- *                       example: "2025-10-14T13:40:00.000Z"
- *                     user:
- *                       type: object
- *                       properties:
- *                         firstName:
- *                           type: string
- *                           example: "Mohamed"
- *                         lastName:
- *                           type: string
- *                           example: "El Amrani"
- *                         email:
- *                           type: string
- *                           example: "mohamed@example.com"
- *                     items:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           quantity:
- *                             type: integer
- *                             example: 2
- *                           product:
- *                             type: object
- *                             properties:
- *                               id:
- *                                 type: string
- *                                 example: "prod_123"
- *                               title:
- *                                 type: string
- *                                 example: "Miel de lavande"
- *                           variant:
- *                             type: object
- *                             properties:
- *                               amount:
- *                                 type: number
- *                                 example: 500
- *                               unit:
- *                                 type: string
- *                                 example: "g"
- *                               price:
- *                                 type: number
- *                                 example: 12.99
- *                               discountPrice:
- *                                 type: number
- *                                 example: 9.99
- *                               isOnSale:
- *                                 type: boolean
- *                                 example: true
- *       404:
- *         description: Commande non trouvée
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: Commande non trouvée
- *       500:
- *         description: Erreur serveur interne
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: Erreur serveur
- */
-
-router.get(
-  "/:id",
-  verifyToken,
-  verifyAdmin,
-  validate({ schema: ValidationId, key: "params" }),
-  getOrderById
-);
-/**
- * @swagger
  * /orders/me:
  *   get:
  *     summary: Récupérer les commandes de l'utilisateur connecté
@@ -524,8 +395,139 @@ router.get(
 router.get(
   "/me",
   verifyToken,
+  validate({ schema: queryOrderSchema, skipSave: true, key: "query" }),
   getMyOrders
 ); // détail d’une commande
+/**
+ * @swagger
+ * /orders/{id}:
+ *   get:
+ *     summary: Récupérer une commande par son identifiant
+ *     description: Retourne les détails complets d'une commande, y compris les informations utilisateur et les articles associés.
+ *     tags:
+ *       - Commandes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Identifiant unique de la commande
+ *     responses:
+ *       200:
+ *         description: Commande récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "ord_abc123"
+ *                     totalAmount:
+ *                       type: number
+ *                       example: 129.99
+ *                     status:
+ *                       type: string
+ *                       example: "DELIVERED"
+ *                     paymentStatus:
+ *                       type: string
+ *                       example: "PAID"
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2025-10-14T13:40:00.000Z"
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         firstName:
+ *                           type: string
+ *                           example: "Mohamed"
+ *                         lastName:
+ *                           type: string
+ *                           example: "El Amrani"
+ *                         email:
+ *                           type: string
+ *                           example: "mohamed@example.com"
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           quantity:
+ *                             type: integer
+ *                             example: 2
+ *                           product:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 example: "prod_123"
+ *                               title:
+ *                                 type: string
+ *                                 example: "Miel de lavande"
+ *                           variant:
+ *                             type: object
+ *                             properties:
+ *                               amount:
+ *                                 type: number
+ *                                 example: 500
+ *                               unit:
+ *                                 type: string
+ *                                 example: "g"
+ *                               price:
+ *                                 type: number
+ *                                 example: 12.99
+ *                               discountPrice:
+ *                                 type: number
+ *                                 example: 9.99
+ *                               isOnSale:
+ *                                 type: boolean
+ *                                 example: true
+ *       404:
+ *         description: Commande non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Commande non trouvée
+ *       500:
+ *         description: Erreur serveur interne
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Erreur serveur
+ */
+
+router.get(
+  "/:id",
+  verifyToken,
+  verifyAdmin,
+  validate({ schema: ValidationId, key: "params" }),
+  getOrderById
+);
+
 router.put(
   "/:id/cancel",
   verifyToken,

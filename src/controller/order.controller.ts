@@ -56,7 +56,6 @@ export const getOrders = async (req: Request, res: Response) => {
 export const getMyOrders = async (req: Request, res: Response) => {
   try {
     const { id } = req.user!;
-    console.log("User ID:", id);
     const query = QueryBuilderService.buildAdvancedQuery(Model.ORDER, {
       ...(res.locals.validated || {}),
       champPrice: "totalAmount",
