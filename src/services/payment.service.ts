@@ -39,9 +39,9 @@ export const createStripeSession = async (
   const isModeDev = process.env.NODE_ENV === "development";
   // console.log(line_items, shippingCost);
   const sessionParams: any = {
-    payment_method_types: ["card"],
+    // payment_method_types: ["card"],
     line_items,
-    mode: "payment",
+    // mode: "payment",
     metadata: {
       orderId: order.id,
       email,
