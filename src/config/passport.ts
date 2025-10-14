@@ -13,11 +13,11 @@ interface GoogleAccountInfo {
 }
 console.log(
   "🎯 Client ID:",
-  process.env.GOOGLE_CLIENT_ID ? "✓ Présent" : "✗ Manquant"
+  process.env.GOOGLE_CLIENT_ID ? "✓ Présent" : "✗ Manquant",process.env.GOOGLE_CLIENT_ID
 );
 console.log(
   "🎯 Client Secret:",
-  process.env.GOOGLE_CLIENT_SECRET ? "✓ Présent" : "✗ Manquant"
+  process.env.GOOGLE_CLIENT_SECRET ? "✓ Présent" : "✗ Manquant",process.env.GOOGLE_CLIENT_SECRET
 );
 console.log(
   "🎯 Backend URL:",
@@ -41,6 +41,7 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        console.log("Google profile:", profile);
         // Here you can create or find a user in your database
         if (!profile.id || !profile.emails?.[0]?.value) {
           return done(
@@ -57,7 +58,7 @@ passport.use(
         // Create a user object based on the Google profile
         let existingUser = await prisma.user.findFirst({
           where: { OR: [{ email: email }, { googleId: googleId }] },
-          select: { id: true, googleId: true,role:true },
+          select: { id: true, googleId: true, role: true },
         });
         //🚨 2. GESTION DES CONFLITS
         if (existingUser) {
