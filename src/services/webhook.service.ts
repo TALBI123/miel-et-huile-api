@@ -220,18 +220,49 @@ export class WebhookService {
     }
   }
   static async handleSessionExpired(session: Stripe.Checkout.Session) {
+    const orderId = session.metadata?.orderId;
+    if (!orderId) {
+      console.warn("⚠️ Session expirée sans orderId dans metadata");
+      return;
+    }
     try {
-      const orderId = session.metadata?.orderId;
-      if (orderId) {
-        await prisma.order.update({
+      await prisma.$transaction(async (tx) => {
+        // 1️⃣ Vérifie si la commande existe
+        const order = await tx.order.findUnique({ where: { id: orderId } });
+
+        if (!order) {
+          console.warn(
+            `⚠️ Commande ${orderId} introuvable lors de l'expiration`
+          );
+          return;
+        }
+
+        // 2️⃣ Vérifie si elle n’a pas déjà un état final
+        const finalStatuses: PaymentStatus[] = [
+          PaymentStatus.PAID,
+          PaymentStatus.REFUNDED,
+          PaymentStatus.FAILED,
+        ];
+
+        if (finalStatuses.includes(order.paymentStatus)) {
+          console.log(
+            `ℹ️ Commande ${orderId} déjà traitée (${order.paymentStatus}), ignorée.`
+          );
+          return;
+        }
+
+        // 3️⃣ Met à jour la commande
+        await tx.order.update({
           where: { id: orderId },
           data: {
             paymentStatus: PaymentStatus.EXPIRED,
             status: OrderStatus.CANCELLED,
+            notes: `Session Stripe expirée automatiquement à ${new Date().toISOString()}`,
           },
         });
-        console.log(`⏰ Commande ${orderId} expirée`);
-      }
+      });
+
+      console.log(`⏰ Commande ${orderId} expirée`);
     } catch (error) {
       console.error("❌ Erreur traitement session expired:", error);
     }
