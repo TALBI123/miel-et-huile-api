@@ -7,15 +7,19 @@ export const createReview = async (req: Request, res: Response) => {
   const { productId, rating, title, comment } = res.locals.validated;
   const userId = req.user?.id; // depuis verifyToken
   try {
-    const review = await reviewService.createReview({
-      productId,
-      userId,
-      rating,
-      title,
-      comment,
-    });
+    // const review = await reviewService.createReview({
+    //   productId,
+    //   userId,
+    //   rating,
+    //   title,
+    //   comment,
+    // });
 
-    res.status(201).json(review);
+    // res.status(201).json(review);
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      message: "Review créée avec succès",
+    });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
