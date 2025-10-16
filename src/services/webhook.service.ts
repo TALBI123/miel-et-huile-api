@@ -171,7 +171,7 @@ export class WebhookService {
       }
 
       // Empêche une réécriture inutile si le statut est déjà correct
-      if (existingOrder.paymentStatus === "REQUIRES_ACTION") {
+      if (existingOrder.paymentStatus === PaymentStatus.REQUIRES_ACTION) {
         console.log(
           `ℹ️ Commande ${orderId} déjà marquée comme REQUIRES_ACTION.`
         );
@@ -188,6 +188,43 @@ export class WebhookService {
       console.log(`🔄 Commande ${orderId} nécessite une action`);
     } catch (error) {
       console.error("❌ Erreur traitement payment requires action:", error);
+    }
+  }
+  static async handlePaymentProcessing(session: Stripe.PaymentIntent) {
+    const orderId = session.metadata?.orderId;
+    if (!orderId) {
+      console.warn(
+        "⚠️ Aucun orderId trouvé dans le metadata du PaymentIntent."
+      );
+      return;
+    }
+    try {
+      // Vérifie que la commande existe avant mise à jour
+      const existingOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, paymentStatus: true },
+      });
+
+      if (!existingOrder) {
+        console.error(
+          `❌ Commande introuvable pour le paymentIntent ${session.id}`
+        );
+        return;
+      }
+
+      // Empêche une réécriture inutile si le statut est déjà correct
+      if (existingOrder.paymentStatus === PaymentStatus.PROCESSING) {
+        console.log(`ℹ️ Commande ${orderId} déjà marquée comme PROCESSING.`);
+        return;
+      }
+      // Mise à jour du statut
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { paymentStatus: "PROCESSING", status: "PENDING" },
+      });
+      console.log(`⌛ [Stripe] Commande ${orderId} en cours de traitement.`);
+    } catch (err) {
+      console.error("❌ Erreur traitement payment requires action:", err);
     }
   }
   static async handlePaymentCanceled(session: Stripe.PaymentIntent) {
@@ -282,21 +319,90 @@ export class WebhookService {
   static async handleDisputeCreated(session: Stripe.Dispute) {
     try {
       const orderId = session.metadata?.orderId;
-      if (orderId) {
-        await prisma.order.update({
-          where: { id: orderId },
-          data: {
-            paymentStatus: PaymentStatus.DISPUTED,
-            status: OrderStatus.PENDING,
-          },
-        });
-        console.log(`⚠️ Commande ${orderId} en litige`);
+
+      if (!orderId) {
+        console.warn(`⚠️ Aucun orderId trouvé pour le chargeId ${session.id}`);
+        return;
       }
+
+      // Vérifie que la commande existe
+      const existingOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, paymentStatus: true },
+      });
+
+      if (!existingOrder) {
+        console.error(`❌ Commande introuvable pour le chargeId ${session.id}`);
+        return;
+      }
+
+      // Idempotence : ne rien faire si déjà en litige
+      if (existingOrder.paymentStatus === "DISPUTED") {
+        console.log(`ℹ️ Commande ${orderId} déjà marquée comme DISPUTED.`);
+        return;
+      }
+
+      // Met à jour le statut pour refléter le litige
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: PaymentStatus.DISPUTED,
+          status: OrderStatus.ON_HOLD, // ou “ON_HOLD_FOR_DISPUTE”
+        },
+      });
+
+      console.log(
+        `⚠️ Commande ${orderId} en litige (chargeback). Prévenir le support et collecter preuves.`
+      );
     } catch (error) {
       console.error("❌ Erreur traitement dispute created:", error);
     }
   }
+  /**
+   * 🔄 Met à jour le statut d'un litige en cours.
+   * Utilisé pour refléter l’évolution d’un litige Stripe côté back-office.
+   */
+  static async handleDisputeUpdated(session: Stripe.Dispute) {
+    const orderId = session.metadata?.orderId;
+    if (!orderId) {
+      console.warn(`⚠️ Aucun orderId trouvé pour le chargeId ${session.id}`);
+      return;
+    }
+    try {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: session.status as PaymentStatus,
+          updatedAt: new Date(),
+        },
+      });
+      console.log(`🟡 Litige ${session.id} mis à jour (${session.status}).`);
+    } catch (err) {
+      console.log("❌ Erreur traitement dispute updated:", err);
+    }
+  }
 
+  /**
+   * 🏁 Gère la clôture d’un litige Stripe.
+   * Met à jour la commande selon le verdict (gagné ou perdu).
+   */
+  static async handleDisputeClosed(session: Stripe.Dispute) {
+    const orderId = session.metadata?.orderId;
+
+    if (!orderId) {
+      console.warn(
+        "⚠️ handleDisputeClosed: orderId manquant dans les métadonnées Stripe."
+      );
+      return;
+    }
+    const isWon = session.status === "won";
+    const newPaymentStatus = isWon ? PaymentStatus.PAID : PaymentStatus.REFUNDED;
+    const newOrderStatus = isWon ? OrderStatus.RESOLVED : OrderStatus.CANCELLED;
+    try {
+    } catch (err) {
+      console.log("❌ Erreur traitement dispute closed:", err);
+    }
+  }
   static async handleChargeRefunded(refund: Stripe.Charge) {
     try {
       const paymentIntentId = refund.payment_intent as string;

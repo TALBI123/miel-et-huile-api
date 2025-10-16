@@ -55,7 +55,7 @@ export const createStripeSession = async (
     sessionParams.success_url = `${process.env.FRONTEND_PROD_URL}/success?session_id={CHECKOUT_SESSION_ID}`;
     sessionParams.cancel_url = `${process.env.FRONTEND_PROD_URL}/cancel`;
   }
-  
+
   const session = await stripe.checkout.sessions.create(sessionParams);
   return { clientSecret: session.client_secret, id: session.id };
 };
@@ -69,12 +69,28 @@ export const handleStripeWebhook = async (event: Stripe.Event) => {
           event.data.object as Stripe.Checkout.Session
         );
         break;
-
       // Événements d'échec de paiement
       case "checkout.session.async_payment_failed":
       case "payment_intent.payment_failed":
         await WebhookService.handlePaymentFailed(
           event.data.object as Stripe.PaymentIntent | Stripe.Checkout.Session
+        );
+        break;
+      // Événements de remboursement
+      case "charge.dispute.created":
+        await WebhookService.handleDisputeCreated(
+          event.data.object as Stripe.Dispute
+        );
+        break;
+      case "charge.dispute.updated":
+        await WebhookService.handleDisputeUpdated(
+          event.data.object as Stripe.Dispute
+        );
+        break;
+
+      case "charge.dispute.closed":
+        await WebhookService.handleDisputeClosed(
+          event.data.object as Stripe.Dispute
         );
         break;
 
@@ -85,9 +101,14 @@ export const handleStripeWebhook = async (event: Stripe.Event) => {
       //   );
       //   break;
 
-      // case "payment_intent.requires_action":
-      //   await WebhookService.handlePaymentRequiresAction(event.data.object  as Stripe.PaymentIntent);
-      //   break;
+      case "payment_intent.requires_action":
+        await WebhookService.handlePaymentRequiresAction(
+          event.data.object as Stripe.PaymentIntent
+        );
+        break;
+      case "payment_intent.processing":
+        await WebhookService.handlePaymentProcessing(event.data.object);
+        break;
 
       case "payment_intent.canceled":
         await WebhookService.handlePaymentCanceled(
@@ -95,16 +116,6 @@ export const handleStripeWebhook = async (event: Stripe.Event) => {
         );
         break;
 
-      // Événements de remboursement
-      case "charge.dispute.created":
-        await WebhookService.handleDisputeCreated(
-          event.data.object as Stripe.Dispute
-        );
-        break;
-
-      // case "invoice.payment_failed":
-      //   await WebhookService.handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
-      //   break;
       // Événements de session expirée
       case "checkout.session.expired":
         await WebhookService.handleSessionExpired(

@@ -1,5 +1,4 @@
 import { OrderItem, PrismaClient } from "@prisma/client";
-import { ApiResponse } from "../types/type";
 const prisma = new PrismaClient();
 export class ProductValidationService {
   /**✅ 2. Valide les articles du panier avant la création d’une commande */

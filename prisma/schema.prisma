@@ -16,13 +16,9 @@ model User {
   email             String               @unique
   password          String?
   phoneNumber       String?
-  address           String?
   city              String?
   state             String?
   postalCode        String?
-  image             String?
-  publicId          String?              @unique
-  googleId          String?              @unique
   country           String?
   newsletter        Boolean              @default(false)
   termsAccepted     Boolean              @default(false)
@@ -30,6 +26,10 @@ model User {
   role              Role                 @default(USER)
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
+  address           String?
+  image             String?
+  publicId          String?              @unique
+  googleId          String?              @unique
   order             Order[]
   review            Review[]
   verificationToken VerificationTokens[]
@@ -44,11 +44,11 @@ model Category {
   name        String    @unique
   image       String
   publicId    String
-  description String?
-  isActive    Boolean   @default(false)
-  slug        String    @unique
   createdAt   DateTime  @default(now())
+  description String?
+  slug        String    @unique
   updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(false)
   products    Product[]
   Banner      Banner[]
 
@@ -57,14 +57,14 @@ model Category {
 
 model Product {
   id             String           @id @default(dbgenerated("gen_random_uuid()"))
-  title          String
-  subDescription String           @default("")
-  description    String
-  rating         Float?           @default(0)
-  isActive       Boolean          @default(false)
   categoryId     String
   createdAt      DateTime         @default(now())
+  description    String
   updatedAt      DateTime         @updatedAt
+  title          String
+  rating         Float?           @default(0)
+  subDescription String           @default("")
+  isActive       Boolean          @default(false)
   category       Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   review         Review[]
   orderItems     OrderItem[]
@@ -89,15 +89,15 @@ model ProductImage {
 
 model ProductVariant {
   id                 String      @id @default(dbgenerated("gen_random_uuid()"))
-  amount             Float
-  unit               String
   price              Float
   discountPrice      Float?      @default(0)
   discountPercentage Int?        @default(0)
   isOnSale           Boolean?    @default(false)
-  isActive           Boolean     @default(true)
   stock              Int         @default(0)
   productId          String
+  isActive           Boolean     @default(true)
+  unit               String
+  amount             Float
   product            Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   OrderItem          OrderItem[]
 
@@ -112,13 +112,13 @@ model Order {
   userId                String
   totalAmount           Float
   status                OrderStatus    @default(PENDING)
-  paymentMethod         PaymentMethod? @default(CARD)
   paymentStatus         PaymentStatus  @default(PENDING)
-  stripeSessionId       String?        @unique
-  stripePaymentIntentId String?        @unique
-  notes                 String?
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
+  stripePaymentIntentId String?        @unique
+  stripeSessionId       String?        @unique
+  paymentMethod         PaymentMethod? @default(CARD)
+  notes                 String?
   user                  User           @relation(fields: [userId], references: [id])
   items                 OrderItem[]
 
@@ -128,14 +128,49 @@ model Order {
   @@index([paymentStatus])
   @@index([stripeSessionId])
 }
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  ON_HOLD
+  CANCELLED
+  REFUNDED
+  RESOLVED
+}
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PROCESSING
+  REQUIRES_ACTION
+  DISPUTED
+  EXPIRED
+}
+
+enum PaymentMethod {
+  CARD
+  PAYPAL
+  APPLE_PAY
+  GOOGLE_PAY
+  BANCONTACT
+  IDEAL
+  SOFORT
+  SEPA_DEBIT
+  GIROPAY
+  KLARNA
+  AFTERPAY
+}
 model OrderItem {
   id        String         @id @default(dbgenerated("gen_random_uuid()"))
   orderId   String
   productId String
-  variantId String
   quantity  Int            @default(1)
   price     Float
+  variantId String
   order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product        @relation(fields: [productId], references: [id])
   variant   ProductVariant @relation(fields: [variantId], references: [id])
@@ -249,49 +284,39 @@ model Banner {
   category   Category?      @relation(fields: [categoryId], references: [id])
 }
 
+model Alert {
+  id         String        @id @default(dbgenerated("gen_random_uuid()"))
+  type       AlertType
+  message    String
+  entityType String // ex: "ORDER", "PAYMENT", "DISPUTE"
+  entityId   String? // ex: id de la commande ou du paiement concerné
+  severity   AlertSeverity @default(INFO)
+  resolved   Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  resolvedAt DateTime?
+}
+
+enum AlertType {
+  DISPUTE_CREATED
+  DISPUTE_UPDATED
+  DISPUTE_CLOSED
+  PAYMENT_FAILED
+  STOCK_ISSUE
+  SYSTEM_ERROR
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
 enum Role {
   USER
   ADMIN
 }
 
-enum OrderStatus {
-  PENDING // Commande créée, en attente de paiement
-  CONFIRMED // ✅ Paiement validé, commande confirmée
-  PROCESSING // En préparation (stock réservé, en cours de traitement)
-  READY_FOR_SHIPMENT // Prêt pour expédition
-  SHIPPED // Expédié - numéro de suivi ajouté
-  IN_TRANSIT // En cours de livraison
-  DELIVERED // Livrée avec succès
-  CANCELLED // Annulée avant paiement
-  REFUNDED // Remboursée après paiement
-  REQUIRES_MANUAL_REVIEW // ⚠️ Nécessite intervention manuelle
-  FAILED // Échec du traitement
-}
 
-enum PaymentStatus {
-  PENDING           // En attente de paiement
-  PAID              // ✅ Paiement confirmé
-  FAILED            // Échec du paiement
-  REFUNDED          // Remboursé totalement
-  PARTIALLY_REFUNDED // Remboursé partiellement
-  DISPUTED          // Litige ouvert
-  EXPIRED          // Paiement expiré
-  REQUIRES_ACTION   // Action requise (3DS, etc.)
-}
-
-enum PaymentMethod {
-  CARD
-  PAYPAL
-  APPLE_PAY
-  GOOGLE_PAY
-  BANCONTACT
-  IDEAL
-  SOFORT
-  SEPA_DEBIT
-  GIROPAY
-  KLARNA
-  AFTERPAY
-}
 
 enum ProductType {
   HONEY
