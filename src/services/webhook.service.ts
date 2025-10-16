@@ -147,20 +147,49 @@ export class WebhookService {
       console.error("❌ Erreur traitement payment succeeded:", error);
     }
   }
-  // static async handlePaymentRequiresAction(session: Stripe.PaymentIntent) {
-  //   try {
-  //     const orderId = session.metadata?.orderId;
-  //     if (orderId) {
-  //       await prisma.order.update({
-  //         where: { id: orderId },
-  //         data: { paymentStatus: "REQUIRES_ACTION", status: "PENDING" },
-  //       });
-  //       console.log(`🔄 Commande ${orderId} nécessite une action`);
-  //     }
-  //   } catch (error) {
-  //     console.error("❌ Erreur traitement payment requires action:", error);
-  //   }
-  // }
+  static async handlePaymentRequiresAction(session: Stripe.PaymentIntent) {
+    try {
+      const orderId = session.metadata?.orderId;
+      if (!orderId) {
+        console.warn(
+          "⚠️ Aucun orderId trouvé dans le metadata du PaymentIntent."
+        );
+        return;
+      }
+
+      // Vérifie que la commande existe avant mise à jour
+      const existingOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, paymentStatus: true },
+      });
+
+      if (!existingOrder) {
+        console.error(
+          `❌ Commande introuvable pour le paymentIntent ${session.id}`
+        );
+        return;
+      }
+
+      // Empêche une réécriture inutile si le statut est déjà correct
+      if (existingOrder.paymentStatus === "REQUIRES_ACTION") {
+        console.log(
+          `ℹ️ Commande ${orderId} déjà marquée comme REQUIRES_ACTION.`
+        );
+        return;
+      }
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: PaymentStatus.REQUIRES_ACTION,
+          status: OrderStatus.PENDING,
+        },
+      });
+      console.log(`🔄 Commande ${orderId} nécessite une action`);
+    } catch (error) {
+      console.error("❌ Erreur traitement payment requires action:", error);
+    }
+  }
   static async handlePaymentCanceled(session: Stripe.PaymentIntent) {
     try {
       const orderId = session.metadata?.orderId;
@@ -200,23 +229,6 @@ export class WebhookService {
       console.log(`❌ Commande ${orderId} annulée`);
     } catch (error) {
       console.error("❌ Erreur traitement payment canceled:", error);
-    }
-  }
-  static async handleDisputeCreated(session: Stripe.Dispute) {
-    try {
-      const orderId = session.metadata?.orderId;
-      if (orderId) {
-        await prisma.order.update({
-          where: { id: orderId },
-          data: {
-            paymentStatus: PaymentStatus.DISPUTED,
-            status: OrderStatus.PENDING,
-          },
-        });
-        console.log(`⚠️ Commande ${orderId} en litige`);
-      }
-    } catch (error) {
-      console.error("❌ Erreur traitement dispute created:", error);
     }
   }
   static async handleSessionExpired(session: Stripe.Checkout.Session) {
@@ -267,6 +279,24 @@ export class WebhookService {
       console.error("❌ Erreur traitement session expired:", error);
     }
   }
+  static async handleDisputeCreated(session: Stripe.Dispute) {
+    try {
+      const orderId = session.metadata?.orderId;
+      if (orderId) {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            paymentStatus: PaymentStatus.DISPUTED,
+            status: OrderStatus.PENDING,
+          },
+        });
+        console.log(`⚠️ Commande ${orderId} en litige`);
+      }
+    } catch (error) {
+      console.error("❌ Erreur traitement dispute created:", error);
+    }
+  }
+
   static async handleChargeRefunded(refund: Stripe.Charge) {
     try {
       const paymentIntentId = refund.payment_intent as string;
@@ -291,82 +321,6 @@ export class WebhookService {
       );
     } catch (err) {
       console.error("Erreur handleChargeRefunded:", err);
-    }
-  }
-  // Notification équipe pour intervention manuelle
-  private async notifyTeamCriticalIssue(session: Stripe.Checkout.Session) {
-    try {
-      // Email d'alerte à l'équipe
-      await sendEmail({
-        to: process.env.ADMIN_EMAIL || "morocostudent@gmail.com",
-        subject: "🚨 INTERVENTION REQUISE - Paiement sans commande",
-        htmlFileName: "critical-alert.ejs", // Créer ce template
-        context: {
-          sessionId: session.id,
-          paymentIntentId: session.payment_intent,
-          amount: session.amount_total,
-          customerEmail: session.customer_details?.email,
-          timestamp: new Date().toISOString(),
-        },
-      });
-    } catch (error) {
-      console.error(`❌ Échec notification équipe`, { error });
-    }
-  }
-  private async handleCriticalPaymentWithoutOrder(
-    session: Stripe.Checkout.Session
-  ) {
-    try {
-    } catch (error) {
-      console.error(`🚨 Impossible de créer commande d'urgence`, {
-        error,
-        sessionId: session.id,
-      });
-    }
-  }
-  private static async sendConfirmationEmailSafely(
-    orderId: string,
-    email: string,
-    customerName: string,
-    order: any
-  ) {
-    try {
-      if (!email || !email.includes("@")) {
-        console.warn(`⚠️ Email invalide pour commande ${orderId}: ${email}`);
-        return;
-      }
-
-      const orderData = createOrderData({
-        customerEmail: email,
-        customerName: customerName || "Client",
-        items: order.items.map((item: any) => ({
-          title: item.product.title,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-      });
-
-      await sendEmail({
-        to: email,
-        subject: "✅ Confirmation de votre commande",
-        htmlFileName: "order-confirmation-email.ejs",
-        context: orderData,
-      });
-
-      console.log(`📧 Email de confirmation envoyé`, { orderId, email });
-    } catch (emailError) {
-      console.error(`⚠️ Échec envoi email pour commande ${orderId}`, {
-        email,
-        error: emailError,
-      });
-
-      // Enregistrer l'échec pour retry ultérieur
-      // await prisma.order.update({
-      //   where: { id: orderId },
-      //   data: {
-      //     notes: `Échec envoi email: ${emailError instanceof Error ? emailError.message : 'Erreur inconnue'}`
-      //   }
-      // }).catch(() => {}); // Ignore les erreurs de logging
     }
   }
 }
