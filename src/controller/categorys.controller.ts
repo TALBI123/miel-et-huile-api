@@ -8,14 +8,11 @@ import {
   deletePathToCloudinary,
   uploadBufferToCloudinary,
 } from "../services/upload.service";
-import {
-  ALLOWED_CATEGORY_PROPERTIES,
-  EnumRelationTables,
-  Model,
-} from "../data/allowedNames";
-import { filterObjectByKeys, isEmptyObject } from "../utils/object";
-import { buildProductQuery, objFiltered } from "../utils/filter";
 import { QueryBuilderService } from "../services/queryBuilder.service";
+import { filterObjectByKeys, isEmptyObject } from "../utils/object";
+import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
+import { buildProductQuery, objFiltered } from "../utils/filter";
+import { EnumRelationTables, Model } from "../types/enums";
 import { CategoryWithRelations } from "types/prisma.type";
 const prisma = new PrismaClient();
 

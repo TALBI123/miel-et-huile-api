@@ -28,18 +28,7 @@ export const ALLOWED_FILTERING_TABLES = [
   "products",
 ] as const;
 
-export enum EnumRelationTables {
-  PRODUCT = "products",
-  CATEGORY = "categories",
-  VARIANT = "variants",
-  ORDER = "orders",
-}
-export enum Model {
-  PRODUCT = "product",
-  CATEGORY = "category",
-  VARIANT = "variant",
-  ORDER = "order",
-}
+
 export type AllowedFilteringTables = (typeof ALLOWED_FILTERING_TABLES)[number];
 export const ALLOWED_ORDER_STATUSES = [
   "CONFIRMED",

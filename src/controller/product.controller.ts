@@ -22,9 +22,8 @@ import {
 import {
   ALLOWED_PRODUCT_PROPERTIES,
   ALLOWED_PRODUCT_VARIANT_PROPERTIES,
-  EnumRelationTables,
-  Model,
 } from "../data/allowedNames";
+import { EnumRelationTables, Model } from "../types/enums";
 import { ProductWithRelations } from "../types/prisma.type";
 
 const prisma = new PrismaClient();

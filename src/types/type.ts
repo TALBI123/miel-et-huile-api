@@ -59,6 +59,7 @@ export interface Product {
   isActive?: boolean;
   images?: { id: string; image: string; publicId: string }[];
 }
+
 export interface ProductVariant {
   amount: number;
   unit: string;

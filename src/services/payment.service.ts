@@ -76,7 +76,8 @@ export const handleStripeWebhook = async (event: Stripe.Event) => {
           event.data.object as Stripe.PaymentIntent | Stripe.Checkout.Session
         );
         break;
-      // Événements de remboursement
+        
+      // Événements de litige
       case "charge.dispute.created":
         await WebhookService.handleDisputeCreated(
           event.data.object as Stripe.Dispute

@@ -6,16 +6,16 @@ import {
   AllowedFilteringTables,
   AllowedOrderPaymentStatuses,
   AllowedOrderStatuses,
-  EnumRelationTables,
+  
 } from "../data/allowedNames";
-
+import { EnumRelationTables } from "../types/enums";
 type RelationMode = "with" | "without" | "all";
 type RelationFilter = {
   relation: string; // ex: "variants" | "category"
   mode: RelationMode;
   nested?: Record<string, any>; // filtres internes
 };
-type TypeTalble = "product" | "category" | "order" | "user" | "orderItem";
+// type TypeTalble = "product" | "category" | "order" | "user" | "orderItem";
 type FilterOptions = {
   page?: number;
   limit?: number;
