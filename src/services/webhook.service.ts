@@ -1,10 +1,17 @@
-import { OrderStatus, PrismaClient, PaymentStatus } from "@prisma/client";
-import { stripe, Stripe } from "../config/stripe";
-import { sendEmail } from "./emailService.service";
-import { InventoryService } from "./inventory.service";
-import { createOrderData } from "../utils/object";
 import { OrderProcessingService } from "./order-processing.service";
-const prisma = new PrismaClient();
+import { AlertService, alertService } from "./alert.service";
+import { InventoryService } from "./inventory.service";
+import { sendEmail } from "./emailService.service";
+import { createOrderData } from "../utils/object";
+import { stripe, Stripe } from "../config/stripe";
+import { Model } from "../types/enums";
+import prisma from "../config/db";
+import {
+  AlertSeverity,
+  AlertType,
+  OrderStatus,
+  PaymentStatus,
+} from "@prisma/client";
 
 export class WebhookService {
   private static async updateStockAndConfirmOrder(orderId: string) {
@@ -317,45 +324,44 @@ export class WebhookService {
     }
   }
   static async handleDisputeCreated(session: Stripe.Dispute) {
+    const orderId = session.metadata?.orderId;
+
+    if (!orderId) {
+      console.warn(`⚠️ Aucun orderId trouvé pour le chargeId ${session.id}`);
+      return;
+    }
     try {
-      const orderId = session.metadata?.orderId;
-
-      if (!orderId) {
-        console.warn(`⚠️ Aucun orderId trouvé pour le chargeId ${session.id}`);
-        return;
-      }
-
-      // Vérifie que la commande existe
-      const existingOrder = await prisma.order.findUnique({
-        where: { id: orderId },
-        select: { id: true, paymentStatus: true },
-      });
-
-      if (!existingOrder) {
-        console.error(`❌ Commande introuvable pour le chargeId ${session.id}`);
-        return;
-      }
-
-      // Idempotence : ne rien faire si déjà en litige
-      if (existingOrder.paymentStatus === "DISPUTED") {
-        console.log(`ℹ️ Commande ${orderId} déjà marquée comme DISPUTED.`);
-        return;
-      }
-
       // Met à jour le statut pour refléter le litige
-      await prisma.order.update({
-        where: { id: orderId },
+      const updated = await prisma.order.updateMany({
+        where: { id: orderId, paymentStatus: { not: PaymentStatus.DISPUTED } },
         data: {
           paymentStatus: PaymentStatus.DISPUTED,
           status: OrderStatus.ON_HOLD, // ou “ON_HOLD_FOR_DISPUTE”
         },
       });
-
-      console.log(
-        `⚠️ Commande ${orderId} en litige (chargeback). Prévenir le support et collecter preuves.`
-      );
+      if (updated.count > 0) {
+        console.log(
+          `⚠️ Commande ${orderId} en litige (chargeback). Prévenir le support.`
+        );
+        alertService.create({
+          type: AlertType.DISPUTE_CREATED,
+          severity: AlertSeverity.URGENT,
+          message: `Litige créé pour la commande ${orderId}. Prévenir le support et collecter preuves.`,
+          entityType: Model.ORDER,
+          entityId: orderId,
+        });
+      } else {
+        console.log(`ℹ️ Commande ${orderId} déjà marquée comme DISPUTED.`);
+      }
     } catch (error) {
       console.error("❌ Erreur traitement dispute created:", error);
+      alertService.create({
+        type: AlertType.DISPUTE_CREATED,
+        severity: AlertSeverity.URGENT,
+        message: `Erreur traitement litige pour la commande ${orderId}: ${error}`,
+        entityType: Model.ORDER,
+        entityId: orderId,
+      });
     }
   }
   /**
@@ -369,16 +375,44 @@ export class WebhookService {
       return;
     }
     try {
-      await prisma.order.update({
+      const updated = await prisma.order.updateMany({
         where: { id: orderId },
         data: {
           paymentStatus: session.status as PaymentStatus,
           updatedAt: new Date(),
         },
       });
+      if (updated.count > 0) {
+        console.log(`🟡 Litige ${session.id} mis à jour (${session.status}).`);
+        // Crée une alerte pour suivi interne si le statut devient critique
+        if (
+          session.status === "needs_response" ||
+          session.status === "under_review"
+        ) {
+          await alertService.create({
+            type: AlertType.DISPUTE_UPDATED,
+            severity: AlertSeverity.CRITICAL,
+            message: `Litige ${session.id} pour la commande ${orderId} a changé de statut: ${session.status}`,
+            entityType: Model.ORDER,
+            entityId: orderId,
+          });
+        }
+      } else {
+        console.log(
+          `ℹ️ Aucun changement pour le litige ${session.id} (déjà à jour).`
+        );
+      }
+
       console.log(`🟡 Litige ${session.id} mis à jour (${session.status}).`);
     } catch (err) {
       console.log("❌ Erreur traitement dispute updated:", err);
+      alertService.create({
+        type: AlertType.DISPUTE_UPDATED,
+        severity: AlertSeverity.CRITICAL,
+        message: `Erreur traitement litige ${session.id} pour la commande ${orderId}: ${err}`,
+        entityType: Model.ORDER,
+        entityId: orderId,
+      });
     }
   }
 
@@ -396,7 +430,9 @@ export class WebhookService {
       return;
     }
     const isWon = session.status === "won";
-    const newPaymentStatus = isWon ? PaymentStatus.PAID : PaymentStatus.REFUNDED;
+    const newPaymentStatus = isWon
+      ? PaymentStatus.PAID
+      : PaymentStatus.REFUNDED;
     const newOrderStatus = isWon ? OrderStatus.RESOLVED : OrderStatus.CANCELLED;
     try {
     } catch (err) {

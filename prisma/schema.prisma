@@ -33,10 +33,16 @@ model User {
   order             Order[]
   review            Review[]
   verificationToken VerificationTokens[]
+  Dispute           Dispute[]
 
   @@index([createdAt])
   @@index([email])
   @@index([isVerified])
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model Category {
@@ -121,6 +127,7 @@ model Order {
   notes                 String?
   user                  User           @relation(fields: [userId], references: [id])
   items                 OrderItem[]
+  Dispute               Dispute[]
 
   @@index([userId])
   @@index([status])
@@ -128,6 +135,7 @@ model Order {
   @@index([paymentStatus])
   @@index([stripeSessionId])
 }
+
 enum OrderStatus {
   PENDING
   PROCESSING
@@ -164,6 +172,7 @@ enum PaymentMethod {
   KLARNA
   AFTERPAY
 }
+
 model OrderItem {
   id        String         @id @default(dbgenerated("gen_random_uuid()"))
   orderId   String
@@ -266,6 +275,11 @@ model VerificationTokens {
   @@index([userId, type])
 }
 
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 model Banner {
   id         String         @id @default(dbgenerated("gen_random_uuid()"))
   title      String
@@ -285,15 +299,54 @@ model Banner {
 }
 
 model Alert {
-  id         String        @id @default(dbgenerated("gen_random_uuid()"))
-  type       AlertType
-  message    String
-  entityType String // ex: "ORDER", "PAYMENT", "DISPUTE"
-  entityId   String? // ex: id de la commande ou du paiement concerné
-  severity   AlertSeverity @default(INFO)
-  resolved   Boolean       @default(false)
-  createdAt  DateTime      @default(now())
-  resolvedAt DateTime?
+  id               String        @id @default(dbgenerated("gen_random_uuid()"))
+  type             AlertType
+  message          String
+  entityType       String // ex: "ORDER", "CATEGORY", "PRODUCT"
+  entityId         String?
+  severity         AlertSeverity @default(INFO)
+  severityRank     Int // pour faciliter le tri par sévérité
+  resolved         Boolean       @default(false)
+  occurrences      Int           @default(1)
+  lastOccurrenceAt DateTime?     @default(now()) // date de la dernière occurrence
+  deduplicationKey String? // clé pour éviter doublons
+  slaDeadline      DateTime?
+  createdAt        DateTime      @default(now())
+  resolvedAt       DateTime?
+  status           AlertStatus   @default(ACTIVE)
+  tags             String[]      @default([])
+
+  // Mini log interne
+  lastAction   String? // CREATED, UPDATED, ESCALATED, RESOLVED
+  lastActionAt DateTime? // date du dernier changement
+  lastNotes    String? // courte note ou explication
+
+  @@index([status])
+  @@index([severity])
+  @@index([entityType, entityId])
+  @@index([deduplicationKey])
+}
+
+enum AlertTag {
+  // Litiges / disputes
+  DISPUTE_CREATED // litige créé par le client ou Stripe
+  DISPUTE_UPDATED // litige mis à jour
+  DISPUTE_WON // litige gagné (bon pour le merchant)
+  DISPUTE_LOST // litige perdu
+
+  // Stock / produit
+  LOW_STOCK // stock faible
+  OUT_OF_STOCK // produit épuisé
+
+  // Système / serveur / sécurité
+  SYSTEM // alerte système générique
+  SERVER_ERROR // erreur serveur ou API
+  SECURITY_BREACH_ATTEMPT // tentative de violation de sécurité
+  SLA_24H // SLA critique, à résoudre sous 24h
+
+  // Priorité / notifications
+  URGENT // alerte critique, action immédiate
+  NOTIFY_ADMIN // nécessite notification à l’admin
 }
 
 enum AlertType {
@@ -305,18 +358,60 @@ enum AlertType {
   SYSTEM_ERROR
 }
 
+enum AlertStatus {
+  ACTIVE // L’alerte est en cours
+  RESOLVED // L’alerte a été traitée
+  ESCALATED // Escalade déclenchée (SLA dépassé)
+}
+
 enum AlertSeverity {
   INFO
   WARNING
   CRITICAL
+  URGENT
 }
 
-enum Role {
-  USER
-  ADMIN
+model Dispute {
+  id       String  @id @default(cuid())
+  stripeId String? @unique // chaque litige Stripe est unique
+  orderId  String
+  order    Order   @relation(fields: [orderId], references: [id])
+  userId   String
+  user     User    @relation(fields: [userId], references: [id])
+
+  // --- État du litige ---
+  status       String // "pending", "under_review", "submitted", "won", "lost"
+  stripeStatus String? // statut Stripe (needs_response, under_review, won, lost)
+
+  // --- Gestion interne ---
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  reviewedBy    String? // Admin qui a validé le dossier
+  reviewedAt    DateTime?
+  autoSubmitted Boolean   @default(false)
+
+  // --- Preuves ---
+  pdfProofUrl     String? // lien vers le PDF généré
+  deliveryProof   String? // URL capture de livraison ou autre
+  customerEmail   String?
+  productDesc     String?
+  additionalNotes String?
+
+  // --- Logs / audit ---
+  logs Json?
+
+  // === Indexes ===
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@index([stripeStatus])
+  @@index([createdAt])
+  @@index([reviewedBy])
+  @@index([customerEmail])
+  @@index([orderId, userId])
+  @@index([status, stripeStatus])
+  @@index([createdAt, status])
 }
-
-
 
 enum ProductType {
   HONEY
@@ -328,11 +423,6 @@ enum ProductType {
 enum DiscountType {
   PERCENTAGE
   FIXED
-}
-
-enum VerificationTokenType {
-  EMAIL_VERIFICATION
-  PASSWORD_RESET
 }
 
 enum BannerLinkType {
