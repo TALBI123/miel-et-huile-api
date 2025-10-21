@@ -17,7 +17,8 @@
     <script>
       const localUrl = "http://localhost:3000";
       const prodUrl = "https://miel-et-huile-api-production-143a.up.railway.app";
-      const url = localUrl;
+      const url = prodUrl;
+      console.log(url);
       const fetchData = async () => {
         const data = await fetch(`${url}/api/auth/login`, {
           method: "POST",
@@ -35,7 +36,7 @@
       };
       fetchData();
       const pk_k =
-        "pk_test_51SEgCYDxHsNPCfyDeY7QoPFPX7jQWPE4tD7BhvJB0IgOoVKv3593uDkrBkTxXBXCl2xpASz23wywOy2FFc5rpimZ00r2oYaX75";
+        "pk_test_51SD0MlE9nqjkeo4XMjZnJQvIBFneVE2JIbysAcGIyOQS5tSr4McSjx68qOytbKB9IczrW9aRYLWLEAklvc13Ocnx00jBNObBSW";
       const checkOut = async () => {
         try {
           const res = await fetch(`${url}/api/checkout`, {
@@ -47,13 +48,13 @@
               shippingCost: Math.floor(Math.random() * 10) + 3,
               items: [
                 {
-                  productId: "53d37d0e-593a-4785-9980-3030d8660ef5",
-                  variantId: "d25f0a0e-06e3-4ed8-b2dc-3ff907f402ef",
+                  productId: "fc326321-e2c9-4c28-9831-d2608155de34",
+                  variantId: "43ccfde0-86b7-424c-9583-604648096c80",
                   quantity: Math.floor(Math.random() * 3) + 1,
                 },
                 {
-                  productId: "162cf1c5-d378-4b51-baf2-827f9a39a416",
-                  variantId: "ced61bb1-2ca8-4d7b-9eb7-5e80fc528df1",
+                  productId: "9907c0c7-f6b8-41f7-ac9a-c88c5759faa7",
+                  variantId: "6820dbb1-20ca-4461-8c42-5ce4ac6d0ccf",
                   quantity: Math.floor(Math.random() * 3) + 1,
                 },
               ],

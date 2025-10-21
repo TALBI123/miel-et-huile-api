@@ -9,7 +9,7 @@ export const verifyStripeWebhook = (
   if (!signature) {
     return res.status(400).json({ error: "Signature manquante" });
   }
-
+  console.log("🔐 Vérification webhook Stripe en cours...");
   try {
     const event = stripe.webhooks.constructEvent(
       req.body,

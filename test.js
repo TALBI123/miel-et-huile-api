@@ -1,3 +1,5 @@
-
+import {config} from 'dotenv';
+config();
 const num = 1.01;
-console.log(Math.ceil(num));
+
+console.log(process.env.ENV);
