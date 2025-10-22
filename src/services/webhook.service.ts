@@ -1,8 +1,6 @@
 import { OrderProcessingService } from "./order-processing.service";
 import { AlertService, alertService } from "./alert.service";
 import { InventoryService } from "./inventory.service";
-import { sendEmail } from "./emailService.service";
-import { createOrderData } from "../utils/object";
 import { stripe, Stripe } from "../config/stripe";
 import { Model } from "../types/enums";
 import prisma from "../config/db";

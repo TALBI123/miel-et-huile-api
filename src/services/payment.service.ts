@@ -49,6 +49,7 @@ export const createStripeSession = async (
       customerName: `${order.user?.firstName} ${order.user?.lastName}`,
     },
   };
+  console.log("✅ sessionParams:", sessionParams);
   if (!isModeDev) {
     sessionParams.ui_mode = "embedded";
     sessionParams.return_url = `${process.env.FRONTEND_PROD_URL}/shipping?session_id={CHECKOUT_SESSION_ID}`;
