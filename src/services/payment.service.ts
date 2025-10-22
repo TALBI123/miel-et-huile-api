@@ -62,7 +62,11 @@ export const createStripeSession = async (
     payment_method_types: ["card"],
     line_items,
     mode: "payment",
-    payment_intent: paymentIntent.id,
+        metadata: {
+      orderId: order.id,
+      email,
+      customerName: `${order.user?.firstName} ${order.user?.lastName}`,
+    },
   };
   console.log("✅ sessionParams:", sessionParams);
   if (!isModeDev) {
