@@ -314,7 +314,7 @@ model Alert {
   createdAt        DateTime      @default(now())
   resolvedAt       DateTime?
   status           AlertStatus   @default(ACTIVE)
-  tags             String[]      @default([])
+  tags             AlertTag[]    @default([])
 
   // Mini log interne
   lastAction   String? // CREATED, UPDATED, ESCALATED, RESOLVED
@@ -328,34 +328,37 @@ model Alert {
 }
 
 enum AlertTag {
-  // Litiges / disputes
-  DISPUTE_CREATED // litige créé par le client ou Stripe
-  DISPUTE_UPDATED // litige mis à jour
-  DISPUTE_WON // litige gagné (bon pour le merchant)
-  DISPUTE_LOST // litige perdu
+  // Litiges
+  DISPUTE_WON
+  DISPUTE_LOST
 
-  // Stock / produit
-  LOW_STOCK // stock faible
-  OUT_OF_STOCK // produit épuisé
+  // Produits
+  LOW_STOCK
+  OUT_OF_STOCK
 
-  // Système / serveur / sécurité
-  SYSTEM // alerte système générique
-  SERVER_ERROR // erreur serveur ou API
-  SECURITY_BREACH_ATTEMPT // tentative de violation de sécurité
-  SLA_24H // SLA critique, à résoudre sous 24h
+  // Sécurité / serveur
+  SECURITY_BREACH_ATTEMPT
+  SLA_24H
 
   // Priorité / notifications
-  URGENT // alerte critique, action immédiate
-  NOTIFY_ADMIN // nécessite notification à l’admin
+  URGENT
+  NOTIFY_ADMIN
 }
 
 enum AlertType {
+  // Litiges / paiements
   DISPUTE_CREATED
   DISPUTE_UPDATED
   DISPUTE_CLOSED
+  DISPUTE_ERROR
   PAYMENT_FAILED
+
+  // Inventaire / produits
   STOCK_ISSUE
+
+  // Système / serveur / sécurité
   SYSTEM_ERROR
+  SERVER_ERROR
 }
 
 enum AlertStatus {

@@ -4,7 +4,7 @@ export class ProductValidationService {
   /**✅ 2. Valide les articles du panier avant la création d’une commande */
 
   static async validateItems(items: OrderItem[]) {
-    console.log("Validating items:", items);
+    // console.log("Validating items:", items);
     if (!items || items.length === 0)
       return {
         success: false,
@@ -43,7 +43,7 @@ export class ProductValidationService {
         });
         continue;
       }
-      console.log(variant);
+      // console.log(variant);
       if (variant.stock < item.quantity)
         invalidItems.push({
           productTitle: variant.product.title,

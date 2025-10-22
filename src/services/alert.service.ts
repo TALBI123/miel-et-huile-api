@@ -1,4 +1,4 @@
-import { AlertSeverity, AlertStatus, AlertType } from "@prisma/client";
+import { AlertSeverity, AlertStatus, AlertTag, AlertType } from "@prisma/client";
 import prisma from "../config/db";
 import { EventEmitter } from "events";
 export interface AlertConfig {
@@ -9,7 +9,7 @@ export interface AlertConfig {
   entityType: string;
   meta?: Record<string, any>;
   deduplicationKey?: string;
-  tags?: string[];
+  tags?: AlertTag[];
 }
 const severityRank: Record<AlertSeverity, number> = {
   INFO: 1,

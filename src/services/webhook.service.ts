@@ -8,6 +8,7 @@ import { Model } from "../types/enums";
 import prisma from "../config/db";
 import {
   AlertSeverity,
+  AlertTag,
   AlertType,
   OrderStatus,
   PaymentStatus,
@@ -330,29 +331,68 @@ export class WebhookService {
       console.warn(`⚠️ Aucun orderId trouvé pour le chargeId ${session.id}`);
       return;
     }
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, userId: true, paymentStatus: true },
+    });
+    if (!order) {
+      console.warn(`⚠️ Commande ${orderId} introuvable.`);
+      return;
+    }
+
+    const disputeExists = await prisma.dispute.findUnique({
+      where: { stripeId: session.id },
+      select: { status: true },
+    });
+
+    // Si le litige existe déjà et la commande est déjà en DISPUTED, on ne fait rien
+    if (
+      disputeExists?.status === session.status &&
+      order.paymentStatus === PaymentStatus.DISPUTED
+    ) {
+      console.log(
+        `ℹ️ Litige ${session.id} et commande ${orderId} déjà à jour.`
+      );
+      return;
+    }
     try {
-      // Met à jour le statut pour refléter le litige
-      const updated = await prisma.order.updateMany({
-        where: { id: orderId, paymentStatus: { not: PaymentStatus.DISPUTED } },
-        data: {
-          paymentStatus: PaymentStatus.DISPUTED,
-          status: OrderStatus.ON_HOLD, // ou “ON_HOLD_FOR_DISPUTE”
-        },
+      await prisma.$transaction(async (tx) => {
+        // Crée le litige s'il n'existe pas
+
+        if (!disputeExists) {
+          await tx.dispute.create({
+            data: {
+              stripeId: session.id,
+              orderId,
+              userId: order.userId,
+              status: session.status,
+              createdAt: new Date(),
+            },
+          });
+          console.log(`✅ Litige créé dans la DB: ${session.id}`);
+        }
+
+        // Met à jour la commande
+        if (order.paymentStatus !== PaymentStatus.DISPUTED) {
+          await tx.order.update({
+            where: { id: orderId },
+            data: {
+              paymentStatus: PaymentStatus.DISPUTED,
+              status: OrderStatus.ON_HOLD,
+              updatedAt: new Date(),
+            },
+          });
+          console.log(`⚠️ Commande ${orderId} mise en litige.`);
+        }
       });
-      if (updated.count > 0) {
-        console.log(
-          `⚠️ Commande ${orderId} en litige (chargeback). Prévenir le support.`
-        );
-        alertService.create({
-          type: AlertType.DISPUTE_CREATED,
-          severity: AlertSeverity.URGENT,
-          message: `Litige créé pour la commande ${orderId}. Prévenir le support et collecter preuves.`,
-          entityType: Model.ORDER,
-          entityId: orderId,
-        });
-      } else {
-        console.log(`ℹ️ Commande ${orderId} déjà marquée comme DISPUTED.`);
-      }
+      alertService.create({
+        type: AlertType.DISPUTE_CREATED,
+        severity: AlertSeverity.URGENT,
+        message: `Litige créé pour la commande ${orderId}. Prévenir le support et collecter preuves.`,
+        entityType: Model.ORDER,
+        entityId: orderId,
+      });
     } catch (error) {
       console.error("❌ Erreur traitement dispute created:", error);
       alertService.create({
@@ -369,38 +409,110 @@ export class WebhookService {
    * Utilisé pour refléter l’évolution d’un litige Stripe côté back-office.
    */
   static async handleDisputeUpdated(session: Stripe.Dispute) {
+    const stripeToPaymentStatusMap: Record<string, PaymentStatus> = {
+      needs_response: PaymentStatus.DISPUTED,
+      under_review: PaymentStatus.DISPUTED,
+      won: PaymentStatus.PAID,
+      lost: PaymentStatus.REFUNDED,
+    };
+    const newPaymentStatus = stripeToPaymentStatusMap[session.status];
     const orderId = session.metadata?.orderId;
     if (!orderId) {
       console.warn(`⚠️ Aucun orderId trouvé pour le chargeId ${session.id}`);
       return;
     }
+    // Récupère litige et commande en une seule requête
+
     try {
-      const updated = await prisma.order.updateMany({
-        where: { id: orderId },
-        data: {
-          paymentStatus: session.status as PaymentStatus,
-          updatedAt: new Date(),
+      const disputeWithOrder = await prisma.dispute.findUnique({
+        where: { stripeId: session.id },
+        select: {
+          status: true,
+          order: { select: { id: true, paymentStatus: true, userId: true } },
         },
       });
-      if (updated.count > 0) {
-        console.log(`🟡 Litige ${session.id} mis à jour (${session.status}).`);
-        // Crée une alerte pour suivi interne si le statut devient critique
-        if (
-          session.status === "needs_response" ||
-          session.status === "under_review"
-        ) {
-          await alertService.create({
-            type: AlertType.DISPUTE_UPDATED,
-            severity: AlertSeverity.CRITICAL,
-            message: `Litige ${session.id} pour la commande ${orderId} a changé de statut: ${session.status}`,
-            entityType: Model.ORDER,
-            entityId: orderId,
-          });
+
+      // Si le litige n’existe pas, on le crée
+      if (!disputeWithOrder) {
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order) {
+          console.warn(`⚠️ Aucune commande trouvée pour l'ID ${orderId}`);
+          return;
         }
-      } else {
+        await prisma.$transaction(async (tx) => {
+          await tx.dispute.create({
+            data: {
+              stripeId: session.id,
+              orderId,
+              userId: order.userId,
+              status: session.status,
+              createdAt: new Date(),
+            },
+          });
+
+          await tx.order.update({
+            where: { id: orderId },
+            data: {
+              paymentStatus: newPaymentStatus,
+              updatedAt: new Date(),
+            },
+          });
+        });
+
         console.log(
-          `ℹ️ Aucun changement pour le litige ${session.id} (déjà à jour).`
+          `✅ Litige créé et commande mise à jour pour ${session.id}`
         );
+        // Alertes non bloquantes
+        alertService.create({
+          type: AlertType.DISPUTE_UPDATED,
+          severity: AlertSeverity.CRITICAL,
+          message: `Litige créé pour la commande ${orderId}. Prévenir le support si nécessaire.`,
+          tags: [AlertTag.NOTIFY_ADMIN],
+          entityType: Model.ORDER,
+          entityId: orderId,
+        });
+        return;
+      }
+      const { status: disputeStatus, order } = disputeWithOrder;
+
+      // Vérifie si la mise à jour est nécessaire
+      if (
+        disputeStatus === session.status &&
+        order.paymentStatus === newPaymentStatus
+      ) {
+        console.log(`ℹ️ Litige ${session.id} et commande déjà à jour.`);
+        return;
+      }
+      // Transaction pour mise à jour du litige et de la commande
+      await prisma.$transaction(async (tx) => {
+        if (disputeStatus !== session.status)
+          await tx.dispute.update({
+            where: { stripeId: session.id },
+            data: { status: session.status, updatedAt: new Date() },
+          });
+        if (order.paymentStatus !== newPaymentStatus)
+          await tx.order.updateMany({
+            where: { id: orderId },
+            data: {
+              paymentStatus: newPaymentStatus,
+              updatedAt: new Date(),
+            },
+          });
+      });
+
+      console.log(`🟡 Litige ${session.id} mis à jour (${session.status}).`);
+      // Crée une alerte pour suivi interne si le statut devient critique
+
+      // Alertes si le statut devient critique
+      if (["needs_response", "under_review"].includes(session.status)) {
+        await alertService.create({
+          type: AlertType.DISPUTE_UPDATED,
+          severity: AlertSeverity.CRITICAL,
+          message: `Litige ${session.id} pour la commande ${orderId} a changé de statut: ${session.status}`,
+          tags: [AlertTag.NOTIFY_ADMIN],
+          entityType: Model.ORDER,
+          entityId: orderId,
+        });
       }
 
       console.log(`🟡 Litige ${session.id} mis à jour (${session.status}).`);
@@ -429,14 +541,55 @@ export class WebhookService {
       );
       return;
     }
+
+    const dispute = await prisma.dispute.findUnique({
+      where: { stripeId: session.id },
+      select: { status: true },
+    });
+    if (!dispute || dispute.status === session.status) {
+      console.log(`ℹ️ Litige ${session.id} déjà à jour ou inexistant.`);
+      return;
+    }
+
     const isWon = session.status === "won";
-    const newPaymentStatus = isWon
-      ? PaymentStatus.PAID
-      : PaymentStatus.REFUNDED;
-    const newOrderStatus = isWon ? OrderStatus.RESOLVED : OrderStatus.CANCELLED;
     try {
-    } catch (err) {
-      console.log("❌ Erreur traitement dispute closed:", err);
+      await prisma.$transaction([
+        prisma.order.update({
+          where: { id: orderId },
+          data: {
+            paymentStatus: isWon ? PaymentStatus.PAID : PaymentStatus.REFUNDED,
+            status: isWon ? OrderStatus.RESOLVED : OrderStatus.CANCELLED,
+            updatedAt: new Date(),
+          },
+        }),
+        prisma.dispute.update({
+          where: { stripeId: session.id },
+          data: { status: session.status, updatedAt: new Date() },
+        }),
+      ]);
+      const resultMsg = isWon ? "✅ Litige gagné" : "❌ Litige perdu";
+      console.log(`${resultMsg} pour la commande ${orderId}`);
+
+      await alertService.create({
+        type: AlertType.DISPUTE_CLOSED,
+        severity: AlertSeverity.INFO,
+        message: `${resultMsg} pour la commande ${orderId}`,
+        entityType: Model.ORDER,
+        entityId: orderId,
+      });
+    } catch (err: any) {
+      console.error("❌ Erreur traitement dispute closed:", err);
+
+      alertService.create({
+        type: AlertType.DISPUTE_CLOSED,
+        severity: AlertSeverity.CRITICAL,
+        message: `🚨 Erreur critique lors de la clôture du litige (Dispute Closed) pour la commande ${orderId}. Détails : ${
+          err?.message || err
+        }`,
+        tags: [AlertTag.NOTIFY_ADMIN],
+        entityType: Model.ORDER,
+        entityId: orderId,
+      });
     }
   }
   static async handleChargeRefunded(refund: Stripe.Charge) {

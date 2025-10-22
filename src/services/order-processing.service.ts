@@ -83,7 +83,7 @@ export class OrderProcessingService {
 
     return prisma.$transaction(
       async (tx) => {
-        console.log("Total Amount: ", totalAmount);
+        // console.log("Total Amount: ", totalAmount);
         const order = await tx.order.create({
           data: {
             id: `cmd-${generateToken()}`,

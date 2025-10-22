@@ -10,15 +10,12 @@ import checkout from "./routes/checkout.routes";
 import { setupSwagger } from "./config/swagger";
 import ordersRoute from "./routes/order.routes";
 import usersRoute from "./routes/user.routes";
-import { Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import express from "express";
-import Stripe from "stripe";
 import cors from "cors";
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 // ⚠️ IMPORTANT: Les webhooks doivent être AVANT express.json()
 app.use("/api/webhooks", webhookRoutes);
@@ -81,43 +78,6 @@ console.log(
   process.env.STRIPE_PUBLIC_KEY ? "✅ Défini" : "❌ Manquant"
 );
 console.log(process.env.PORT || "❌ PORT non défini");
-// Export the app for use in other files (like server.ts)
-app.post("/checkout", async (req: Request, res: Response) => {
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "Miel bio 500g",
-            description: "Pot de miel 100% naturel",
-            images: ["https://example.com/miel500.jpg"],
-          },
-          unit_amount: 1500, // en cents -> 15.00 USD
-        },
-        quantity: 2,
-      },
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "Pack 3 savons au miel",
-            description: "Savons artisanaux faits main",
-            images: ["https://example.com/savon.jpg"],
-          },
-          unit_amount: 800, // en cents -> 8.00 USD
-        },
-        quantity: 1,
-      },
-    ],
-    mode: "payment",
-    success_url: `${process.env.FRONTEND_URL}/success`,
-    cancel_url: `${process.env.FRONTEND_URL}/cancel`,
-  });
-  console.log(session);
-  res.json({ id: session.id });
-});
 
 export default app;
 
