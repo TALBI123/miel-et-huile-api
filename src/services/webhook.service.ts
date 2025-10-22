@@ -94,7 +94,7 @@ export class WebhookService {
       }
 
       const orderId = session.metadata?.orderId;
-      console.log("OrderID bro : ",orderId)
+      console.log("OrderID bro : ",orderId,"  metadat:",session.metadata);
       if (!orderId) {
         console.warn("⚠️ Payment failed reçu sans orderId", {
           paymentIntentId: session.id,
