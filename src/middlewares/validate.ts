@@ -41,7 +41,7 @@ export const validate =
           },
           []
         );
-        console.log(err.issues);
+        // console.log(err.issues);
         return res.status(StatusCodes.BAD_REQUEST).json({ errors });
       }
       console.error(err);

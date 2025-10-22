@@ -2,6 +2,7 @@ import { OrderWithRelations } from "../types/order.type";
 import { WebhookService } from "./webhook.service";
 import { stripe } from "../config/stripe";
 import Stripe from "stripe";
+import prisma from "../config/db";
 export const createStripeSession = async (
   order: OrderWithRelations,
   shippingCost: number,
@@ -39,15 +40,29 @@ export const createStripeSession = async (
   const isModeDev = process.env.NODE_ENV === "development";
   // console.log(line_items, shippingCost);
   console.log(`🛒 Création session Stripe pour la commande ID: ${order.id}`);
-  const sessionParams: any = {
-    payment_method_types: ["card"],
-    line_items,
-    mode: "payment",
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(
+      (order.items.reduce((acc, item) => {
+        const itemPrice = item.variant?.isOnSale
+          ? item.variant?.discountPrice!
+          : item.variant?.price!;
+        return acc + itemPrice * item.quantity;
+      }, 0) +
+        shippingCost) *
+        100
+    ),
+    currency: "eur",
     metadata: {
       orderId: order.id,
       email,
       customerName: `${order.user?.firstName} ${order.user?.lastName}`,
     },
+  });
+  const sessionParams: any = {
+    payment_method_types: ["card"],
+    line_items,
+    mode: "payment",
+    payment_intent: paymentIntent.id,
   };
   console.log("✅ sessionParams:", sessionParams);
   if (!isModeDev) {
@@ -59,6 +74,17 @@ export const createStripeSession = async (
   }
 
   const session = await stripe.checkout.sessions.create(sessionParams);
+  // ✅ Mettre à jour la commande avec PaymentIntent ID
+  await prisma.order.update({
+    where: { id: order.id },
+    data: { stripePaymentIntentId: paymentIntent.id },
+  });
+
+  console.log("✅ Session créée avec PaymentIntent:", {
+    sessionId: session.id,
+    paymentIntentId: paymentIntent.id,
+    orderId: order.id,
+  });
   return { clientSecret: session.client_secret, id: session.id };
 };
 export const handleStripeWebhook = async (event: Stripe.Event) => {
@@ -73,8 +99,8 @@ export const handleStripeWebhook = async (event: Stripe.Event) => {
         );
         break;
       // Événements d'échec de paiement
-      case "checkout.session.async_payment_failed":
       case "payment_intent.payment_failed":
+      case "checkout.session.async_payment_failed":
         console.log("Event :    ❌ Échec du paiement reçu via webhook Stripe.");
 
         await WebhookService.handlePaymentFailed(
