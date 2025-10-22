@@ -105,7 +105,7 @@ export const createCategory = async (
 ) => {
   let imageInfo: UploadResult | undefined;
   try {
-    console.log(req.file, "jjj");
+    // console.log(req.file, "jjj");
     const { name, description } = req.body;
     const existingCategory = await prisma.category.findUnique({
       where: { name },
@@ -181,9 +181,9 @@ export const updateCategory = async (
       updatedData.publicId = imageInfo.public_id;
     }
 
-    console.log(existingCategory, updatedData);
+    // console.log(existingCategory, updatedData);
     const changedObj = objFiltered(existingCategory, updatedData);
-    console.log(changedObj, "changedObj");
+    // console.log(changedObj, "changedObj");
     if (isEmptyObject(changedObj))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,

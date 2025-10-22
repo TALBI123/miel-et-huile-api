@@ -34,8 +34,6 @@ export const getProducts = async (
   req: Request,
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
-  // console.log("   ---------------------   ");
-  // console.log("options : ", res.locals.validated);
   const { categorySlug, ...rest } = res.locals.validated;
   let categoryId: string | undefined;
   try {
@@ -83,16 +81,11 @@ export const getProducts = async (
       prisma.product.findMany(query),
       prisma.product.count({ where: query.where }),
     ]);
-    // const products = (await prisma.product.findMany(
-    //   query
-    // )) as ProductWithRelations[];
     if (!products.length)
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });
-    // console.log("", query.where);
-    // const lastPage = await prisma.product.count({ where: query.where });
-    // console.log(lastPage);
+
     const newProducts = (products as ProductWithRelations[]).map((p) => {
       const { images, createdAt, updatedAt, variants, ...rest } = p;
       const { id, ...variant } = variants[0] || {};
@@ -227,20 +220,20 @@ export const updateProduct = async (
     }
 
     // Vérifier si des données valides sont fournies
-    console.log(res.locals.validated, " res.locals.validated");
+    // console.log(res.locals.validated, " res.locals.validated");
     const filterdProduct = filterObjectByKeys(
       res.locals.validated,
       ALLOWED_PRODUCT_PROPERTIES
     );
     const { category, ...rest } = existingProduct;
     const changedObj = objFiltered(rest, filterdProduct);
-    console.log(changedObj, "changedObj");
+    // console.log(changedObj, "changedObj");
     if (isEmptyObject(changedObj))
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "Aucune donnée valide fournie pour la mise à jour",
       });
-    console.log(existingProduct, filterdProduct);
+    // console.log(existingProduct, filterdProduct);
 
     const updateProduct = await prisma.$transaction(async (tx) => {
       const updatedProduct = await tx.product.update({
@@ -294,7 +287,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
       const imagesDeleted = await deletePathToCloudinary(imagesToDelete).catch(
         (err) => console.error(`existing image deletion error: ${err}`)
       );
-      console.log(" imagesDeleted", imagesDeleted);
+      // console.log(" imagesDeleted", imagesDeleted);
     }
     res
       .status(StatusCodes.OK)

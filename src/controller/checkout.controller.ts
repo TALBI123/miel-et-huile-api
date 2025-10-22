@@ -18,6 +18,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     if (!validationResponse.success)
       return res.status(StatusCodes.BAD_REQUEST).json(validationResponse);
     console.log("🛒 Articles validés avec succès.");
+    console.log("🛒 Création de la commande en cours...");
     const order: OrderWithRelations = await OrderProcessingService.createOrder(
       req.user?.id!,
       items,

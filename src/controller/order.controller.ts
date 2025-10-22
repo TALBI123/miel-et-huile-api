@@ -34,10 +34,10 @@ export const getOrders = async (req: Request, res: Response) => {
         message: "Aucune commande trouvée",
         data: orders,
       });
-    console.log(
-      " ",
-      orders.map((order) => timeAgo(order.createdAt.toISOString()))
-    );
+    // console.log(
+    //   " ",
+    //   orders.map((order) => timeAgo(order.createdAt.toISOString()))
+    // );
     res.status(StatusCodes.OK).json({
       success: true,
       data: orders.map((order) => ({
@@ -56,7 +56,7 @@ export const getOrders = async (req: Request, res: Response) => {
 export const getMyOrders = async (req: Request, res: Response) => {
   try {
     const { id } = req.user!;
-    console.log(req.user)
+    // console.log(req.user)
     const query = QueryBuilderService.buildAdvancedQuery(Model.ORDER, {
       ...(res.locals.validated || {}),
       champPrice: "totalAmount",
@@ -100,7 +100,7 @@ export const getMyOrders = async (req: Request, res: Response) => {
         message: "Commande non trouvée",
         data: orders,
       });
-    console.log("Last Page Count:", lastPage);
+    // console.log("Last Page Count:", lastPage);
     res.status(StatusCodes.OK).json({
       success: true,
       data: orders,
