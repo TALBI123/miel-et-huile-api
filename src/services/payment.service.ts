@@ -89,7 +89,7 @@ export const createStripeSession = async (
   //   paymentIntentId: paymentIntent.id,
   //   orderId: order.id,
   // });
-    const successUrl = isModeDev
+  const successUrl = isModeDev
     ? `${process.env.FRONTEND_PROD_URL}/success?session_id={CHECKOUT_SESSION_ID}`
     : `${process.env.FRONTEND_PROD_URL}/shipping?session_id={CHECKOUT_SESSION_ID}`;
 
@@ -106,6 +106,13 @@ export const createStripeSession = async (
       orderId: order.id,
       email,
       customerName: `${order.user?.firstName} ${order.user?.lastName}`,
+    },
+    payment_intent_data: {
+      metadata: {
+        orderId: order.id,
+        email,
+        customerName: `${order.user?.firstName} ${order.user?.lastName}`,
+      },
     },
   });
 
