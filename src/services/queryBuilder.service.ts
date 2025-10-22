@@ -251,7 +251,7 @@ export class QueryBuilderService {
       mode,
     } = options;
     if (mode === "without") return where;
-    console.log("Filtering Price : ", options);
+    // console.log("Filtering Price : ", options);
     if (
       (ALLOWED_FILTERING_TABLES.includes(table as AllowedFilteringTables) &&
         minPrice !== undefined) ||

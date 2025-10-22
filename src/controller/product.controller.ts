@@ -34,8 +34,8 @@ export const getProducts = async (
   req: Request,
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
-  console.log("   ---------------------   ");
-  console.log("options : ", res.locals.validated);
+  // console.log("   ---------------------   ");
+  // console.log("options : ", res.locals.validated);
   const { categorySlug, ...rest } = res.locals.validated;
   let categoryId: string | undefined;
   try {
@@ -90,9 +90,9 @@ export const getProducts = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Aucun produit trouvé" });
-    console.log("", query.where);
+    // console.log("", query.where);
     // const lastPage = await prisma.product.count({ where: query.where });
-    console.log(lastPage);
+    // console.log(lastPage);
     const newProducts = (products as ProductWithRelations[]).map((p) => {
       const { images, createdAt, updatedAt, variants, ...rest } = p;
       const { id, ...variant } = variants[0] || {};
@@ -494,7 +494,7 @@ export const createProductVariant = async (
           productId: id,
         },
       });
-      console.log(existingProduct);
+      // console.log(existingProduct);
       if (!existingProduct.category.isActive)
         await tx.category.update({
           where: { id: existingProduct.category.id },

@@ -23,7 +23,7 @@ export const getAllCategorys = async (
 ) => {
   try {
     // console.log(res.locals.validated, "res.locals.validated",req.query);
-    console.log(res.locals.validated, "res.locals.validated");
+    // console.log(res.locals.validated, "res.locals.validated");
     const query = QueryBuilderService.buildAdvancedQuery(Model.CATEGORY, {
       ...(res.locals.validated || {}),
       nestedIsActive: { isActive: true },

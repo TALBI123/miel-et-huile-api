@@ -9,6 +9,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       eventId: event?.id,
       type: event?.type,
     });
+    
     await handleStripeWebhook(event!);
     res.status(StatusCodes.OK).json({
       received: true,
