@@ -175,12 +175,12 @@ export class QueryBuilderService {
               }
             : {}),
         });
-        console.log("After Stock & OnSale Filters: ", where);
+        // console.log("After Stock & OnSale Filters: ", where);
         Object.assign(
           where,
           this.buildRelationFilter(EnumRelationTables.VARIANT, mode, where)
         );
-        console.log("After Relation Filter: ", where);
+        // console.log("After Relation Filter: ", where);
         Object.assign(
           where,
           this.buildFilterPrice(EnumRelationTables.VARIANT, priceOptions, where)
@@ -196,7 +196,7 @@ export class QueryBuilderService {
             "name"
           )
         );
-        console.log("After Common Filters: ", where);
+        // console.log("After Common Filters: ", where);
 
         Object.assign(
           where,
