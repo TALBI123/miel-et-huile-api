@@ -38,6 +38,7 @@ export const createStripeSession = async (
   });
   const isModeDev = process.env.NODE_ENV === "development";
   // console.log(line_items, shippingCost);
+  console.log(`🛒 Création session Stripe pour la commande ID: ${order.id}`);
   const sessionParams: any = {
     payment_method_types: ["card"],
     line_items,

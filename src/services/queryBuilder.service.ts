@@ -148,7 +148,7 @@ export class QueryBuilderService {
             "isNestedActive",
           ]),
         };
-        console.log("After Common Filters: ", where);
+        // console.log("After Common Filters: ", where);
         Object.assign(where, {
           ...(options.inStock !== undefined || options.isOnSale !== undefined
             ? {
@@ -185,7 +185,7 @@ export class QueryBuilderService {
           where,
           this.buildFilterPrice(EnumRelationTables.VARIANT, priceOptions, where)
         );
-        console.log("----> Where : ", where);
+        // console.log("----> Where : ", where);
         break;
       case "category": // -------- Categorys
         Object.assign(
@@ -257,14 +257,14 @@ export class QueryBuilderService {
         minPrice !== undefined) ||
       maxPrice !== undefined
     ) {
-      console.log(
-        "Building Price Filter...",
-        prvWhere[table as AllowedFilteringTables]?.every,
-        "minPrice",
-        minPrice,
-        "maxPrice",
-        maxPrice
-      );
+      // console.log(
+      //   "Building Price Filter...",
+      //   prvWhere[table as AllowedFilteringTables]?.every,
+      //   "minPrice",
+      //   minPrice,
+      //   "maxPrice",
+      //   maxPrice
+      // );
       const priceFilter = {
         [champPrice as string]: {
           ...(minPrice ? { gte: minPrice } : {}),
@@ -290,7 +290,7 @@ export class QueryBuilderService {
     nested?: any
   ): Record<string, any> => {
     if (!relationName) return {};
-    console.log("Building Relation Filter: ", where[relationName]);
+    // console.log("Building Relation Filter: ", where[relationName]);
     switch (mode.trim()) {
       case "with":
         return {

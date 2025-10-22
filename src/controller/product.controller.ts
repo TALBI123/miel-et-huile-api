@@ -461,7 +461,7 @@ export const createProductVariant = async (
 ) => {
   const { id } = req.params;
   try {
-    console.log(res.locals.validated, " req.body");
+    // console.log(res.locals.validated, " req.body");
     const existingProduct = await prisma.product.findUnique({
       where: { id },
       select: {
@@ -469,7 +469,7 @@ export const createProductVariant = async (
         isActive: true,
       },
     });
-    console.log(existingProduct);
+    // console.log(existingProduct);
     if (!existingProduct)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
