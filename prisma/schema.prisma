@@ -112,7 +112,6 @@ model ProductVariant {
   @@index([isActive])
   @@index([isOnSale])
 }
-
 model Order {
   id                    String         @id @default(dbgenerated("gen_random_uuid()"))
   userId                String

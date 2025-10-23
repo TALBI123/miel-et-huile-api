@@ -115,7 +115,7 @@ export class AlertService extends EventEmitter {
   private startEscalationMonitor() {
     setInterval(async () => {
       try {
-      await prisma.alert.updateMany({
+     const alerts =  await prisma.alert.updateMany({
         where: { status: AlertStatus.ACTIVE, slaDeadline: { lt: new Date() } },
         data: {
           status: AlertStatus.ESCALATED,
@@ -123,6 +123,7 @@ export class AlertService extends EventEmitter {
           lastActionAt: new Date(),
         },
       });
+      console.log("⚠️ Alerte(s) escaladée(s) en attente de SLA dépassée.", alerts);
     } catch (err) {
       console.error("❌ Erreur monitor escalade:", err);
     }

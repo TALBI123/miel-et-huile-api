@@ -38,8 +38,7 @@ export const createStripeSession = async (
     quantity: 1,
   });
   const isModeDev = process.env.NODE_ENV === "development";
-  // console.log(line_items, shippingCost);
-  // console.log(`🛒 Création session Stripe pour la commande ID: ${order.id}`);
+  console.log(`🛒 Création session Stripe pour la commande ID: ${order.id}`);
   // const paymentIntent = await stripe.paymentIntents.create({
   //   amount: Math.round(
   //     (order.items.reduce((acc, item) => {
@@ -58,50 +57,10 @@ export const createStripeSession = async (
   //     customerName: `${order.user?.firstName} ${order.user?.lastName}`,
   //   },
   // });
-  // const sessionParams: any = {
-  //   payment_method_types: ["card"],
-  //   line_items,
-  //   mode: "payment",
-  //       metadata: {
-  //     orderId: order.id,
-  //     email,
-  //     customerName: `${order.user?.firstName} ${order.user?.lastName}`,
-  //   },
-  // };
-  // console.log("✅ sessionParams:", sessionParams);
-  // if (!isModeDev) {
-  //   sessionParams.ui_mode = "embedded";
-  //   sessionParams.return_url = `${process.env.FRONTEND_PROD_URL}/shipping?session_id={CHECKOUT_SESSION_ID}`;
-  // } else {
-  //   sessionParams.success_url = `${process.env.FRONTEND_PROD_URL}/success?session_id={CHECKOUT_SESSION_ID}`;
-  //   sessionParams.cancel_url = `${process.env.FRONTEND_PROD_URL}/cancel`;
-  // }
-
-  // const session = await stripe.checkout.sessions.create(sessionParams);
-  // // ✅ Mettre à jour la commande avec PaymentIntent ID
-  // await prisma.order.update({
-  //   where: { id: order.id },
-  //   data: { stripePaymentIntentId: paymentIntent.id },
-  // });
-
-  // console.log("✅ Session créée avec PaymentIntent:", {
-  //   sessionId: session.id,
-  //   paymentIntentId: paymentIntent.id,
-  //   orderId: order.id,
-  // });
-  const successUrl = isModeDev
-    ? `${process.env.FRONTEND_PROD_URL}/success?session_id={CHECKOUT_SESSION_ID}`
-    : `${process.env.FRONTEND_PROD_URL}/shipping?session_id={CHECKOUT_SESSION_ID}`;
-
-  const cancelUrl = `${process.env.FRONTEND_PROD_URL}/cancel`;
-
-  // 💳 Créer la session Checkout (Stripe crée automatiquement le PaymentIntent)
-  const session = await stripe.checkout.sessions.create({
+  const sessionParams: any = {
     payment_method_types: ["card"],
     line_items,
     mode: "payment",
-    success_url: successUrl,
-    cancel_url: cancelUrl,
     metadata: {
       orderId: order.id,
       email,
@@ -114,7 +73,44 @@ export const createStripeSession = async (
         customerName: `${order.user?.firstName} ${order.user?.lastName}`,
       },
     },
-  });
+  };
+  console.log("✅ sessionParams:", sessionParams);
+  if (!isModeDev) {
+    sessionParams.ui_mode = "embedded";
+    sessionParams.return_url = `${process.env.FRONTEND_PROD_URL}/shipping?session_id={CHECKOUT_SESSION_ID}`;
+  } else {
+    sessionParams.success_url = `${process.env.FRONTEND_PROD_URL}/success?session_id={CHECKOUT_SESSION_ID}`;
+    sessionParams.cancel_url = `${process.env.FRONTEND_PROD_URL}/cancel`;
+  }
+
+  // const session = await stripe.checkout.sessions.create(sessionParams);
+  const successUrl = isModeDev
+    ? `${process.env.FRONTEND_PROD_URL}/success?session_id={CHECKOUT_SESSION_ID}`
+    : `${process.env.FRONTEND_PROD_URL}/shipping?session_id={CHECKOUT_SESSION_ID}`;
+
+  const cancelUrl = `${process.env.FRONTEND_PROD_URL}/cancel`;
+
+  // 💳 Créer la session Checkout (Stripe crée automatiquement le PaymentIntent)
+  const session = await stripe.checkout.sessions.create(sessionParams);
+  // const session = await stripe.checkout.sessions.create({
+  //   payment_method_types: ["card"],
+  //   line_items,
+  //   mode: "payment",
+  //   success_url: successUrl,
+  //   cancel_url: cancelUrl,
+  //   metadata: {
+  //     orderId: order.id,
+  //     email,
+  //     customerName: `${order.user?.firstName} ${order.user?.lastName}`,
+  //   },
+  //   payment_intent_data: {
+  //     metadata: {
+  //       orderId: order.id,
+  //       email,
+  //       customerName: `${order.user?.firstName} ${order.user?.lastName}`,
+  //     },
+  //   },
+  // });
 
   // ✅ Enregistrer le PaymentIntent ID créé par Stripe
   await prisma.order.update({

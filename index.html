@@ -17,7 +17,7 @@
     <script>
       const localUrl = "http://localhost:3000";
       const prodUrl = "https://miel-et-huile-api-production-143a.up.railway.app";
-      const url = localUrl;
+      const url = prodUrl;
       console.log(url);
       const fetchData = async () => {
         const data = await fetch(`${url}/api/auth/login`, {
