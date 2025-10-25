@@ -33,5 +33,4 @@ export class PacklinkService {
   /**
    * ✅ 1. Calcule les options de livraison selon le panier et l’adresse du client
    */
-  
 }

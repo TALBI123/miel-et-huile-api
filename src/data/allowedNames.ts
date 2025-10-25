@@ -1,4 +1,6 @@
 export const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const ALLOWED_SIZE = ["XS", "S", "M", "L", "XL"] as const;
+export type AllowedTypeSizes = (typeof ALLOWED_SIZE)[number];
 export const ALLOWED_CATEGORY_PROPERTIES = [
   "name",
   "description",
@@ -18,10 +20,12 @@ export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [
   "discountPrice",
   "discountPercentage",
   "stock",
+  "size",
+  "origin",
   "isOnSale",
   "isActive",
 ] as const;
-export const ALLOWED_USER_UNITS = ["g", "kg", "ml", "L"];
+export const ALLOWED_UNITS = ["g", "kg", "ml", "L"];
 export const ALLOWED_FILTERING_TABLES = [
   "variants",
   "orders",

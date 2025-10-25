@@ -66,6 +66,8 @@ export interface ProductVariant {
   price: number;
   discountPercentage?: number;
   discountPrice?: number;
+  size?: string;
+  origin?: string; 
   isOnSale?: boolean;
   isActive?: boolean;
   stock: number;

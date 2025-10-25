@@ -15,6 +15,8 @@ import express from "express";
 import cors from "cors";
 
 const app = express();
+
+// app.use(cors({ origin: "http://domain:5173", credentials: true }));
 app.use(cors({ origin: true, credentials: true }));
 
 // ⚠️ IMPORTANT: Les webhooks doivent être AVANT express.json()

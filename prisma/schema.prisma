@@ -77,10 +77,18 @@ model Product {
   images         ProductImage[]
   variants       ProductVariant[]
   Banner         Banner[]
+  ProductDetails ProductDetails?
 
   @@index([categoryId])
   @@index([createdAt])
   @@index([isActive])
+}
+
+model ProductDetails {
+  id             String  @id @default(cuid())
+  productId      String  @unique
+  product        Product @relation(fields: [productId], references: [id])
+  jsonAttributes Json?
 }
 
 model ProductImage {
@@ -94,24 +102,42 @@ model ProductImage {
 }
 
 model ProductVariant {
-  id                 String      @id @default(dbgenerated("gen_random_uuid()"))
-  price              Float
-  discountPrice      Float?      @default(0)
+  id            String @id @default(dbgenerated("gen_random_uuid()"))
+  price         Float
+  discountPrice Float? @default(0)
+
   discountPercentage Int?        @default(0)
   isOnSale           Boolean?    @default(false)
   stock              Int         @default(0)
   productId          String
   isActive           Boolean     @default(true)
-  unit               String
-  amount             Float
-  product            Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  OrderItem          OrderItem[]
+  unit               String?
+  amount             Float?
+  size               String?
+  productType        ProductType @default(HONEY)
+
+  // 🆕 NOUVEAU : Attributs spécifiques miel/dattes
+  origin    String? // "Maroc", "Algérie", etc.
+  name      String
+  sku       String      @unique
+  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  OrderItem OrderItem[]
 
   @@unique([amount, productId])
+  @@unique([size, productId])
   @@index([productId])
   @@index([isActive])
   @@index([isOnSale])
+  @@index([sku]) // 🆕 Index SKU
 }
+
+enum ProductType {
+  HONEY // Miel
+  CLOTHING // Vêtements
+  DATES // Dattes
+  OIL // Huile
+}
+
 model Order {
   id                    String         @id @default(dbgenerated("gen_random_uuid()"))
   userId                String
@@ -415,12 +441,7 @@ model Dispute {
   @@index([createdAt, status])
 }
 
-enum ProductType {
-  HONEY
-  OIL
-  COMBO
-  ACCESSORY
-}
+
 
 enum DiscountType {
   PERCENTAGE

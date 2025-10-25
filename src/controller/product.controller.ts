@@ -452,6 +452,7 @@ export const createProductVariant = async (
   req: Request<{ id: string }, {}, ProductVariant>,
   res: Response
 ) => {
+  const { amount, size, unit } = req.body;
   const { id } = req.params;
   try {
     // console.log(res.locals.validated, " req.body");
@@ -460,6 +461,7 @@ export const createProductVariant = async (
       select: {
         category: { select: { id: true, isActive: true } },
         isActive: true,
+        title: true,
       },
     });
     // console.log(existingProduct);
@@ -470,6 +472,7 @@ export const createProductVariant = async (
       });
     const existingAmount = await prisma.productVariant.findFirst({
       where: { amount: req.body.amount, productId: id },
+      select: { id: true },
     });
     if (existingAmount)
       return res.status(StatusCodes.CONFLICT).json({
@@ -477,6 +480,9 @@ export const createProductVariant = async (
         message: "Cette variante existe déjà",
       });
     // // Construire l'objet Produit
+    const name = `${existingProduct.title} - ${size ? size : amount} ${
+      req.body.unit
+    }`;
     const data = await prisma.$transaction(async (tx) => {
       const variant = await tx.productVariant.create({
         data: {
@@ -485,6 +491,8 @@ export const createProductVariant = async (
             (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
           >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
           productId: id,
+          name,
+          sku: `SKU-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         },
       });
       // console.log(existingProduct);
@@ -558,8 +566,16 @@ export const updateProductVariant = async (req: Request, res: Response) => {
           success: false,
           message: "Cette variante existe déjà",
         });
+    } else if (req.body?.size && existingVariant.size !== req.body.size) {
+      const sizeExists = await prisma.productVariant.findFirst({
+        where: { size: req.body.size, productId: id },
+      });
+      if (sizeExists)
+        return res.status(StatusCodes.CONFLICT).json({
+          success: false,
+          message: "Cette variante existe déjà",
+        });
     }
-
     // Construire l'objet Produit mis à jour
     const updatedData = {
       ...filterObjectByKeys<

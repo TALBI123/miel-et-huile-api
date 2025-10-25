@@ -1,8 +1,9 @@
+import { ALLOWED_SIZE, ALLOWED_UNITS } from "data/allowedNames";
 import { FieldOptions } from "../types/type";
 import { z, ZodType } from "zod";
 
-// --- UTILITIES SCHEMAS
-
+// ----------------- UTILITIES SCHEMAS
+// ----- PRICE SCHEMA
 export const optionalPriceSchema = (message: string) =>
   z.string().regex(/^\d+$/, { message }).transform(Number).optional();
 export const createFieldConfig = (options: FieldOptions) => {
@@ -44,6 +45,12 @@ export const createFieldConfig = (options: FieldOptions) => {
   }
 };
 
+// ----- MESSAGES UTILITIES
+export const getInvalidValueMessage = (
+  key: string,
+  allowed: readonly string[]
+) => `${key} invalide (${allowed.join(", ")} autorisées)`;
+// ----- GENERIC FIELD SCHEMA
 export function createFieldSchema(options: FieldOptions): ZodType<any> {
   const {
     type = "string",

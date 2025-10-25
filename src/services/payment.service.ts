@@ -121,6 +121,7 @@ export const createStripeSession = async (
   console.log("✅ Session créée avec succès :", {
     sessionId: session.id,
     paymentIntentId: session.payment_intent,
+    
     orderId: order.id,
   });
   return { clientSecret: session.client_secret, id: session.id };
