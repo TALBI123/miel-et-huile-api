@@ -6,6 +6,7 @@ export const booleanFromStringSchema = z
   .string()
   .optional()
   .transform((val) => {
+
     if (val === "true") return true;
     if (val === "false") return false;
     return undefined; // ou une valeur par défaut

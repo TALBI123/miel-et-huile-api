@@ -323,4 +323,6 @@ export class QueryBuilderService {
     const offset = ((page as number) - 1) * (limit as number);
     return { skip: offset, take: limit };
   };
+  static calculateLastPage = (totalItems: number, limit = 5): number =>
+    Math.ceil(totalItems / limit);
 }

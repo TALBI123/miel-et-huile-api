@@ -23,6 +23,7 @@ export const getAllCategorys = async (
 ) => {
   try {
     // console.log(res.locals.validated, "res.locals.validated",req.query);
+    const { page, limit } = res.locals.validated || {};
     // console.log(res.locals.validated, "res.locals.validated");
     const query = QueryBuilderService.buildAdvancedQuery(Model.CATEGORY, {
       ...(res.locals.validated || {}),
@@ -71,8 +72,12 @@ export const getAllCategorys = async (
     res.status(StatusCodes.OK).json({
       success: true,
       data: newData,
-      len: data.length,
-      lastPage: Math.ceil(lastPage / (res.locals.validated.limit || 5)),
+      pagination: {
+        page,
+        limit,
+        total: data.length,
+        lastPage: QueryBuilderService.calculateLastPage(lastPage, limit),
+      },
     });
   } catch (err) {
     handleServerError(res, err);

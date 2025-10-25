@@ -10,7 +10,7 @@ import crypto from "crypto";
 import { string } from "zod";
 import { generateSlug } from "../utils/helpers";
 interface GetExistingProductParams {
-  key?: "title" | "categoryId";
+  key?: "title";
   id: string;
   select?: Record<string, any>;
 }
@@ -37,7 +37,7 @@ export class ProductVariantService {
    * 🔍 Vérifier si le SKU existe déjà
    */
   async getExistingProduct({
-    key = "title",
+    key,
     id,
     select,
   }: GetExistingProductParams): Promise<ProductWithCategory | null> {
@@ -46,7 +46,7 @@ export class ProductVariantService {
       select: select || {
         category: { select: { id: true, isActive: true } },
         isActive: true,
-        [key]: true,
+        ...(key !== undefined ? { [key]: true } : {}),
       },
     });
     return existingProduct as any;

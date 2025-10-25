@@ -37,9 +37,8 @@ const router = Router();
  *   - name: Produits
  *     description: Gestion des produits (CRUD, affichage, détails)
  */
-
 /**
- * @openapi
+ * @swagger
  * /products:
  *   get:
  *     summary: Récupérer les produits avec filtres, pagination et catégorie
@@ -51,62 +50,110 @@ const router = Router();
  *       - Filtrer uniquement les produits actifs via `isActive`
  *       - Filtrer selon l'état des variantes via `isNestedActive`
  *       - Gérer les variantes via `mode` (`all`, `with`, `without`)
- *       - Combiner plusieurs filtres sans générer d'erreur (même en cas de paramètres invalides)
+ *       - Filtrer par type de produit (`HONEY`, `CLOTHING`, `DATES`, `OIL`)
+ *       - Combiner plusieurs filtres sans générer d'erreur
  *
  *       La variante la moins chère est automatiquement incluse dans le retour.
  *     tags:
  *       - Produits
  *     parameters:
- *       - $ref: '#/components/parameters/PageParam'
- *       - $ref: '#/components/parameters/LimitParam'
- *       - $ref: '#/components/parameters/SearchParam'
- *       - $ref: '#/components/parameters/ModeParam'
+ *       - name: page
+ *         in: query
+ *         required: false
+ *         description: Numéro de page pour la pagination
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *           example: 1
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Nombre de produits par page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *           example: 10
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: Texte à rechercher dans le titre ou la description
+ *         schema:
+ *           type: string
+ *           example: "miel lavande"
+ *       - name: mode
+ *         in: query
+ *         required: false
+ *         description: Mode des variantes à inclure
+ *         schema:
+ *           type: string
+ *           enum: [all, with, without]
+ *           default: all
+ *           example: "with"
  *       - name: categorySlug
  *         in: query
  *         required: false
  *         description: Slug de la catégorie pour filtrer les produits
  *         schema:
  *           type: string
+ *           example: "miels-artisanaux"
  *       - name: onSale
  *         in: query
  *         required: false
  *         description: Filtrer uniquement les produits en promotion
  *         schema:
  *           type: boolean
+ *           example: true
  *       - name: minPrice
  *         in: query
  *         required: false
  *         description: Prix minimum des variantes incluses
  *         schema:
  *           type: number
+ *           minimum: 0
+ *           example: 10.5
  *       - name: maxPrice
  *         in: query
  *         required: false
  *         description: Prix maximum des variantes incluses
  *         schema:
  *           type: number
+ *           minimum: 0
+ *           example: 50.0
  *       - name: inStock
  *         in: query
  *         required: false
  *         description: Filtrer uniquement les produits actuellement en stock
  *         schema:
  *           type: boolean
+ *           example: true
  *       - name: isActive
  *         in: query
  *         required: false
  *         description: Filtrer uniquement les produits actifs
  *         schema:
  *           type: boolean
+ *           example: true
  *       - name: isNestedActive
  *         in: query
  *         required: false
  *         description: >
- *           Filtrer les produits dont **les variantes** (ou entités liées) sont actives.
+ *           Filtrer les produits dont les variantes sont actives :
  *           - `true` → retourne les produits ayant au moins une variante active
  *           - `false` → retourne les produits dont toutes les variantes sont inactives
- *           - Si la valeur est invalide (autre que true/false), le filtre est ignoré.
  *         schema:
  *           type: boolean
+ *           example: true
+ *       - name: productType
+ *         in: query
+ *         required: false
+ *         description: Filtrer par type de produit
+ *         schema:
+ *           type: string
+ *           enum: [HONEY, CLOTHING, DATES, OIL]
+ *           example: "HONEY"
  *     responses:
  *       200:
  *         description: Succès, renvoie la liste des produits filtrés
@@ -125,44 +172,83 @@ const router = Router();
  *                     properties:
  *                       id:
  *                         type: string
+ *                         example: "4f9c5fb9-e20c-4e0d-94ce-06a60a82ee39"
+ *                       categoryId:
+ *                         type: string
+ *                         example: "f1e1efe0-b6e8-49af-a0b1-bdb979a76faf"
  *                       title:
  *                         type: string
+ *                         example: "Miel purifié industriellement"
  *                       subDescription:
  *                         type: string
+ *                         nullable: true
+ *                         example: "Moins riche en enzymes mais se conserve plus longtemps."
  *                       description:
  *                         type: string
+ *                         example: "Miel chauffé et filtré, souvent mélangé pour homogénéiser la texture."
  *                       rating:
  *                         type: number
- *                       price:
- *                         type: number
- *                       discountPrice:
- *                         type: number
- *                       discountPercentage:
- *                         type: number
- *                       image:
- *                         type: string
+ *                         example: 0
  *                       isActive:
  *                         type: boolean
- *                       isNestedActive:
- *                         type: boolean
  *                         example: true
+ *                       image:
+ *                         type: string
+ *                         example: "https://res.cloudinary.com/dje0moqah/image/upload/v1761413543/products/o8so19uyufv8wofrgz1q.jpg"
+ *                       variantId:
+ *                         type: string
+ *                         example: "f0d3bd83-d8dc-4842-9c58-50b05134424e"
+ *                       price:
+ *                         type: number
+ *                         example: 60
+ *                       discountPrice:
+ *                         type: number
+ *                         example: 0
+ *                       discountPercentage:
+ *                         type: number
+ *                         example: 0
+ *                       amount:
+ *                         type: number
+ *                         example: 500
+ *                       unit:
+ *                         type: string
+ *                         example: "g"
+ *                       stock:
+ *                         type: integer
+ *                         example: 100
  *                       createdAt:
  *                         type: string
  *                         format: date-time
+ *                         example: "2025-10-25T17:32:23.266Z"
  *                       updatedAt:
  *                         type: string
  *                         format: date-time
- *                 total:
- *                   type: integer
- *                   example: 120
- *                 len:
- *                   type: integer
- *                   example: 10
- *                 lastPage:
- *                   type: integer
- *                   example: 12
- *       404:
- *         description: Aucun produit trouvé
+ *                         example: "2025-10-25T17:34:08.346Z"
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       example: 120
+ *                       description: Nombre total de produits
+ *                     len:
+ *                       type: integer
+ *                       example: 10
+ *                       description: Nombre de produits dans cette page
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                       description: Page actuelle
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                       description: Limite par page
+ *                     lastPage:
+ *                       type: integer
+ *                       example: 12
+ *                       description: Dernière page disponible
+ *       400:
+ *         description: Paramètres de requête invalides
  *         content:
  *           application/json:
  *             schema:
@@ -173,7 +259,18 @@ const router = Router();
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: "Aucun produit trouvé"
+ *                   example: "Paramètres de pagination invalides"
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       field:
+ *                         type: string
+ *                         example: "page"
+ *                       message:
+ *                         type: string
+ *                         example: "La page doit être un nombre entier positif"
  *       500:
  *         description: Erreur serveur interne
  *         content:

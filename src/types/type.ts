@@ -29,8 +29,7 @@ export interface ApiResponse<T = any> {
   message?: string;
   errors?: string;
   data?: T;
-  lastPage?: number;
-  len?: number;
+  pagination?: Record<string, number>;
 }
 
 export interface UserTokenPayload {
