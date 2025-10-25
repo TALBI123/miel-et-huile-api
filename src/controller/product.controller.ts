@@ -1,8 +1,11 @@
 import { cleanUploadedFiles, handleServerError } from "../utils/helpers";
 import { QueryBuilderService } from "../services/queryBuilder.service";
 import { filterObjectByKeys, isEmptyObject } from "../utils/object";
-import { buildProductQuery, objFiltered } from "../utils/filter";
-import { Prisma, PrismaClient } from "@prisma/client";
+import {
+  getAllowedPropertiesForProductType,
+  objFiltered,
+} from "../utils/filter";
+import { Prisma, PrismaClient, ProductType } from "@prisma/client";
 import {
   ApiResponse,
   Product,
@@ -22,11 +25,17 @@ import {
 import {
   ALLOWED_PRODUCT_PROPERTIES,
   ALLOWED_PRODUCT_VARIANT_PROPERTIES,
+  AllowedProductVariantProperties,
 } from "../data/allowedNames";
 import { EnumRelationTables, Model } from "../types/enums";
-import { ProductWithRelations } from "../types/prisma.type";
+import {
+  ProductWithCategory,
+  ProductWithRelations,
+} from "../types/prisma.type";
+import { ProductVariantService } from "../services/productVariant.service";
 
 const prisma = new PrismaClient();
+const service = ProductVariantService.getInstance(prisma);
 
 // --- PUBLIC PRODUCT Controller
 
@@ -48,7 +57,6 @@ export const getProducts = async (
           .json({ success: false, message: "Catégorie non trouvée" });
       categoryId = existingSlug?.id;
     }
-
     const query = QueryBuilderService.buildAdvancedQuery(Model.PRODUCT, {
       ...(rest || {}),
       isNestedPrice: true,
@@ -77,6 +85,7 @@ export const getProducts = async (
         },
       },
     });
+    
     const [products, lastPage] = await Promise.all([
       prisma.product.findMany(query),
       prisma.product.count({ where: query.where }),
@@ -452,26 +461,27 @@ export const createProductVariant = async (
   req: Request<{ id: string }, {}, ProductVariant>,
   res: Response
 ) => {
-  const { amount, size, unit } = req.body;
+  const { productType, size, amount, unit } = res.locals.validated;
   const { id } = req.params;
+  const isHasSize = productType === ProductType.CLOTHING;
   try {
     // console.log(res.locals.validated, " req.body");
-    const existingProduct = await prisma.product.findUnique({
-      where: { id },
-      select: {
-        category: { select: { id: true, isActive: true } },
-        isActive: true,
-        title: true,
-      },
-    });
+    const existingProduct: ProductWithCategory | null =
+      await service.getExistingProduct({ id });
     // console.log(existingProduct);
+    // existingProduct?.category
     if (!existingProduct)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: "Produit non trouvé",
       });
+    const where = {
+      ...(isHasSize ? { size } : { amount }),
+      productId: id,
+    };
+    console.log(where);
     const existingAmount = await prisma.productVariant.findFirst({
-      where: { amount: req.body.amount, productId: id },
+      where,
       select: { id: true },
     });
     if (existingAmount)
@@ -479,21 +489,32 @@ export const createProductVariant = async (
         success: false,
         message: "Cette variante existe déjà",
       });
-    // // Construire l'objet Produit
-    const name = `${existingProduct.title} - ${size ? size : amount} ${
-      req.body.unit
-    }`;
+    const filteredData = filterObjectByKeys<
+      Omit<ProductVariant, "productId">,
+      AllowedProductVariantProperties
+    >(
+      res.locals.validated,
+      getAllowedPropertiesForProductType(
+        productType
+      ) as AllowedProductVariantProperties[]
+    );
+    const name = service.generateUniqueName(existingProduct.title);
+    const sku = service.generateSKU({
+      title: existingProduct.title,
+      productType,
+      ...(isHasSize ? { size } : { amount, unit: unit }),
+    });
+    const variantData = {
+      ...filteredData,
+      ...(productType !== ProductType.HONEY ? { productType } : {}),
+      productId: id,
+      name,
+      sku,
+    };
+    console.log(filteredData);
     const data = await prisma.$transaction(async (tx) => {
       const variant = await tx.productVariant.create({
-        data: {
-          ...filterObjectByKeys<
-            Omit<ProductVariant, "productId">,
-            (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
-          >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
-          productId: id,
-          name,
-          sku: `SKU-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        },
+        data: variantData,
       });
       // console.log(existingProduct);
       if (!existingProduct.category.isActive)
@@ -538,6 +559,7 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         category: { select: { id: true, isActive: true } },
       },
     });
+    console.log(existingProduct);
     if (!existingProduct)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,

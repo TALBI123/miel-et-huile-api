@@ -1,0 +1,109 @@
+{
+  "categories": [
+    {
+      "id": 1,
+      "name": "Miels monofloraux",
+      "description": "Ces miels sont issus d'une seule variété florale, offrant des saveurs uniques et des bienfaits spécifiques selon la plante dont ils proviennent. Ils sont souvent recherchés pour leurs propriétés médicinales et leur goût distinctif."
+    },
+    {
+      "id": 2,
+      "name": "Miels aromatisés et composés",
+      "description": "Miels enrichis avec des plantes, épices ou extraits naturels. Ils allient les propriétés du miel à celles des ingrédients ajoutés pour créer des saveurs originales et des vertus santé supplémentaires."
+    },
+    {
+      "id": 3,
+      "name": "Miels multifloraux et de terroir",
+      "description": "Ces miels proviennent de plusieurs fleurs ou d'une région spécifique. Ils reflètent la diversité de la flore locale et offrent un goût riche et équilibré, très apprécié des amateurs de miel authentique."
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "categoryId": 2,
+      "name": "Miel Gingembre et Citron",
+      "description": "Ce miel combine la douceur naturelle du miel pur avec la force épicée du gingembre et la fraîcheur acidulée du citron. Il est parfait pour stimuler l'énergie, renforcer le système immunitaire et soulager les maux de gorge.",
+      "subDescription": "Idéal en infusion chaude ou sur des tartines pour un boost naturel et revitalisant.",
+      "price": 12.5,
+      "discountPrice": 10.5,
+      "amount": 250,
+      "unit": "g"
+    },
+    {
+      "id": 2,
+      "categoryId": 2,
+      "name": "Miel Propolis et Citron",
+      "description": "Miel enrichi en propolis, reconnu pour ses propriétés antibactériennes, et agrémenté d'une pointe de citron pour un goût rafraîchissant et revitalisant. Favorise la défense naturelle de l'organisme et apaise la gorge.",
+      "subDescription": "Parfait en complément de cures hivernales ou en ajout dans vos boissons chaudes.",
+      "price": 15,
+      "discountPrice": null,
+      "amount": 200,
+      "unit": "g"
+    },
+    {
+      "id": 3,
+      "categoryId": 1,
+      "name": "Miel de Mûres Sauvages",
+      "description": "Récolté dans les zones de broussailles et de forêts, ce miel est naturellement fruité avec des notes sucrées et légèrement acidulées. Riche en antioxydants, il apporte des vertus stimulantes pour l'organisme.",
+      "subDescription": "Idéal pour accompagner les yaourts, desserts ou pour les amateurs de miel intense et aromatique.",
+      "price": 18,
+      "discountPrice": 16,
+      "amount": 300,
+      "unit": "g"
+    },
+    {
+      "id": 4,
+      "categoryId": 1,
+      "name": "Miel de Romarin",
+      "description": "Miel monofloral issu de fleurs de romarin, offrant un goût délicat et légèrement résineux. Connue pour ses vertus digestives et stimulantes pour le foie, ce miel est parfait pour un usage quotidien.",
+      "subDescription": "Excellent pour les infusions ou comme édulcorant naturel dans les recettes.",
+      "price": 14,
+      "discountPrice": null,
+      "amount": 250,
+      "unit": "g"
+    },
+    {
+      "id": 5,
+      "categoryId": 1,
+      "name": "Miel de Thym Rose",
+      "description": "Miel rare aux notes florales intenses et légèrement boisées, récolté à partir de fleurs de thym rose. Connu pour ses propriétés antibactériennes et apaisantes, il est idéal pour renforcer l'organisme.",
+      "subDescription": "Idéal en tisane ou en remède naturel contre la fatigue et les maux de gorge.",
+      "price": 20,
+      "discountPrice": 18,
+      "amount": 200,
+      "unit": "g"
+    },
+    {
+      "id": 6,
+      "categoryId": 1,
+      "name": "Miel d’Eucalyptus",
+      "description": "Miel monofloral au goût prononcé et mentholé, issu des fleurs d’eucalyptus. Excellent pour la santé respiratoire et reconnu pour ses propriétés antiseptiques.",
+      "subDescription": "Parfait en infusion chaude ou à consommer directement pour soulager la gorge.",
+      "price": 13,
+      "discountPrice": null,
+      "amount": 250,
+      "unit": "g"
+    },
+    {
+      "id": 7,
+      "categoryId": 1,
+      "name": "Miel de Châtaignier",
+      "description": "Miel au goût puissant et légèrement amer, récolté à partir de fleurs de châtaignier. Riche en minéraux et oligo-éléments, il est parfait pour les amateurs de miel corsé.",
+      "subDescription": "Idéal à tartiner ou pour accompagner des fromages forts.",
+      "price": 17,
+      "discountPrice": 15,
+      "amount": 300,
+      "unit": "g"
+    },
+    {
+      "id": 8,
+      "categoryId": 1,
+      "name": "Miel d’Avocatier",
+      "description": "Miel délicat et crémeux provenant des fleurs d’avocatier. Il offre une texture onctueuse et un goût subtil qui ravira les palais les plus fins.",
+      "subDescription": "Parfait pour adoucir les infusions ou comme ingrédient de pâtisserie saine.",
+      "price": 22,
+      "discountPrice": null,
+      "amount": 250,
+      "unit": "g"
+    }
+  ]
+}

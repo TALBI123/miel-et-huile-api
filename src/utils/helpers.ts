@@ -24,8 +24,8 @@ export const generateToken = (len = 32): string => {
   // retourne base64url pour être safe dans les URL
   return crypto.randomBytes(len).toString("base64url");
 };
-export const generateSlug = (name: string): string => {
-  return slugify(name, { lower: true, strict: true });
+export const generateSlug = (name: string, isLower = true): string => {
+  return slugify(name, { lower: isLower, strict: true });
 };
 
 

@@ -1,9 +1,11 @@
 import { is } from "zod/v4/locales";
 import {
   ALLOWED_FILTERING_TABLES,
+  ALLOWED_PRODUCT_VARIANT_PROPERTIES,
   AllowedFilteringTables,
 } from "../data/allowedNames";
 import { QueryBuilderService } from "../services/queryBuilder.service";
+import { ProductType } from "@prisma/client";
 type OrderOptions = {
   orderBy: "price" | "stock" | "name";
   orderDirection: "asc" | "desc";
@@ -141,4 +143,19 @@ export const objFiltered = <T extends Record<string, any>, K extends keyof T>(
     if (value !== oldObj[key as K]) filteredObj[key as K] = value;
   }
   return filteredObj;
+};
+
+export const getAllowedPropertiesForProductType = (
+  productType: keyof typeof ProductType
+): readonly string[] => {
+  switch (productType) {
+    case ProductType.DATES:
+    case ProductType.HONEY:
+      return ALLOWED_PRODUCT_VARIANT_PROPERTIES;
+
+    case ProductType.CLOTHING:
+      return [...ALLOWED_PRODUCT_VARIANT_PROPERTIES, "size"] as const;
+    default:
+      return [] as const;
+  }
 };

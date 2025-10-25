@@ -28,3 +28,12 @@ export type CategoryWithRelations = Prisma.CategoryGetPayload<{
     };
   };
 }>;
+
+  export type ProductWithCategory = Prisma.ProductGetPayload<{
+  select: {
+    id: true;
+    isActive: true;
+    category: { select: { id: true; isActive: true } };
+    title: true; // si tu veux inclure
+  };
+}>;

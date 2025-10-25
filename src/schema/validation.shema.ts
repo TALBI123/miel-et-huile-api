@@ -6,8 +6,6 @@ export const booleanFromStringSchema = z
   .string()
   .optional()
   .transform((val) => {
-    console.log("Valeur reçue pour isActive:", val, "Type:", typeof val);
-
     if (val === "true") return true;
     if (val === "false") return false;
     return undefined; // ou une valeur par défaut

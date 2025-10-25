@@ -1,3 +1,5 @@
+import { ProductType } from "@prisma/client";
+
 type Role = "USER" | "ADMIN";
 export type isString<T> = T extends string ? "string" : "number";
 type FieldType = "number" | "string";
@@ -66,15 +68,14 @@ export interface ProductVariant {
   price: number;
   discountPercentage?: number;
   discountPrice?: number;
+  productType: ProductType;
   size?: string;
-  origin?: string; 
+  origin?: string;
   isOnSale?: boolean;
   isActive?: boolean;
   stock: number;
   productId: string;
 }
-
-
 
 interface IntUser {
   id: string;

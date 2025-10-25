@@ -2,10 +2,12 @@ import {
   ALLOWED_SIZE,
   ALLOWED_UNITS,
   AllowedTypeSizes,
+  AllowedTypeUnits,
 } from "../data/allowedNames";
 import { z } from "zod";
 import { booleanFromString, getInvalidValueMessage } from "./utils";
 import {
+  booleanFromStringSchema,
   FilterSchema,
   isActiveModeOptionsSchema,
   minMaxPrice,
@@ -55,16 +57,7 @@ export const createProductShema = z.object({
       message: "La sous description doit contenir au moins 2 caractères",
     }),
   description: z.string().optional(),
-  isActive: z
-    .string()
-    .optional()
-    .transform((val) => {
-      console.log("Valeur reçue pour isActive:", val, "Type:", typeof val);
-
-      if (val === "true") return true;
-      if (val === "false") return false;
-      return undefined; // ou une valeur par défaut
-    }),
+  isActive: booleanFromStringSchema,
   categoryId: z
     .string({ message: "L'ID est requis" })
     .uuid({ message: "L'ID doit être un UUID valide" }),
@@ -90,7 +83,7 @@ export const createProductVariantSchema = refineobject(
         .enum(ProductType, {
           message: "Veuillez sélectionner un type de produit valide",
         })
-        .optional(),
+        .default(ProductType.HONEY),
       price: z
         .number({ message: "Le prix est requis" })
         .min(1, { message: "Le prix est requise" })
@@ -119,7 +112,7 @@ export const createProductVariantSchema = refineobject(
         case ProductType.HONEY:
           if (!data.unit) {
             addError("unit", "L'unité est obligatoire pour ce type de produit");
-          } else if (!ALLOWED_UNITS.includes(data.unit))
+          } else if (!ALLOWED_UNITS.includes(data.unit as AllowedTypeUnits))
             addError("unit", getInvalidValueMessage("Unité", ALLOWED_UNITS));
 
           // Amount obligatoire pour le miel
@@ -168,7 +161,7 @@ export const updateeProductVariantSchema = refineobject(
         .enum(ProductType, {
           message: "Veuillez sélectionner un type de produit valide",
         })
-        .optional(),
+        .default(ProductType.HONEY),
       unit: z.string().optional(),
       amount: z.number().optional(),
       size: z.string().optional(),
@@ -185,7 +178,7 @@ export const updateeProductVariantSchema = refineobject(
       switch (data.productType) {
         case ProductType.DATES:
         case ProductType.HONEY:
-          if (data.unit && !ALLOWED_UNITS.includes(data.unit))
+          if (data.unit && !ALLOWED_UNITS.includes(data.unit as AllowedTypeUnits))
             addError(
               "unit",
               `Unité invalide (${ALLOWED_UNITS.join(", ")} autorisés)`
