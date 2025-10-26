@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
 import { ApiResponse } from "../../types/type";
+import { Request, Response } from "express";
 interface LoginBodyRequest {
     email: string;
     password: string;
@@ -10,7 +10,7 @@ interface RegisterBodyRequest {
     email: string;
     password: string;
 }
-declare const register: (req: Request<{}, {}, RegisterBodyRequest>, res: Response<ApiResponse>) => Promise<Response<ApiResponse<any>, Record<string, any>> | undefined>;
-declare const login: (req: Request<{}, {}, LoginBodyRequest>, res: Response<ApiResponse>) => Promise<Response<ApiResponse<any>, Record<string, any>> | undefined>;
-declare const logout: (req: Request, res: Response) => Promise<void>;
-export { login, register, logout };
+export declare const register: (req: Request<{}, {}, RegisterBodyRequest>, res: Response<ApiResponse>) => Promise<Response<ApiResponse<any>, Record<string, any>> | undefined>;
+export declare const login: (req: Request<{}, {}, LoginBodyRequest>, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const logout: (req: Request, res: Response) => Promise<void>;
+export {};

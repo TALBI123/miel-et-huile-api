@@ -1,4 +1,21 @@
-import { Role } from "@prisma/client";
+import { ProductType } from "@prisma/client";
+type Role = "USER" | "ADMIN";
+export type isString<T> = T extends string ? "string" : "number";
+type FieldType = "number" | "string";
+export type FieldOptions = {
+    type?: FieldType;
+    name: string;
+    required?: boolean;
+    min?: number;
+    minLength?: number;
+    isUUID?: boolean;
+    messages?: {
+        required?: string;
+        invalid?: string;
+        min?: string;
+        minLength?: string;
+    };
+};
 export interface MailOptions<T> {
     to: string;
     subject: string;
@@ -10,9 +27,50 @@ export interface ApiResponse<T = any> {
     message?: string;
     errors?: string;
     data?: T;
+    pagination?: Record<string, number>;
 }
 export interface UserTokenPayload {
     id: string;
     role: Role;
     email: string;
 }
+export interface UploadResult {
+    secure_url: string;
+    public_id: string;
+}
+export interface IntCategory {
+    name: string;
+    description?: string | null;
+    isActive?: boolean;
+    slug?: string;
+    image?: string;
+    publicId?: string;
+}
+export interface Product {
+    title: string;
+    categoryId: string;
+    description: string;
+    subDescription: string;
+    isActive?: boolean;
+    images?: {
+        id: string;
+        image: string;
+        publicId: string;
+    }[];
+}
+export interface ProductVariant {
+    amount: number;
+    unit: string;
+    price: number;
+    discountPercentage?: number;
+    discountPrice?: number;
+    productType: ProductType;
+    size?: string;
+    origin?: string;
+    isOnSale?: boolean;
+    isActive?: boolean;
+    stock: number;
+    productId: string;
+}
+export type ProductTypeKeys = keyof typeof ProductType | "ALL";
+export {};

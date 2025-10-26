@@ -1,0 +1,412 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const categorys_controller_1 = require("../controller/categorys.controller");
+const express_1 = require("express");
+const auth_1 = require("../middlewares/auth");
+const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
+const validate_1 = require("../middlewares/validate");
+const validation_shema_1 = require("../schema/validation.shema");
+const category_shema_1 = require("../schema/category.shema");
+const router = (0, express_1.Router)();
+/**
+ * @swagger
+ * tags:
+ *   - name: Catégories
+ *     description: Gestion des catégories (CRUD, affichage, détails)
+ */
+// --- PUBLIC CATEGORY ROUTES
+/**
+ * @swagger
+ * /categorys:
+ *   get:
+ *     summary: Récupérer la liste des catégories avec le nombre de produits
+ *     description: >
+ *       Cette route permet de récupérer toutes les catégories, avec des informations détaillées sur chaque catégorie, y compris :
+ *         - `productsCount` : le nombre de produits associés à chaque catégorie.
+ *         - `createdAt` et `updatedAt` : les dates de création et de mise à jour.
+ *       Elle supporte des filtres et options de pagination via les **query params**.
+ *
+ *       Les champs possibles pour filtrer ou trier sont :
+ *         - `page` (number) : numéro de page pour la pagination.
+ *         - `limit` (number) : nombre de résultats par page.
+ *         - `search` (string) : recherche par nom ou description de catégorie.
+ *         - `mode` (enum) : filtrage des catégories selon leur contenu en produits :
+ *             - `all` : récupère toutes les catégories.
+ *             - `with` : récupère uniquement les catégories qui contiennent des produits.
+ *             - `without` : récupère uniquement les catégories sans produits.
+ *         - `isActive` (boolean) : filtrer uniquement les catégories actives.
+ *         - `isNestedActive` (boolean) : filtrer les catégories dont les produits sont **actifs**.
+ *     tags:
+ *       - Catégories
+ *     parameters:
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/ModeParam'
+ *       - name: isActive
+ *         in: query
+ *         required: false
+ *         description: Filtrer uniquement les catégories actives
+ *         schema:
+ *           type: boolean
+ *           example: true
+ *       - name: isNestedActive
+ *         in: query
+ *         required: false
+ *         description: >
+ *           Si `true`, ne renvoie que les catégories dont **au moins un produit** est actif.
+ *           Si `false`, renvoie les catégories dont **tous les produits** sont inactifs.
+ *         schema:
+ *           type: boolean
+ *           example: true
+ *     responses:
+ *       200:
+ *         description: Succès, renvoie la liste des catégories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       slug:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       image:
+ *                         type: string
+ *                       publicId:
+ *                         type: string
+ *                       productsCount:
+ *                         type: integer
+ *                       isActive:
+ *                         type: boolean
+ *                       isNestedActive:
+ *                         type: boolean
+ *                         description: Indique si la catégorie contient des produits actifs
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *       404:
+ *         description: Aucune catégorie trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/", (0, validate_1.validate)({
+    schema: category_shema_1.QueryCategorySchema,
+    key: "query",
+    skipSave: true,
+}), categorys_controller_1.getAllCategorys);
+/**
+ * @swagger
+ * /categorys/{id}:
+ *   get:
+ *     summary: Récupérer une catégorie par son ID
+ *     description: >
+ *       Cette route permet de récupérer **une catégorie unique** en utilisant son ID.
+ *       Si la catégorie existe, elle renvoie toutes ses informations.
+ *       Si elle n'existe pas, renvoie une erreur 404.
+ *     tags:
+ *       - Catégories
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: L'ID de la catégorie à récupérer.
+ *     responses:
+ *       200:
+ *         description: Catégorie récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     publicId:
+ *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       404:
+ *         description: La catégorie n'existe pas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Erreur serveur inattendue
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.get("/:id", (0, validate_1.validate)({ schema: validation_shema_1.ValidationId, key: "params" }), categorys_controller_1.getCategoryById);
+// --- AdMIN CATEGORY CRUD OPERATIONS
+/**
+ * @swagger
+ * /categorys:
+ *   post:
+ *     summary: Crée une nouvelle catégorie (Admin)
+ *     tags:
+ *       - Catégories
+ *     security:
+ *       - cookieAuth: []  # Nécessite un token pour authentification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Miels"
+ *                 description: Nom de la catégorie
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image représentant la catégorie
+ *     responses:
+ *       201:
+ *         description: Catégorie créée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "64f2c5e7b5e7e72f12345678"
+ *                     name:
+ *                       type: string
+ *                       example: "Miels"
+ *                     imageUrl:
+ *                       type: string
+ *                       example: "http://localhost:3000/images/miel.jpg"
+ *       401:
+ *         description: Non authentifié / token manquant ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Token invalide ou expiré"
+ *       403:
+ *         description: Accès refusé (non-admin)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Accès refusé : Admin requis"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Une erreur est survenue côté serveur"
+ */
+router.post("/", auth_1.verifyToken, auth_1.verifyAdmin, uploadMiddleware_1.uploadMemoryStorage, uploadMiddleware_1.uploadHandler, (0, validate_1.validate)({ schema: category_shema_1.CreateCategorySchema }), categorys_controller_1.createCategory);
+/**
+ * @swagger
+ * /categorys/{id}:
+ *   patch:
+ *     summary: Met à jour une catégorie existante
+ *     tags:
+ *       - Catégories
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "64f2c5e7b5e7e72f12345678"
+ *         description: ID de la catégorie à mettre à jour
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nouveau nom de la catégorie
+ *                 example: "Miels et Pollen"
+ *               description:
+ *                 type: string
+ *                 description: Description de la catégorie
+ *                 example: "Catégorie regroupant tous les miels et pollens"
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Nouvelle image de la catégorie
+ *     responses:
+ *       200:
+ *         description: Catégorie mise à jour avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 success: true
+ *                 message: "Catégorie mise à jour avec succès"
+ *                 data:
+ *                   id: "64f2c5e7b5e7e72f12345678"
+ *       400:
+ *         description: Aucune donnée valide fournie pour la mise à jour
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 success: false
+ *                 message: "Aucune donnée valide fournie pour la mise à jour"
+ *       404:
+ *         description: Catégorie non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 success: false
+ *                 message: "Catégorie non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 success: false
+ *                 message: "Une erreur est survenue côté serveur"
+ */
+router.patch("/:id", auth_1.verifyToken, auth_1.verifyAdmin, uploadMiddleware_1.uploadMemoryStorage, (0, validate_1.validate)({ schema: category_shema_1.CreateCategorySchema.partial(), skipSave: true }), (0, validate_1.validate)({ schema: validation_shema_1.ValidationId, key: "params" }), validate_1.checkEmptyRequestBody, categorys_controller_1.updateCategory);
+/**
+ * @swagger
+ * /categorys/{id}:
+ *   delete:
+ *     summary: Supprimer une catégorie et tous ses produits associés
+ *     description: >
+ *       Cette route supprime une catégorie par son ID.
+ *       La suppression est **en cascade** :
+ *         - Tous les produits associés à cette catégorie sont supprimés.
+ *         - Tous les variants des produits sont supprimés.
+ *         - Toutes les images des produits sont supprimées de la base de données et de **Cloudinary**.
+ *         - L'image principale de la catégorie est également supprimée de Cloudinary.
+ *       Cette approche garantit que la base de données reste propre et que les fichiers médias ne restent pas sur Cloudinary après suppression.
+ *       Le frontend peut utiliser la réponse pour mettre à jour son interface avec la liste des produits supprimés.
+ *     tags:
+ *       - Catégories
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: L'ID de la catégorie à supprimer.
+ *     responses:
+ *       200:
+ *         description: Catégorie et produits supprimés avec succès.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *       404:
+ *         description: La catégorie n'existe pas.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Erreur serveur inattendue.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.delete("/:id", auth_1.verifyToken, 
+// verifyAdmin,
+(0, validate_1.validate)({ schema: validation_shema_1.ValidationId, key: "params" }), categorys_controller_1.deleteCategory);
+exports.default = router;
+//# sourceMappingURL=categorys.routes.js.map

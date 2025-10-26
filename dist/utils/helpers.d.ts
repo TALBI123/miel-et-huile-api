@@ -1,5 +1,11 @@
-import { VerificationTokenType } from "@prisma/client";
+import { VerificationTokenType } from "../types/enums";
 import { Response } from "express";
 export declare const getExpirationDate: (minutes: number) => Date;
-export declare const createVerificationToken: (userId: string, type: VerificationTokenType, expiresInMinutes?: number) => Promise<string>;
+export declare const hashToken: (token: string) => string;
+export declare const generateToken: (len?: number) => string;
+export declare const generateSlug: (name: string, isLower?: boolean) => string;
+export declare function isExpired(date: Date): boolean;
+export declare const createVerificationToken: (userId: string, token: string, type: VerificationTokenType, expiresInMinutes?: number) => Promise<string>;
 export declare const handleServerError: (res: Response, error: unknown) => void;
+export declare const cleanUploadedFiles: (files: Express.Multer.File[]) => void;
+export declare const timeAgo: (dateString: string) => string;

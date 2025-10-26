@@ -3,14 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logout = exports.register = exports.login = void 0;
-const client_1 = require("@prisma/client");
+exports.logout = exports.login = exports.register = void 0;
+const blacklistService_service_1 = require("../../services/blacklistService.service");
+const emailService_service_1 = require("../../services/emailService.service");
+const enums_1 = require("../../types/enums");
 const http_status_codes_1 = require("http-status-codes");
-const mailer_1 = require("../../utils/mailer");
+const client_1 = require("@prisma/client");
+const dotenv_1 = require("dotenv");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const crypto_1 = __importDefault(require("crypto"));
-const dotenv_1 = require("dotenv");
+const blacklistService = new blacklistService_service_1.BlacklistService();
 const helpers_1 = require("../../utils/helpers");
 (0, dotenv_1.config)();
 const prisma = new client_1.PrismaClient();
@@ -22,15 +24,15 @@ const register = async (req, res) => {
             where: { email },
             select: { email: true },
         });
-        console.log(client_1.VerificationTokenType);
         if (data?.email)
             return res
                 .status(http_status_codes_1.StatusCodes.BAD_REQUEST)
                 .json({ message: "l email deja existe", success: false });
-        console.log(process.env.SALT_ROUND);
         const hash = await bcryptjs_1.default.hash(password, +process.env.SALT_ROUND || 10);
-        const token = crypto_1.default.randomBytes(16).toString("hex");
-        const link = `http://localhost:${process.env.PORT}/auth/verification-email?token=${token}`;
+        const token = (0, helpers_1.generateToken)();
+        const link = `${process.env.NODE_ENV === "production"
+            ? process.env.BACKEND_URL
+            : process.env.LOCAL_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
         const user = await prisma.user.create({
             data: {
                 firstName,
@@ -41,22 +43,15 @@ const register = async (req, res) => {
             },
             select: { id: true },
         });
-        await prisma.verificationTokens.create({
-            data: {
-                token,
-                userId: user.id,
-                type: client_1.VerificationTokenType.EMAIL_VERIFICATION,
-                expiresAt: (0, helpers_1.getExpirationDate)(4),
-            },
-        });
-        await (0, helpers_1.createVerificationToken)(user.id, client_1.VerificationTokenType.EMAIL_VERIFICATION);
+        await (0, helpers_1.createVerificationToken)(user.id, token, enums_1.VerificationTokenType.EMAIL_VERIFICATION, 15);
         const emailOptions = {
             to: email,
-            subject: "verifacation de l'eamil",
+            subject: "verification de votre email",
             htmlFileName: "verification.email.ejs",
             context: { link },
         };
-        await (0, mailer_1.sendEmail)(emailOptions);
+        await (0, emailService_service_1.sendEmail)(emailOptions);
+        console.log(token, new Date());
         res.status(http_status_codes_1.StatusCodes.CREATED).json({
             message: "Inscription réussie. Veuillez vérifier votre email",
             success: true,
@@ -90,7 +85,7 @@ const login = async (req, res) => {
             message: "Veuillez confirmer votre email avant de vous connecter.",
         });
     try {
-        const isPasswordValid = await bcryptjs_1.default.compare(password, data?.password);
+        const isPasswordValid = await bcryptjs_1.default.compare(password, data.password);
         if (!isPasswordValid)
             return res.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).json({
                 success: false,
@@ -103,17 +98,18 @@ const login = async (req, res) => {
             role: data.role,
         };
         const token = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: "1h",
+            expiresIn: "24h",
         });
         // Configeration du cookie
         res.cookie("access_token", token, {
             httpOnly: true,
-            sameSite: "lax",
-            maxAge: 15 * 60 * 1000,
+            sameSite: "none",
+            secure: true,
+            maxAge: 24 * 60 * 60 * 1000,
         });
         return res
             .status(http_status_codes_1.StatusCodes.OK)
-            .json({ message: "Connexion réussie", success: true });
+            .json({ message: "Connexion réussie", success: true, date: new Date() });
     }
     catch (err) {
         (0, helpers_1.handleServerError)(res, err);
@@ -122,8 +118,27 @@ const login = async (req, res) => {
 exports.login = login;
 const logout = async (req, res) => {
     try {
-        console.log("logout");
-        res.status(http_status_codes_1.StatusCodes.OK).json({ message: "Logout" });
+        const token = req.cookies["access_token"];
+        if (token) {
+            try {
+                blacklistService.addToBlacklist(token);
+            }
+            catch (err) {
+                console.error("Erreur lors de l'ajout du token à la blacklist:", err);
+            }
+        }
+        res.clearCookie("access_token", {
+            path: "/",
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            domain: process.env.COOKIE_DOMAIN || undefined,
+        });
+        res.status(http_status_codes_1.StatusCodes.OK).json({
+            success: true,
+            message: "Déconnexion réussie",
+            toeknExpiration: (0, helpers_1.getExpirationDate)(token),
+        });
     }
     catch (err) {
         (0, helpers_1.handleServerError)(res, err);
