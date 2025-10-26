@@ -11,7 +11,7 @@ import { setupSwagger } from "./config/swagger";
 import ordersRoute from "./routes/order.routes";
 import usersRoute from "./routes/user.routes";
 import cookieParser from "cookie-parser";
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import { PacklinkService } from "./services/packlink.service";
 
@@ -56,7 +56,7 @@ setupSwagger(app);
 
 // Route de débogage pour vérifier les variables d'environnement Google OAuth
 // Test .env Production
-app.get("/auth/google/debug", (req, res) => {
+app.get("/auth/google/debug", (req: Request, res: Response) => {
   res.json({
     clientId: process.env.GOOGLE_CLIENT_ID ? "✅ Défini" : "❌ Manquant",
     clientSecret: process.env.GOOGLE_CLIENT_SECRET

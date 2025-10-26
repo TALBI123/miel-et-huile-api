@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import "./config/passport";
 import app from "./app";
 import fs from "fs";
+import { Request, Response } from "express";
 import {
   verifyEmailConfig,
   verifySendGridConnection,
@@ -57,7 +58,7 @@ const checkEmailConnection = async () => {
 if (process.env.NODE_ENV !== "test") {
   checkEmailConnection();
 }
-app.get('/',async(req,res) => {
+app.get('/',async(req: Request, res: Response) => {
   res.json({
     message: "Server is running updated",
     env: process.env.NODE_ENV || "❌ NODE_ENV non défini",

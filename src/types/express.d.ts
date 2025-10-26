@@ -2,6 +2,7 @@ import * as Express from "express";
 import { UserTokenPayload } from "./type";
 import { Role } from "@prisma/client";
 import Stripe from "stripe";
+import { File } from "multer";
 
 declare global {
   namespace Express {
@@ -13,7 +14,7 @@ declare global {
 
     interface Request {
       user?: User;
-      file?: Express.Multer.File & { buffer: Buffer };
+      file?: File & { buffer: Buffer };
       stripeEvent?: Stripe.Event;
     }
   }
