@@ -29,11 +29,19 @@ export type CategoryWithRelations = Prisma.CategoryGetPayload<{
   };
 }>;
 
-  export type ProductWithCategory = Prisma.ProductGetPayload<{
+export type ProductWithCategory = Prisma.ProductGetPayload<{
   select: {
     id: true;
     isActive: true;
     category: { select: { id: true; isActive: true } };
     title: true; // si tu veux inclure
+  };
+}>;
+export type ProductVariantWithRelations = Prisma.ProductVariantGetPayload<{
+  select: {
+    amount: true;
+    size: true;
+    unit: true;
+    productId: true;
   };
 }>;

@@ -1,12 +1,12 @@
 import { booleanFromString, optionalPriceSchema } from "./utils";
 import { ALLOWED_ORDER_STATUSES } from "../data/allowedNames";
 import { z } from "zod";
+import { clamp } from "../utils/mathUtils";
 
 export const booleanFromStringSchema = z
   .string()
   .optional()
   .transform((val) => {
-
     if (val === "true") return true;
     if (val === "false") return false;
     return undefined; // ou une valeur par défaut
@@ -33,15 +33,17 @@ export const dateFilterSchema = z.object({
 });
 
 // ✅ Fonction utilitaire qui transforme une valeur en boolean ou undefined
-export const safeBoolean = z.union([z.boolean(), z.string()]).transform((val) => {
-  if (typeof val === "boolean") return val;
-  if (typeof val === "string") {
-    const normalized = val.toLowerCase();
-    if (normalized === "true") return true;
-    if (normalized === "false") return false;
-  }
-  return undefined; // 🔥 valeur ignorée si ce n’est pas true/false
-});
+export const safeBoolean = z
+  .union([z.boolean(), z.string()])
+  .transform((val) => {
+    if (typeof val === "boolean") return val;
+    if (typeof val === "string") {
+      const normalized = val.toLowerCase();
+      if (normalized === "true") return true;
+      if (normalized === "false") return false;
+    }
+    return undefined; // 🔥 valeur ignorée si ce n’est pas true/false
+  });
 
 // .transform((data) => {
 //   return data.startDate && data.endDate && data.startDate > data.endDate
@@ -54,7 +56,7 @@ export const categorySlug = z.object({
     // .regex(/^[a-z0-9-]+$/i)
     .optional(),
 });
-export  const minMaxPrice = z.object({
+export const minMaxPrice = z.object({
   minPrice: optionalPriceSchema("Le prix minimum doit être un nombre"),
   maxPrice: optionalPriceSchema("Le prix maximum doit être un nombre"),
 });
@@ -69,17 +71,21 @@ export const isActiveModeOptionsSchema = z.object({
 });
 
 // --- SHEMAS VALIDATION PAGINATION
+
 export const FilterSchema = z.object({
   page: z
-    .string()
-    .regex(/^\d+$/, { message: "La page doit être un nombre entier positif" })
-    .default("1")
-    .transform(Number),
+    .preprocess((val) => {
+      // val vient de req.query (string | undefined)
+      const num = Number(String(val ?? "1"));
+      return clamp(num,1, Number.MAX_SAFE_INTEGER);
+    }, z.number().int().min(1))
+    .default(1),
   limit: z
-    .string()
-    .regex(/^\d+$/, { message: "La limite doit être un nombre entier positif" })
-    .default("5")
-    .transform(Number),
+    .preprocess((val) => {
+      const num = Number(String(val ?? "5"));
+      return clamp(num);
+    }, z.number().int().min(1).max(Number.MAX_SAFE_INTEGER))
+    .default(5),
   search: z
     .string({
       message: "La recherche /search/ doit être une chaîne de caractères",
@@ -90,7 +96,6 @@ export const FilterSchema = z.object({
 });
 
 // --- SHEMAS VALIDATION QUERY
-
 
 export const queryOrderSchema = z
   .object({

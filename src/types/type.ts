@@ -86,3 +86,4 @@ interface IntUser {
   image: string;
   publicId: string;
 }
+export type ProductTypeKeys = keyof typeof ProductType | "ALL";

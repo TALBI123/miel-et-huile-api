@@ -29,6 +29,7 @@ import {
 } from "../data/allowedNames";
 import { EnumRelationTables, Model } from "../types/enums";
 import {
+  ProductVariantWithRelations,
   ProductWithCategory,
   ProductWithRelations,
 } from "../types/prisma.type";
@@ -44,6 +45,7 @@ export const getProducts = async (
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
   const { categorySlug, ...rest } = res.locals.validated;
+   console.log(res.locals.validated, " req.body");
   const { page, limit } = res.locals.validated;
   let categoryId: string | undefined;
   try {
@@ -472,7 +474,7 @@ export const createProductVariant = async (
   try {
     // console.log(res.locals.validated, " req.body");
     const existingProduct: ProductWithCategory | null =
-      await service.getExistingProduct({ id,key:"title" });
+      await service.getExistingProduct({ id, key: "title" });
     // console.log(existingProduct);
     // existingProduct?.category
     if (!existingProduct)
@@ -556,22 +558,19 @@ export const createProductVariant = async (
 export const updateProductVariant = async (req: Request, res: Response) => {
   try {
     const { variantId, id } = req.params;
-    const existingProduct = await prisma.product.findUnique({
-      where: { id },
-      select: {
-        isActive: true,
-        category: { select: { id: true, isActive: true } },
-      },
-    });
-    console.log("produit catId - id -> cat : ", existingProduct);
+    const { productType } = res.locals.validated;
+    const existingProduct = await service.getExistingProduct({ id });
     if (!existingProduct)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: "Produit non trouvé",
       });
-    const existingVariant = await prisma.productVariant.findUnique({
-      where: { id: variantId },
-    });
+
+    const existingVariant = (await service.getProductVariantById(variantId, [
+      "amount",
+      "size",
+      "productId",
+    ])) as ProductVariantWithRelations | null;
     if (!existingVariant)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
@@ -582,20 +581,26 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         success: false,
         message: "Produit ou variant ne correspond pas au produit",
       });
+    const updatedData = {
+      ...filterObjectByKeys<
+        Partial<ProductVariant>,
+        (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
+      >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
+    };
+    const changedObj = objFiltered(existingVariant, updatedData);
     // console.log(res.locals.validated, " res.locals.validated hnaya", req.body);
-    if (req.body?.amount && req.body.amount !== existingVariant.amount) {
+    if (changedObj?.amount && changedObj.amount !== existingVariant.amount) {
       const amountExists = await prisma.productVariant.findFirst({
-        where: { amount: req.body.amount, productId: id },
+        where: { amount: changedObj.amount, productId: id },
       });
       if (amountExists)
         return res.status(StatusCodes.CONFLICT).json({
           success: false,
           message: "Cette variante existe déjà",
         });
-
-    } else if (req.body?.size && existingVariant.size !== req.body.size) {
+    } else if (changedObj?.size && existingVariant.size !== changedObj.size) {
       const sizeExists = await prisma.productVariant.findFirst({
-        where: { size: req.body.size, productId: id },
+        where: { size: changedObj.size, productId: id },
       });
       if (sizeExists)
         return res.status(StatusCodes.CONFLICT).json({
@@ -604,13 +609,13 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         });
     }
     // Construire l'objet Produit mis à jour
-    const updatedData = {
-      ...filterObjectByKeys<
-        Partial<ProductVariant>,
-        (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
-      >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
-    };
-    const changedObj = objFiltered(existingVariant, updatedData);
+    // const updatedData = {
+    //   ...filterObjectByKeys<
+    //     Partial<ProductVariant>,
+    //     (typeof ALLOWED_PRODUCT_VARIANT_PROPERTIES)[number]
+    //   >(res.locals.validated, ALLOWED_PRODUCT_VARIANT_PROPERTIES),
+    // };
+    // const changedObj = objFiltered(existingVariant, updatedData);
     // console.log(changedObj, " changedObj");
     if (isEmptyObject(changedObj))
       return res.status(StatusCodes.BAD_REQUEST).json({

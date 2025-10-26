@@ -14,6 +14,7 @@ import {
   validePrice,
 } from "./validation.shema";
 import { ProductType } from "@prisma/client";
+import { ProductTypeKeys } from "types/type";
 interface ProductVariantData {
   amount?: number;
   unit?: string;
@@ -178,7 +179,10 @@ export const updateeProductVariantSchema = refineobject(
       switch (data.productType) {
         case ProductType.DATES:
         case ProductType.HONEY:
-          if (data.unit && !ALLOWED_UNITS.includes(data.unit as AllowedTypeUnits))
+          if (
+            data.unit &&
+            !ALLOWED_UNITS.includes(data.unit as AllowedTypeUnits)
+          )
             addError(
               "unit",
               `Unité invalide (${ALLOWED_UNITS.join(", ")} autorisés)`
@@ -254,6 +258,15 @@ export const QueryProductSchema = z
     inStock: booleanFromString(
       "La valeur de inStock doit être true ou false"
     ).optional(),
+    productType: z.transform((val) => {
+      console.log("Preprocess productType value:", val);
+      if (
+        typeof val === "string" &&
+        Object.values(ProductType).includes(val as ProductType)
+      )
+        return val;
+      return "ALL";
+    }),
   })
   .merge(isActiveModeOptionsSchema)
   .merge(FilterSchema)

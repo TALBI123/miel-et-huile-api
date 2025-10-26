@@ -13,6 +13,7 @@ import usersRoute from "./routes/user.routes";
 import cookieParser from "cookie-parser";
 import express from "express";
 import cors from "cors";
+import { PacklinkService } from "./services/packlink.service";
 
 const app = express();
 
@@ -80,7 +81,15 @@ console.log(
   process.env.STRIPE_PUBLIC_KEY ? "✅ Défini" : "❌ Manquant"
 );
 console.log(process.env.PORT || "❌ PORT non défini");
+// async function runPacklink() {
+//   console.log("🚀 Test de Packlink...");
+//   await PacklinkService.testPacklink();
 
+//   console.log("🔍 Vérification du statut Packlink:");
+//   await PacklinkService.getStatus();
+// }
+
+// runPacklink()
 export default app;
 
 // app.get("/", async (req, res) => {

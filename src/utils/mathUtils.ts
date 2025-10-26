@@ -24,3 +24,5 @@ export const calculateDiscountForVariant = (data: Partial<ProductVariant>) => {
     ...(isOnSale !== undefined ? { isOnSale } : {}),
   };
 };
+export const clamp = (n: number, min = 1, max = 50) =>
+  Number.isNaN(n) ? min : Math.min(Math.max(Math.trunc(n), min), max);

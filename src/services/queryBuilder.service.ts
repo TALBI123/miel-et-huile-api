@@ -9,6 +9,7 @@ import {
   
 } from "../data/allowedNames";
 import { EnumRelationTables } from "../types/enums";
+import { ProductTypeKeys } from "../types/type";
 type RelationMode = "with" | "without" | "all";
 type RelationFilter = {
   relation: string; // ex: "variants" | "category"
@@ -24,6 +25,7 @@ type FilterOptions = {
   inStock?: boolean;
   isOnSale?: boolean;
   categoryId?: string;
+  productType :ProductTypeKeys;
   maxPrice?: number;
   minPrice?: number;
   isNestedPrice?: boolean;
@@ -121,6 +123,7 @@ export class QueryBuilderService {
       minPrice,
       maxPrice,
       isNestedPrice,
+      productType,
       champPrice,
       mode = "all",
       extraWhere,
@@ -138,6 +141,7 @@ export class QueryBuilderService {
       champPrice,
       mode,
     };
+    console.log("Product Type in Query Builder: ", productType);
     switch (table) {
       case "product":
         where = {
@@ -147,7 +151,9 @@ export class QueryBuilderService {
             "search",
             "isNestedActive",
           ]),
+          ...(productType !== "ALL" ? { variants: { some: { productType } } } : {})
         };
+
         // console.log("After Common Filters: ", where);
         Object.assign(where, {
           ...(options.inStock !== undefined || options.isOnSale !== undefined
