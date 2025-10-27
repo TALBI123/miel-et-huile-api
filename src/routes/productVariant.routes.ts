@@ -1,19 +1,20 @@
+import { getProductTypeMiddleware } from "../middlewares/product.middleware";
+import { calculateDiscountForVariant } from "../utils/mathUtils";
+import { checkEmptyRequestBody } from "../middlewares/validate";
+import { verifyAdmin, verifyToken } from "../middlewares/auth";
+import { ValidationId } from "../schema/validation.shema";
 import { validate } from "../middlewares/validate";
 import {
   createProductVariant,
   deleteProductVariant,
   updateProductVariant,
 } from "../controller/productVariant.controller";
-import { Router } from "express";
-import { verifyAdmin, verifyToken } from "../middlewares/auth";
-import { checkEmptyRequestBody } from "../middlewares/validate";
 import {
   createProductVariantSchema,
   productVariantSchema,
   updateeProductVariantSchema,
 } from "../schema/product.shema";
-import { ValidationId } from "../schema/validation.shema";
-import { calculateDiscountForVariant } from "../utils/mathUtils";
+import { Router } from "express";
 const router = Router({ mergeParams: true }); // Important pour accéder aux params du parent
 // -------------------- ADD Variants to product
 /**
@@ -26,10 +27,12 @@ const router = Router({ mergeParams: true }); // Important pour accéder aux par
  * @swagger
  * /products/{id}/variants:
  *   post:
- *     summary: Créer une variante de produit
+ *     summary: Créer une nouvelle variante pour un produit
  *     description: |
- *       Cette route permet d'ajouter une nouvelle variante à un produit existant.
- *       Une variante représente une configuration spécifique (par ex. quantité, unité, prix, etc.).
+ *       Cette route permet de créer une variante pour un produit existant.
+ *       - Le `productType` est récupéré via un middleware.
+ *       - Pour les produits **HONNEY** ou **DATTES**, les champs `amount` et `unit` sont nécessaires.
+ *       - Pour les produits **CLOTHING**, seul le champ `size` est utilisé à la place de `amount` et `unit`.
  *     tags:
  *       - Variantes de Produits
  *     parameters:
@@ -38,7 +41,7 @@ const router = Router({ mergeParams: true }); // Important pour accéder aux par
  *         schema:
  *           type: string
  *         required: true
- *         description: L'identifiant du produit auquel la variante sera associée
+ *         description: L'identifiant du produit
  *     requestBody:
  *       required: true
  *       content:
@@ -46,34 +49,35 @@ const router = Router({ mergeParams: true }); // Important pour accéder aux par
  *           schema:
  *             type: object
  *             properties:
+ *               price:
+ *                 type: number
+ *                 example: 29.99
+ *               discountPrice:
+ *                 type: number
+ *                 example: 24.99
+ *                 description: Utilisé si discountPercentage n'est pas fourni
+ *               discountPercentage:
+ *                 type: number
+ *                 example: 15
+ *                 description: Utilisé si discountPrice n'est pas fourni
+ *               isOnSale:
+ *                 type: boolean
+ *                 example: false
+ *               stock:
+ *                 type: integer
+ *                 example: 100
  *               amount:
  *                 type: number
  *                 example: 500
- *                 description: Quantité de la variante
+ *                 description: Non utilisé pour CLOTHING
  *               unit:
  *                 type: string
  *                 example: "g"
- *                 description: Unité de mesure de la variante
- *               price:
- *                 type: number
- *                 example: 19.99
- *                 description: Prix normal de la variante
- *               discountPercentage:
- *                 type: number
- *                 example: 10
- *                 description: Pourcentage de réduction (optionnel)
- *               discountPrice:
- *                 type: number
- *                 example: 17.99
- *                 description: Prix réduit si en promotion (optionnel)
- *               isOnSale:
- *                 type: boolean
- *                 example: true
- *                 description: Indique si la variante est en promotion
- *               stock:
- *                 type: number
- *                 example: 50
- *                 description: Quantité en stock disponible
+ *                 description: Non utilisé pour CLOTHING
+ *               size:
+ *                 type: string
+ *                 example: "M"
+ *                 description: Utilisé uniquement pour CLOTHING
  *     responses:
  *       201:
  *         description: Variante créée avec succès
@@ -85,13 +89,46 @@ const router = Router({ mergeParams: true }); // Important pour accéder aux par
  *                 success:
  *                   type: boolean
  *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Variante créée avec succès"
  *                 data:
- *                   $ref: '#/components/schemas/ProductVariant'
+ *                   type: object
+ *                   properties:
+ *                     price:
+ *                       type: number
+ *                       example: 29.99
+ *                     discountPrice:
+ *                       type: number
+ *                       example: 24.99
+ *                     discountPercentage:
+ *                       type: number
+ *                       example: 15
+ *                     isOnSale:
+ *                       type: boolean
+ *                       example: false
+ *                     stock:
+ *                       type: integer
+ *                       example: 100
+ *                     amount:
+ *                       type: number
+ *                       example: 500
+ *                     unit:
+ *                       type: string
+ *                       example: "g"
+ *                     size:
+ *                       type: string
+ *                       example: "M"
+ *       400:
+ *         description: Données invalides ou manquantes
  *       404:
  *         description: Produit non trouvé
+ *       409:
+ *         description: Conflit - amount ou size déjà utilisé pour une autre variante
  *       500:
  *         description: Erreur interne du serveur
  */
+
 /**
  * @swagger
  * components:
@@ -129,10 +166,11 @@ const router = Router({ mergeParams: true }); // Important pour accéder aux par
  */
 
 router.post(
-  "/variants",
+  "/",
   verifyToken,
   verifyAdmin,
   validate({ schema: ValidationId, key: "params" }),
+  getProductTypeMiddleware,
   validate({
     schema: createProductVariantSchema.transform(calculateDiscountForVariant),
     skipSave: true,
@@ -145,7 +183,11 @@ router.post(
  * /products/{id}/variants/{variantId}:
  *   patch:
  *     summary: Mettre à jour une variante de produit
- *     description: Cette route permet de mettre à jour une variante existante d'un produit.
+ *     description: |
+ *       Cette route permet de mettre à jour une variante existante d'un produit.
+ *       Le `productType` est récupéré via un middleware en fonction de l'id du produit.
+ *       - **HONEY ou DATES** : les champs `amount` et `unit` sont utilisés.
+ *       - **CLOTHING** : seul le champ `size` est utilisé à la place de `amount` et `unit`.
  *     tags:
  *       - Variantes de Produits
  *     parameters:
@@ -168,27 +210,35 @@ router.post(
  *           schema:
  *             type: object
  *             properties:
- *               amount:
- *                 type: number
- *                 example: 1000
- *               unit:
- *                 type: string
- *                 example: "ml"
  *               price:
  *                 type: number
  *                 example: 29.99
- *               discountPercentage:
- *                 type: number
- *                 example: 15
  *               discountPrice:
  *                 type: number
  *                 example: 24.99
- *               isOnSale:
- *                 type: boolean
- *                 example: false
- *               stock:
+ *                 description: Utilisé si discountPercentage n'est pas fourni
+ *               discountPercentage:
  *                 type: number
+ *                 example: 15
+ *                 description: Utilisé si discountPrice n'est pas fourni
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
+ *               stock:
+ *                 type: integer
  *                 example: 100
+ *               amount:
+ *                 type: number
+ *                 example: 500
+ *                 description: Non utilisé pour CLOTHING
+ *               unit:
+ *                 type: string
+ *                 example: "g"
+ *                 description: Non utilisé pour CLOTHING
+ *               size:
+ *                 type: string
+ *                 example: "M"
+ *                 description: Utilisé uniquement pour CLOTHING
  *     responses:
  *       200:
  *         description: Variante mise à jour avec succès
@@ -204,13 +254,38 @@ router.post(
  *                   type: string
  *                   example: La variante a été mise à jour avec succès
  *                 data:
- *                   $ref: '#/components/schemas/ProductVariant'
+ *                   type: object
+ *                   properties:
+ *                     price:
+ *                       type: number
+ *                       example: 29.99
+ *                     discountPrice:
+ *                       type: number
+ *                       example: 24.99
+ *                     discountPercentage:
+ *                       type: number
+ *                       example: 15
+ *                     isActive:
+ *                       type: boolean
+ *                       example: true
+ *                     stock:
+ *                       type: integer
+ *                       example: 100
+ *                     amount:
+ *                       type: number
+ *                       example: 500
+ *                     unit:
+ *                       type: string
+ *                       example: "g"
+ *                     size:
+ *                       type: string
+ *                       example: "M"
  *       400:
  *         description: Aucune donnée valide fournie pour la mise à jour
  *       404:
  *         description: Produit ou variante non trouvée
  *       409:
- *         description: Conflit - amount déjà utilisé pour une autre variante
+ *         description: Conflit - amount ou size déjà utilisé pour une autre variante
  *       500:
  *         description: Erreur interne du serveur
  */
@@ -220,6 +295,7 @@ router.patch(
   verifyToken,
   verifyAdmin,
   validate({ schema: productVariantSchema, key: "params" }),
+  getProductTypeMiddleware,
   validate({
     schema: updateeProductVariantSchema.transform(calculateDiscountForVariant),
     skipSave: true,

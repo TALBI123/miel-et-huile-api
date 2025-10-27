@@ -60,6 +60,11 @@ export const createProductShema = z.object({
   description: z.string().optional(),
   isActive: booleanFromStringSchema,
   origin: z.string({ message: "L'origine est requise" }).optional(),
+  productType: z
+    .enum(ProductType, {
+      message: "Veuillez sélectionner un type de produit valide",
+    })
+    .default(ProductType.HONEY),
   categoryId: z
     .string({ message: "L'ID est requis" })
     .uuid({ message: "L'ID doit être un UUID valide" }),
@@ -274,3 +279,4 @@ export const QueryProductSchema = z
   .refine(validePrice, {
     message: "Le prix minimum ne peut pas être supérieur au prix maximum",
   });
+  

@@ -26,7 +26,8 @@ export const createProductVariant = async (
   req: Request<{ id: string }, {}, ProductVariant>,
   res: Response
 ) => {
-  const { productType, size, amount, unit } = res.locals.validated;
+  const {  size, amount, unit } = res.locals.validated;
+  const { productType, ...rest } = res.locals.validated;
   const { id } = req.params;
   const isHasSize = productType === ProductType.CLOTHING;
   try {
@@ -55,10 +56,10 @@ export const createProductVariant = async (
         message: "Cette variante existe déjà",
       });
     const filteredData = filterObjectByKeys<
-      Omit<ProductVariant, "productId">,
+      Omit<ProductVariant, "productId" |"productType">,
       AllowedProductVariantProperties
     >(
-      res.locals.validated,
+      rest,
       getAllowedPropertiesForProductType(
         productType
       ) as AllowedProductVariantProperties[]
@@ -71,7 +72,6 @@ export const createProductVariant = async (
     });
     const variantData = {
       ...filteredData,
-      ...(productType !== ProductType.HONEY ? { productType } : {}),
       productId: id,
       name,
       sku,

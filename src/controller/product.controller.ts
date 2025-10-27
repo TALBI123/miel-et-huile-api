@@ -7,9 +7,7 @@ import { EnumRelationTables, Model } from "../types/enums";
 import { handleServerError } from "../utils/helpers";
 import { objFiltered } from "../utils/filter";
 import { StatusCodes } from "http-status-codes";
-
 import { Request, Response } from "express";
-
 import {
   deleteFromCloudinary,
   deletePathToCloudinary,
@@ -18,6 +16,7 @@ import {
 } from "../services/upload.service";
 
 import prisma from "../config/db";
+import { ProductType } from "@prisma/client";
 
 // --- PUBLIC PRODUCT Controller
 
@@ -26,7 +25,6 @@ export const getProducts = async (
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
   const { categorySlug, ...rest } = res.locals.validated;
-  console.log(res.locals.validated, " req.body");
   const { page, limit } = res.locals.validated;
   let categoryId: string | undefined;
   try {
@@ -135,6 +133,7 @@ export const createProduct = async (
 ) => {
   let imagesInfo: UploadResult[] = [];
   try {
+    const { productType, ...rest } = req.body;
     const existingCategory = await prisma.category.findUnique({
       where: { id: req.body.categoryId },
     });
@@ -162,7 +161,8 @@ export const createProduct = async (
 
     const data = await prisma.product.create({
       data: {
-        ...filterObjectByKeys(req.body, ALLOWED_PRODUCT_PROPERTIES),
+        ...filterObjectByKeys(rest, ALLOWED_PRODUCT_PROPERTIES),
+        ...(productType !== ProductType.HONEY ? { productType } : {}),
         images: {
           create: imagesInfo.map((img) => ({
             image: img.secure_url,

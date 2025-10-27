@@ -11,8 +11,6 @@
     "unit": "kg",
     "amount": 1,
     "size": null,
-    "productType": "HONEY",
-    "origin": null,
     "name": "variant-Miel-purifie-73D1",
     "sku": "HON-PU-1KG-580A"
   },
@@ -28,8 +26,6 @@
     "unit": "g",
     "amount": 500,
     "size": null,
-    "productType": "HONEY",
-    "origin": null,
     "name": "variant-Miel-purifie-E73A",
     "sku": "HON-PU-500G-E1D0"
   },
@@ -45,8 +41,6 @@
     "unit": "g",
     "amount": 250,
     "size": null,
-    "productType": "HONEY",
-    "origin": null,
     "name": "variant-Miel-de-C68E",
     "sku": "HON-DE-250G-EBA6"
   },
@@ -62,8 +56,6 @@
     "unit": "kg",
     "amount": 1,
     "size": null,
-    "productType": "HONEY",
-    "origin": "france",
     "name": "variant-Miel-a-C764",
     "sku": "HON-À-300G-C04F"
   },
@@ -79,8 +71,6 @@
     "unit": "g",
     "amount": 300,
     "size": null,
-    "productType": "HONEY",
-    "origin": null,
     "name": "variant-Miel-a-53B5",
     "sku": "HON-À-300G-DB37"
   },
@@ -96,8 +86,6 @@
     "unit": "g",
     "amount": 250,
     "size": null,
-    "productType": "HONEY",
-    "origin": null,
     "name": "variant-Miel-dEucalyptus-3A6D",
     "sku": "HON-D’-250G-4B26"
   }

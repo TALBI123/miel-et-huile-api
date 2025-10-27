@@ -20,8 +20,17 @@ export const validate =
   }: ValidateOptions<T>): RequestHandler =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
-      const parsed = schema.parse(req[key] ?? {});
-      console.log("steal here")
+      console.log(
+        "Validating request...",
+        res.locals.validated,
+        " res.locals.validated"
+      );
+      const payload = res.locals.validated?.productType
+        ? res.locals.validated
+        : req[key];
+        console.log(payload, " payload validate middleware");
+      const parsed = schema.parse(payload ?? {});
+      console.log("steal here");
       if (skipSave) res.locals.validated = parsed ?? {};
       // console.log(parsed, " parsed validate",skipSave);
       // console.log(skipSave, parsed, " skipSave");

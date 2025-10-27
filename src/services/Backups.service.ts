@@ -45,22 +45,39 @@ export class BackupsService {
   static async restoreBackupFromFile() {
     const backupDir = path.join(__dirname, "../../backups");
     console.log("Restoring backups from directory:", backupDir);
-    for (const table of this.ALLTABLES) {
-      const filePath = path.join(
-        backupDir,
-        `${table}_backup_${new Date().toISOString().split("T")[0]}.json`
-      );
-      if (!fs.existsSync(filePath)) {
-        console.log(
-          `No backup file found for table ${table} at ${filePath}, skipping...`
+    try {
+      for (const table of this.ALLTABLES) {
+        const data = await this.getAllItems(table as keyof typeof prisma);
+        if (data.length) {
+          console.log(" Table", table, "is not empty, skipping restoration.");
+          continue; // Skip if table is not empty
+        }
+        const filePath = path.join(
+          backupDir,
+          `${table}_backup_${new Date().toISOString().split("T")[0]}.json`
         );
-        continue;
-      }
+        if (!fs.existsSync(filePath)) {
+          console.log(
+            `No backup file found for table ${table} at ${filePath}, skipping...`
+          );
+          continue;
+        }
         const fileData = fs.readFileSync(filePath, "utf-8");
-        console.log(JSON.parse(fileData).length, " items to restore for table ", table);
-        console.log(JSON.parse(fileData));
+        console.log(
+          JSON.parse(fileData).length,
+          " items to restore for table ",
+          table
+        );
+        //   console.log(JSON.parse(fileData));
+        const jsonData = JSON.parse(fileData);
+        await (prisma as any)[table].createMany({
+          data: jsonData,
+        });
         console.log(`Restoring backup for table ${table} from ${filePath}`);
-        break;
+        //   break;
+      }
+    } catch (err) {
+      console.log("Error during backup restoration:", err);
     }
   }
 }

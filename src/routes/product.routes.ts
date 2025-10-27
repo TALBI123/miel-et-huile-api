@@ -37,12 +37,12 @@ const router = Router();
  *     description: >
  *       Cette route permet de récupérer les produits avec la possibilité de :
  *       - Filtrer par `categorySlug` (slug de catégorie)
- *       - Rechercher par nom ou titre
- *       - Filtrer par prix, stock ou promotion
+ *       - Rechercher par nom ou description via `search`
+ *       - Filtrer par prix (`minPrice` et `maxPrice`) et stock
  *       - Filtrer uniquement les produits actifs via `isActive`
- *       - Filtrer selon l'état des variantes via `isNestedActive`
+ *       - Filtrer selon l'état des variantes via `isNestedActive` (avec startDate et endDate)
  *       - Gérer les variantes via `mode` (`all`, `with`, `without`)
- *       - Filtrer par type de produit (`HONEY`, `CLOTHING`, `DATES`, `OIL`)
+ *       - Filtrer par type de produit (`HONEY`, `CLOTHING`, `DATES`)
  *       - Combiner plusieurs filtres sans générer d'erreur
  *
  *       La variante la moins chère est automatiquement incluse dans le retour.
@@ -55,72 +55,29 @@ const router = Router();
  *         description: Numéro de page pour la pagination
  *         schema:
  *           type: integer
- *           minimum: 1
- *           default: 1
  *           example: 1
  *       - name: limit
  *         in: query
  *         required: false
- *         description: Nombre de produits par page
+ *         description: Nombre de résultats par page
  *         schema:
  *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 10
  *           example: 10
  *       - name: search
  *         in: query
  *         required: false
- *         description: Texte à rechercher dans le titre ou la description
+ *         description: Recherche par nom ou description de produit
  *         schema:
  *           type: string
- *           example: "miel lavande"
+ *           example: "Miel"
  *       - name: mode
  *         in: query
  *         required: false
- *         description: Mode des variantes à inclure
+ *         description: Filtrage selon le contenu des catégories
  *         schema:
  *           type: string
  *           enum: [all, with, without]
- *           default: all
- *           example: "with"
- *       - name: categorySlug
- *         in: query
- *         required: false
- *         description: Slug de la catégorie pour filtrer les produits
- *         schema:
- *           type: string
- *           example: "miels-artisanaux"
- *       - name: onSale
- *         in: query
- *         required: false
- *         description: Filtrer uniquement les produits en promotion
- *         schema:
- *           type: boolean
- *           example: true
- *       - name: minPrice
- *         in: query
- *         required: false
- *         description: Prix minimum des variantes incluses
- *         schema:
- *           type: number
- *           minimum: 0
- *           example: 10.5
- *       - name: maxPrice
- *         in: query
- *         required: false
- *         description: Prix maximum des variantes incluses
- *         schema:
- *           type: number
- *           minimum: 0
- *           example: 50.0
- *       - name: inStock
- *         in: query
- *         required: false
- *         description: Filtrer uniquement les produits actuellement en stock
- *         schema:
- *           type: boolean
- *           example: true
+ *           example: "all"
  *       - name: isActive
  *         in: query
  *         required: false
@@ -131,20 +88,31 @@ const router = Router();
  *       - name: isNestedActive
  *         in: query
  *         required: false
- *         description: >
- *           Filtrer les produits dont les variantes sont actives :
- *           - `true` → retourne les produits ayant au moins une variante active
- *           - `false` → retourne les produits dont toutes les variantes sont inactives
+ *         description: Filtrer les produits dont les variantes sont actives (en fonction de startDate et endDate)
  *         schema:
  *           type: boolean
  *           example: true
+ *       - name: minPrice
+ *         in: query
+ *         required: false
+ *         description: Prix minimum pour filtrer
+ *         schema:
+ *           type: number
+ *           example: 10
+ *       - name: maxPrice
+ *         in: query
+ *         required: false
+ *         description: Prix maximum pour filtrer
+ *         schema:
+ *           type: number
+ *           example: 100
  *       - name: productType
  *         in: query
  *         required: false
  *         description: Filtrer par type de produit
  *         schema:
  *           type: string
- *           enum: [HONEY, CLOTHING, DATES, OIL]
+ *           enum: [HONEY, CLOTHING, DATES]
  *           example: "HONEY"
  *     responses:
  *       200:
@@ -164,118 +132,61 @@ const router = Router();
  *                     properties:
  *                       id:
  *                         type: string
- *                         example: "4f9c5fb9-e20c-4e0d-94ce-06a60a82ee39"
  *                       categoryId:
  *                         type: string
- *                         example: "f1e1efe0-b6e8-49af-a0b1-bdb979a76faf"
  *                       title:
  *                         type: string
- *                         example: "Miel purifié industriellement"
  *                       subDescription:
  *                         type: string
  *                         nullable: true
- *                         example: "Moins riche en enzymes mais se conserve plus longtemps."
  *                       description:
  *                         type: string
- *                         example: "Miel chauffé et filtré, souvent mélangé pour homogénéiser la texture."
  *                       rating:
  *                         type: number
- *                         example: 0
  *                       isActive:
  *                         type: boolean
- *                         example: true
  *                       image:
  *                         type: string
- *                         example: "https://res.cloudinary.com/dje0moqah/image/upload/v1761413543/products/o8so19uyufv8wofrgz1q.jpg"
  *                       variantId:
  *                         type: string
- *                         example: "f0d3bd83-d8dc-4842-9c58-50b05134424e"
  *                       price:
  *                         type: number
- *                         example: 60
  *                       discountPrice:
  *                         type: number
- *                         example: 0
  *                       discountPercentage:
  *                         type: number
- *                         example: 0
  *                       amount:
  *                         type: number
- *                         example: 500
  *                       unit:
  *                         type: string
- *                         example: "g"
  *                       stock:
  *                         type: integer
- *                         example: 100
+ *                       productType:
+ *                         type: string
+ *                         enum: [HONEY, CLOTHING, DATES]
  *                       createdAt:
  *                         type: string
  *                         format: date-time
- *                         example: "2025-10-25T17:32:23.266Z"
  *                       updatedAt:
  *                         type: string
  *                         format: date-time
- *                         example: "2025-10-25T17:34:08.346Z"
  *                 pagination:
  *                   type: object
  *                   properties:
  *                     total:
  *                       type: integer
- *                       example: 120
- *                       description: Nombre total de produits
  *                     len:
  *                       type: integer
- *                       example: 10
- *                       description: Nombre de produits dans cette page
  *                     page:
  *                       type: integer
- *                       example: 1
- *                       description: Page actuelle
  *                     limit:
  *                       type: integer
- *                       example: 10
- *                       description: Limite par page
  *                     lastPage:
  *                       type: integer
- *                       example: 12
- *                       description: Dernière page disponible
  *       400:
  *         description: Paramètres de requête invalides
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Paramètres de pagination invalides"
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       field:
- *                         type: string
- *                         example: "page"
- *                       message:
- *                         type: string
- *                         example: "La page doit être un nombre entier positif"
  *       500:
  *         description: Erreur serveur interne
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Erreur interne du serveur"
  */
 
 router.get(
@@ -546,6 +457,19 @@ router.post(
  *               subDescription:
  *                 type: string
  *                 example: "Nouvelle sous-description"
+ *               origin:
+ *                 type: string
+ *                 example: "Maroc"
+ *                 description: "Origine du produit"
+ *               productType:
+ *                 type: string
+ *                 enum: [HONEY, CLOTHING, DATES]
+ *                 example: "CLOTHING"
+ *                 description: "Type du produit"
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
+ *                 description: "Indique si le produit est actif"
  *             additionalProperties: false
  *     responses:
  *       200:
@@ -579,45 +503,22 @@ router.post(
  *                     subDescription:
  *                       type: string
  *                       example: "Nouvelle sous-description"
+ *                     origin:
+ *                       type: string
+ *                       example: "Maroc"
+ *                     productType:
+ *                       type: string
+ *                       enum: [HONEY, CLOTHING, DATES]
+ *                       example: "CLOTHING"
+ *                     isActive:
+ *                       type: boolean
+ *                       example: true
  *       400:
  *         description: Requête invalide (aucune donnée valide ou catégorie non trouvée)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Aucune donnée valide fournie pour la mise à jour"
  *       404:
  *         description: Produit non trouvé
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Produit non trouvé"
  *       500:
  *         description: Erreur interne du serveur
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Erreur interne du serveur"
  */
 
 router.patch(

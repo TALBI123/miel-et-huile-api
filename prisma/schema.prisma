@@ -135,7 +135,6 @@ enum ProductType {
   HONEY // Miel
   CLOTHING // Vêtements
   DATES // Dattes
-  // OIL // Huile
 }
 
 model Order {

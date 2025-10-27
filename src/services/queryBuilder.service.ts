@@ -24,7 +24,7 @@ type FilterOptions = {
   inStock?: boolean;
   isOnSale?: boolean;
   categoryId?: string;
-  productType :ProductTypeKeys;
+  productType: ProductTypeKeys;
   maxPrice?: number;
   minPrice?: number;
   isNestedPrice?: boolean;
@@ -150,7 +150,7 @@ export class QueryBuilderService {
             "search",
             "isNestedActive",
           ]),
-          ...(productType !== "ALL" ? { variants: { some: { productType } } } : {})
+          ...(productType !== "ALL" ? { productType } : {}),
         };
 
         // console.log("After Common Filters: ", where);

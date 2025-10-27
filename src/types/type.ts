@@ -57,6 +57,7 @@ export interface Product {
   categoryId: string;
   origin: string;
   description: string;
+  productType: ProductType;
   subDescription: string;
   isActive?: boolean;
   images?: { id: string; image: string; publicId: string }[];
@@ -67,10 +68,9 @@ export interface ProductVariant {
   unit: string;
   price: number;
   discountPercentage?: number;
-  discountPrice?: number;
-  productType: ProductType;
   size?: string;
-  origin?: string;
+  productType: ProductType;
+  discountPrice?: number;
   isOnSale?: boolean;
   isActive?: boolean;
   stock: number;
