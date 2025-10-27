@@ -14,6 +14,7 @@ export const ALLOWED_PRODUCT_PROPERTIES = [
   "description",
   "subDescription",
   "isActive",
+  "productType",
   "origin",
 ] as const;
 export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [

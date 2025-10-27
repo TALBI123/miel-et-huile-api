@@ -139,6 +139,8 @@ export const updateProductVariant = async (req: Request, res: Response) => {
         success: false,
         message: "Produit ou variant ne correspond pas au produit",
       });
+
+    
     const updatedData = {
       ...filterObjectByKeys<
         Partial<ProductVariant>,

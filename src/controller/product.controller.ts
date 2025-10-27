@@ -158,10 +158,14 @@ export const createProduct = async (
 
     // console.log(imagesInfo, " imagesInfo");
     // Enregistrer la Produit dans la base de données
-
+    const ALLOWED_PRODUCT_PROPERTIES_Without_ProductType =
+      ALLOWED_PRODUCT_PROPERTIES.filter((prop) => prop !== "productType");
     const data = await prisma.product.create({
       data: {
-        ...filterObjectByKeys(rest, ALLOWED_PRODUCT_PROPERTIES),
+        ...filterObjectByKeys<
+          Omit<Product, "productType">,
+          (typeof ALLOWED_PRODUCT_PROPERTIES_Without_ProductType)[number]
+        >(rest, ALLOWED_PRODUCT_PROPERTIES_Without_ProductType),
         ...(productType !== ProductType.HONEY ? { productType } : {}),
         images: {
           create: imagesInfo.map((img) => ({
@@ -204,7 +208,6 @@ export const updateProduct = async (
       return res
         .status(StatusCodes.NOT_FOUND)
         .json({ success: false, message: "Produit non trouvé" });
-
     if (req.body?.categoryId) {
       const existingCategory = await prisma.category.findUnique({
         where: { id: req.body.categoryId },
@@ -229,6 +232,18 @@ export const updateProduct = async (
     );
     const { category, ...rest } = existingProduct;
     const changedObj = objFiltered(rest, filterdProduct);
+    if (changedObj.productType) {
+      const hasVariants = await prisma.productVariant.count({
+        where: { productId: existingProduct.id },
+      });
+      if (hasVariants)
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message:
+            "Impossible de modifier le type de produit car des variantes existent déjà pour ce produit",
+        });
+    }
+
     // console.log(changedObj, "changedObj");
     if (isEmptyObject(changedObj))
       return res.status(StatusCodes.BAD_REQUEST).json({
