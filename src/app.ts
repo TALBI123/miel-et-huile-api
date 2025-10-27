@@ -14,6 +14,7 @@ import cookieParser from "cookie-parser";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { PacklinkService } from "./services/packlink.service";
+import { BackupsService } from "./services/Backups.service";
 
 const app = express();
 
@@ -81,12 +82,20 @@ console.log(
   process.env.STRIPE_PUBLIC_KEY ? "✅ Défini" : "❌ Manquant"
 );
 console.log(process.env.PORT || "❌ PORT non défini");
+async function getBackupData() {
+  console.log("🔄 Démarrage de la sauvegarde des données...");
+  await BackupsService.saveBackupToFile();
+  console.log("✅ Sauvegarde des données terminée.");
+}
+getBackupData();
 // async function runPacklink() {
-//   console.log("🚀 Test de Packlink...");
-//   await PacklinkService.testPacklink();
-
-//   console.log("🔍 Vérification du statut Packlink:");
-//   await PacklinkService.getStatus();
+//   try {
+//     console.log("🧪 Test Packlink...");
+//     const result = await PacklinkService.testPacklink();
+//     console.log("✅ Résultat:", result);
+//   } catch (error) {
+//     console.error("❌ Erreur:", error);
+//   }
 // }
 
 // runPacklink()

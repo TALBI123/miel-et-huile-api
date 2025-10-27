@@ -1,0 +1,79 @@
+[
+  {
+    "id": "90f5a521-3089-455d-a1d7-4e1b29caf2ed",
+    "categoryId": "f1e1efe0-b6e8-49af-a0b1-bdb979a76faf",
+    "createdAt": "2025-10-25T17:33:32.808Z",
+    "description": "Miel au goût doux et floral, très apprécié pour ses arômes délicats.",
+    "updatedAt": "2025-10-25T17:33:32.808Z",
+    "title": "Miel de Lavande",
+    "rating": 0,
+    "subDescription": "Apaisant naturel, idéal pour le sommeil et la détente.",
+    "isActive": false
+  },
+  {
+    "id": "4f9c5fb9-e20c-4e0d-94ce-06a60a82ee39",
+    "categoryId": "f1e1efe0-b6e8-49af-a0b1-bdb979a76faf",
+    "createdAt": "2025-10-25T17:32:23.266Z",
+    "description": "Miel chauffé et filtré, souvent mélangé pour homogénéiser la texture.",
+    "updatedAt": "2025-10-25T17:34:08.346Z",
+    "title": "Miel purifié industriellement",
+    "rating": 0,
+    "subDescription": "Moins riche en enzymes mais se conserve plus longtemps.",
+    "isActive": true
+  },
+  {
+    "id": "5d8674d4-8dc6-45fd-9ba1-2f911bd53863",
+    "categoryId": "26623e70-558c-45cd-b462-a94ccbfff237",
+    "createdAt": "2025-10-25T19:15:27.393Z",
+    "description": "Ce miel combine la douceur naturelle du miel pur avec la force épicée du gingembre et la fraîcheur acidulée du citron. Il est parfait pour stimuler l'énergie, renforcer le système immunitaire et soulager les maux de gorge.",
+    "updatedAt": "2025-10-25T19:15:27.393Z",
+    "title": "Miel Gingembre et Citron",
+    "rating": 0,
+    "subDescription": "Idéal en infusion chaude ou sur des tartines pour un boost naturel et revitalisant.",
+    "isActive": false
+  },
+  {
+    "id": "3c6af7de-6fee-4286-8f3f-5ed84f2abbdb",
+    "categoryId": "26623e70-558c-45cd-b462-a94ccbfff237",
+    "createdAt": "2025-10-25T19:18:06.672Z",
+    "description": "Miel enrichi en propolis, reconnu pour ses propriétés antibactériennes, et agrémenté d'une pointe de citron pour un goût rafraîchissant et revitalisant. Favorise la défense naturelle de l'organisme et apaise la gorge.",
+    "updatedAt": "2025-10-25T19:18:06.672Z",
+    "title": "Miel Propolis et Citron",
+    "rating": 0,
+    "subDescription": "Parfait en complément de cures hivernales ou en ajout dans vos boissons chaudes.",
+    "isActive": false
+  },
+  {
+    "id": "331eb208-5a38-4c11-b807-9750980be977",
+    "categoryId": "4380eb64-50b9-4e8e-9b1c-c8af870fc4b5",
+    "createdAt": "2025-10-25T19:41:16.973Z",
+    "description": "Miel rare aux notes florales intenses et légèrement boisées, récolté à partir de fleurs de thym rose. Connu pour ses propriétés antibactériennes et apaisantes, il est idéal pour renforcer l'organisme.",
+    "updatedAt": "2025-10-25T19:42:08.292Z",
+    "title": "Miel de Thym Rose",
+    "rating": 0,
+    "subDescription": "Idéal en tisane ou en remède naturel contre la fatigue et les maux de gorge.",
+    "isActive": true
+  },
+  {
+    "id": "f0292f81-1536-43c3-ac21-3ecc079af078",
+    "categoryId": "4380eb64-50b9-4e8e-9b1c-c8af870fc4b5",
+    "createdAt": "2025-10-25T19:45:44.219Z",
+    "description": "Miel monofloral au goût prononcé et mentholé, issu des fleurs d’eucalyptus. Excellent pour la santé respiratoire et reconnu pour ses propriétés antiseptiques.",
+    "updatedAt": "2025-10-25T19:46:46.149Z",
+    "title": "Miel d’Eucalyptus",
+    "rating": 0,
+    "subDescription": "Parfait en infusion chaude ou à consommer directement pour soulager la gorge.",
+    "isActive": true
+  },
+  {
+    "id": "1bb66d13-7158-4dcb-89bb-55d75db951a8",
+    "categoryId": "f1e1efe0-b6e8-49af-a0b1-bdb979a76faf",
+    "createdAt": "2025-10-25T17:31:29.516Z",
+    "description": "Miel infusé à la cannelle, doux et parfumé.",
+    "updatedAt": "2025-10-25T21:47:33.164Z",
+    "title": "Miel à la cannelle",
+    "rating": 0,
+    "subDescription": "Favorise la circulation sanguine et le métabolisme.",
+    "isActive": true
+  }
+]

@@ -59,6 +59,7 @@ export const createProductShema = z.object({
     }),
   description: z.string().optional(),
   isActive: booleanFromStringSchema,
+  origin: z.string({ message: "L'origine est requise" }).optional(),
   categoryId: z
     .string({ message: "L'ID est requis" })
     .uuid({ message: "L'ID doit être un UUID valide" }),
@@ -97,7 +98,6 @@ export const createProductVariantSchema = refineobject(
       unit: z.string().optional(),
       amount: z.number().optional(),
       size: z.string().optional(),
-      origin: z.string({ message: "L'origine est requise" }).optional(),
     })
     .superRefine((data, ctx) => {
       function addError(path: string, message: string) {

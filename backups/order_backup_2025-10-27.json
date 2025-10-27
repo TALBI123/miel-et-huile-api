@@ -1,0 +1,93 @@
+[
+  {
+    "id": "cmd-rG7PwNIMoccK8SAWuvqu9GmSxwIA6q9l9ZoQXFAFZPo",
+    "userId": "e85a8fa4-6183-4f06-ba1e-0c55561fdb25",
+    "totalAmount": 33,
+    "status": "CONFIRMED",
+    "paymentStatus": "PAID",
+    "createdAt": "2025-10-25T20:10:49.147Z",
+    "updatedAt": "2025-10-25T20:12:25.574Z",
+    "stripePaymentIntentId": "pi_3SMDp5E9nqjkeo4X0i3fTSfA",
+    "stripeSessionId": null,
+    "paymentMethod": "CARD",
+    "notes": "Traité par webhook session id cs_test_b1AdqpydBhcFAiSmUchTAbinzsjg6Zdy0YvAWiGT24gyazU8QTMHFyg6Jx à 2025-10-25T20:12:25.573Z"
+  },
+  {
+    "id": "cmd-TydQ8TNaMZiYgJKT18SNl6ohBLrfCVZZlUYd38Eir_g",
+    "userId": "e85a8fa4-6183-4f06-ba1e-0c55561fdb25",
+    "totalAmount": 98,
+    "status": "CANCELLED",
+    "paymentStatus": "EXPIRED",
+    "createdAt": "2025-10-25T20:10:48.813Z",
+    "updatedAt": "2025-10-26T20:10:50.793Z",
+    "stripePaymentIntentId": null,
+    "stripeSessionId": null,
+    "paymentMethod": "CARD",
+    "notes": "Session Stripe expirée automatiquement à 2025-10-26T20:10:50.792Z"
+  },
+  {
+    "id": "cmd-PvObjzWGh_Ko9d7hx_AnggZqFl6agBMSlgjpV0-Xi34",
+    "userId": "e85a8fa4-6183-4f06-ba1e-0c55561fdb25",
+    "totalAmount": 33,
+    "status": "CANCELLED",
+    "paymentStatus": "EXPIRED",
+    "createdAt": "2025-10-25T20:10:50.489Z",
+    "updatedAt": "2025-10-26T20:10:50.933Z",
+    "stripePaymentIntentId": null,
+    "stripeSessionId": null,
+    "paymentMethod": "CARD",
+    "notes": "Session Stripe expirée automatiquement à 2025-10-26T20:10:50.932Z"
+  },
+  {
+    "id": "cmd-py0ZnC0MGm7v0Zw52YhyaD0lY3DxvbiWbePu1YsF9Gs",
+    "userId": "e85a8fa4-6183-4f06-ba1e-0c55561fdb25",
+    "totalAmount": 33,
+    "status": "CANCELLED",
+    "paymentStatus": "EXPIRED",
+    "createdAt": "2025-10-25T20:10:50.196Z",
+    "updatedAt": "2025-10-26T20:10:50.947Z",
+    "stripePaymentIntentId": null,
+    "stripeSessionId": null,
+    "paymentMethod": "CARD",
+    "notes": "Session Stripe expirée automatiquement à 2025-10-26T20:10:50.945Z"
+  },
+  {
+    "id": "cmd-Tb1XbUsrSK30zddnH-Mq376C_saMcU9X1_zKMz5VOBQ",
+    "userId": "e85a8fa4-6183-4f06-ba1e-0c55561fdb25",
+    "totalAmount": 33,
+    "status": "CANCELLED",
+    "paymentStatus": "EXPIRED",
+    "createdAt": "2025-10-25T20:10:50.719Z",
+    "updatedAt": "2025-10-26T20:10:51.702Z",
+    "stripePaymentIntentId": null,
+    "stripeSessionId": null,
+    "paymentMethod": "CARD",
+    "notes": "Session Stripe expirée automatiquement à 2025-10-26T20:10:51.701Z"
+  },
+  {
+    "id": "cmd-ywHes2xsSf-wtBqoezUWdgdaOusmn29etONCHSqCczo",
+    "userId": "e85a8fa4-6183-4f06-ba1e-0c55561fdb25",
+    "totalAmount": 33,
+    "status": "CANCELLED",
+    "paymentStatus": "EXPIRED",
+    "createdAt": "2025-10-25T20:10:51.213Z",
+    "updatedAt": "2025-10-26T20:10:51.932Z",
+    "stripePaymentIntentId": null,
+    "stripeSessionId": null,
+    "paymentMethod": "CARD",
+    "notes": "Session Stripe expirée automatiquement à 2025-10-26T20:10:51.931Z"
+  },
+  {
+    "id": "cmd-dU0Xm6IjBNfg9w1j8ctR2g5YszCgpNgqtBFzrQanhrI",
+    "userId": "e85a8fa4-6183-4f06-ba1e-0c55561fdb25",
+    "totalAmount": 33,
+    "status": "CANCELLED",
+    "paymentStatus": "EXPIRED",
+    "createdAt": "2025-10-25T20:10:50.932Z",
+    "updatedAt": "2025-10-26T20:10:52.018Z",
+    "stripePaymentIntentId": null,
+    "stripeSessionId": null,
+    "paymentMethod": "CARD",
+    "notes": "Session Stripe expirée automatiquement à 2025-10-26T20:10:52.017Z"
+  }
+]

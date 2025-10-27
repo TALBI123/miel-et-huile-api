@@ -55,6 +55,7 @@ export interface IntCategory {
 export interface Product {
   title: string;
   categoryId: string;
+  origin: string;
   description: string;
   subDescription: string;
   isActive?: boolean;

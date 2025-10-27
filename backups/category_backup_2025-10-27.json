@@ -1,0 +1,46 @@
+[
+  {
+    "id": "26623e70-558c-45cd-b462-a94ccbfff237",
+    "name": "Miels aromatisés et composés",
+    "image": "https://res.cloudinary.com/dje0moqah/image/upload/v1761419332/categories/w2zqh6toh8hove5huypj.webp",
+    "publicId": "categories/w2zqh6toh8hove5huypj",
+    "createdAt": "2025-10-25T19:08:51.804Z",
+    "description": "",
+    "slug": "miels-aromatises-et-composes",
+    "updatedAt": "2025-10-25T19:08:51.804Z",
+    "isActive": false
+  },
+  {
+    "id": "f1e1efe0-b6e8-49af-a0b1-bdb979a76faf",
+    "name": "Nos Miels",
+    "image": "https://res.cloudinary.com/dje0moqah/image/upload/v1761305576/categories/v87jp4x5tlexb6bjlh9l.jpg",
+    "publicId": "categories/v87jp4x5tlexb6bjlh9l",
+    "createdAt": "2025-10-24T11:32:57.215Z",
+    "description": "Miels enrichis avec des plantes, épices ou extraits naturels. Ils allient les propriétés du miel à celles des ingrédients ajoutés pour créer des saveurs originales et des vertus santé supplémentaires.",
+    "slug": "nos-miels",
+    "updatedAt": "2025-10-25T19:09:55.038Z",
+    "isActive": true
+  },
+  {
+    "id": "1aeeb3ce-58f1-4d1a-98a4-18465f2c0709",
+    "name": "Miels multifloraux et de terroir",
+    "image": "https://res.cloudinary.com/dje0moqah/image/upload/v1761419506/categories/jv1cysd3dlh8pfzkmsdi.webp",
+    "publicId": "categories/jv1cysd3dlh8pfzkmsdi",
+    "createdAt": "2025-10-25T19:11:46.574Z",
+    "description": "Ces miels proviennent de plusieurs fleurs ou d'une région spécifique. Ils reflètent la diversité de la flore locale et offrent un goût riche et équilibré, très apprécié des amateurs de miel authentique.",
+    "slug": "miels-multifloraux-et-de-terroir",
+    "updatedAt": "2025-10-25T19:11:46.574Z",
+    "isActive": false
+  },
+  {
+    "id": "4380eb64-50b9-4e8e-9b1c-c8af870fc4b5",
+    "name": "Miels monofloraux",
+    "image": "https://res.cloudinary.com/dje0moqah/image/upload/v1761419300/categories/sjnj2w41plz6h7brmt8f.webp",
+    "publicId": "categories/sjnj2w41plz6h7brmt8f",
+    "createdAt": "2025-10-25T19:08:20.367Z",
+    "description": "Miels enrichis avec des plantes, épices ou extraits naturels. Ils allient les propriétés du miel à celles des ingrédients ajoutés pour créer des saveurs originales et des vertus santé supplémentaires.",
+    "slug": "miels-monofloraux",
+    "updatedAt": "2025-10-25T19:42:07.989Z",
+    "isActive": true
+  }
+]

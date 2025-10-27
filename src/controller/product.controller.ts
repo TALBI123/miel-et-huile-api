@@ -45,7 +45,7 @@ export const getProducts = async (
   res: Response<ApiResponse<Record<string, any> | null>>
 ) => {
   const { categorySlug, ...rest } = res.locals.validated;
-   console.log(res.locals.validated, " req.body");
+  console.log(res.locals.validated, " req.body");
   const { page, limit } = res.locals.validated;
   let categoryId: string | undefined;
   try {
@@ -129,7 +129,12 @@ export const getProductById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { images: true, variants: true },
+      include: {
+        images: {
+          select: { id: true, image: true },
+        },
+        variants: true,
+      },
     });
     if (!product)
       return res

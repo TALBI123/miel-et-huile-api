@@ -14,6 +14,7 @@ export const ALLOWED_PRODUCT_PROPERTIES = [
   "description",
   "subDescription",
   "isActive",
+  "origin",
 ] as const;
 export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [
   "amount",
@@ -23,7 +24,7 @@ export const ALLOWED_PRODUCT_VARIANT_PROPERTIES = [
   "discountPercentage",
   "stock",
   // "size",
-  "origin",
+
   "isOnSale",
   "isActive",
 ] as const;
@@ -35,7 +36,6 @@ export const ALLOWED_FILTERING_TABLES = [
   "orders",
   "products",
 ] as const;
-
 
 export type AllowedFilteringTables = (typeof ALLOWED_FILTERING_TABLES)[number];
 export const ALLOWED_ORDER_STATUSES = [
