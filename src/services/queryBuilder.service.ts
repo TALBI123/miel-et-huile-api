@@ -6,7 +6,6 @@ import {
   AllowedFilteringTables,
   AllowedOrderPaymentStatuses,
   AllowedOrderStatuses,
-  
 } from "../data/allowedNames";
 import { EnumRelationTables } from "../types/enums";
 import { ProductTypeKeys } from "../types/type";

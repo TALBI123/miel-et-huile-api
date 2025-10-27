@@ -3,12 +3,11 @@ import { categorySlug, ValidationId } from "../schema/validation.shema";
 import { verifyAdmin, verifyToken } from "../middlewares/auth";
 import productVariantRoute from "./productVariant.routes";
 import productImagesRoute from "./productImages.routes";
-import { Router } from "express";
+import reviewsRoute from "./review.routes";
 import {
   uploadDiskMiddleware,
   uploadHandler,
 } from "../middlewares/uploadMiddleware";
-
 import {
   createProduct,
   getProducts,
@@ -16,13 +15,13 @@ import {
   updateProduct,
   deleteProduct,
 } from "../controller/product.controller";
-
 import {
   createProductShema,
   QueryProductSchema,
 } from "../schema/product.shema";
-
+import { Router } from "express";
 const router = Router();
+
 // --- PUBLIC CATEGORY ROUTES
 /**
  * @swagger
@@ -686,13 +685,15 @@ router.delete(
 
 // === ROUTES VARIANTS IMBRIQUÉES ===
 // Toutes les routes variants seront préfixées par /products/:id/variants
-
 router.use("/:id/variants", productVariantRoute);
 
-// === ROUTES IMBRIQUÉES ===
+// === ROUTES IMAGES IMBRIQUÉES ===
 // Toutes les routes images seront préfixées par /products/:id/images
-
 router.use("/:id/images", productImagesRoute);
+
+// === ROUTES REVIEWS IMBRIQUÉES ===
+// Toutes les routes reviews seront préfixées par /products/:id/reviews
+router.use("/:id/reviews", reviewsRoute);
 
 export default router;
 console.log("🔒 product routes loaded");

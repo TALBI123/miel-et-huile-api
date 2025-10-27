@@ -1,7 +1,7 @@
 import { booleanFromString, optionalPriceSchema } from "./utils";
 import { ALLOWED_ORDER_STATUSES } from "../data/allowedNames";
-import { z } from "zod";
 import { clamp } from "../utils/mathUtils";
+import { z } from "zod";
 
 export const booleanFromStringSchema = z
   .string()

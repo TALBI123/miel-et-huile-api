@@ -1,7 +1,13 @@
 import { ProductVariantService } from "../services/productVariant.service";
-import { ALLOWED_PRODUCT_VARIANT_PROPERTIES, AllowedProductVariantProperties } from "../data/allowedNames";
+import {
+  ALLOWED_PRODUCT_VARIANT_PROPERTIES,
+  AllowedProductVariantProperties,
+} from "../data/allowedNames";
 import { filterObjectByKeys, isEmptyObject } from "../utils/object";
-import { ProductVariantWithRelations, ProductWithCategory } from "../types/prisma.type";
+import {
+  ProductVariantWithRelations,
+  ProductWithCategory,
+} from "../types/prisma.type";
 import { handleServerError } from "../utils/helpers";
 import { StatusCodes } from "http-status-codes";
 import { ProductVariant } from "../types/type";

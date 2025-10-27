@@ -1,7 +1,7 @@
 import { createReview } from "../controller/review.controller";
 import { verifyToken, verifyAdmin } from "../middlewares/auth";
 import { Router } from "express";
-const router = Router();
+const router = Router({ mergeParams: true }); // Important pour accéder aux params du parent
 
 // ✅ Créer une review
 router.post("/", verifyToken, createReview);

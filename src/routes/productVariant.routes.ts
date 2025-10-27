@@ -129,7 +129,7 @@ const router = Router({ mergeParams: true }); // Important pour accéder aux par
  */
 
 router.post(
-  "/",
+  "/variants",
   verifyToken,
   verifyAdmin,
   validate({ schema: ValidationId, key: "params" }),
