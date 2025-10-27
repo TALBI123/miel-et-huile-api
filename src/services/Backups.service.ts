@@ -5,12 +5,12 @@ import fs from "fs";
 export class BackupsService {
   private static ALLTABLES: string[] = [
     "user",
-    "product",
     "category",
-    "order",
-    "orderItem",
+    "product",
     "productImage",
     "productVariant",
+    "order",
+    "orderItem",
   ];
 
   static async getAllItems(tabName: keyof typeof prisma) {
@@ -21,7 +21,7 @@ export class BackupsService {
   }
   static async saveBackupToFile() {
     if (process.env.NODE_ENV === "development") {
-        console.log("Backup skipped in development mode.");
+      console.log("Backup skipped in development mode.");
       return;
     }
     const backupDir = path.join(__dirname, "../../backups");
@@ -40,6 +40,27 @@ export class BackupsService {
       }
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
       console.log(`Backup saved for table ${table} at ${filePath}`);
+    }
+  }
+  static async restoreBackupFromFile() {
+    const backupDir = path.join(__dirname, "../../backups");
+    console.log("Restoring backups from directory:", backupDir);
+    for (const table of this.ALLTABLES) {
+      const filePath = path.join(
+        backupDir,
+        `${table}_backup_${new Date().toISOString().split("T")[0]}.json`
+      );
+      if (!fs.existsSync(filePath)) {
+        console.log(
+          `No backup file found for table ${table} at ${filePath}, skipping...`
+        );
+        continue;
+      }
+        const fileData = fs.readFileSync(filePath, "utf-8");
+        console.log(JSON.parse(fileData).length, " items to restore for table ", table);
+        console.log(JSON.parse(fileData));
+        console.log(`Restoring backup for table ${table} from ${filePath}`);
+        break;
     }
   }
 }

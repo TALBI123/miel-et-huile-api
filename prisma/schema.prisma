@@ -71,6 +71,8 @@ model Product {
   rating         Float?           @default(0)
   subDescription String           @default("")
   isActive       Boolean          @default(false)
+  origin         String? // "Maroc", "Algérie", etc.
+  productType    ProductType      @default(HONEY)
   category       Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   review         Review[]
   orderItems     OrderItem[]
@@ -106,18 +108,16 @@ model ProductVariant {
   price         Float
   discountPrice Float? @default(0)
 
-  discountPercentage Int?        @default(0)
-  isOnSale           Boolean?    @default(false)
-  stock              Int         @default(0)
+  discountPercentage Int?     @default(0)
+  isOnSale           Boolean? @default(false)
+  stock              Int      @default(0)
   productId          String
-  isActive           Boolean     @default(true)
+  isActive           Boolean  @default(true)
   unit               String?
   amount             Float?
   size               String?
-  productType        ProductType @default(HONEY)
 
   // 🆕 NOUVEAU : Attributs spécifiques miel/dattes
-  origin    String? // "Maroc", "Algérie", etc.
   name      String
   sku       String      @unique
   product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -135,7 +135,7 @@ enum ProductType {
   HONEY // Miel
   CLOTHING // Vêtements
   DATES // Dattes
-  OIL // Huile
+  // OIL // Huile
 }
 
 model Order {
@@ -314,7 +314,7 @@ model Banner {
   linkType   BannerLinkType @default(NONE)
   productId  String?
   categoryId String?
-  isActive   Boolean        @default(true)
+  isActive   Boolean        @default(false)
   startsAt   DateTime?
   endsAt     DateTime?
   createdAt  DateTime       @default(now())
@@ -440,8 +440,6 @@ model Dispute {
   @@index([status, stripeStatus])
   @@index([createdAt, status])
 }
-
-
 
 enum DiscountType {
   PERCENTAGE

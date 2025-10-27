@@ -84,7 +84,8 @@ console.log(
 console.log(process.env.PORT || "❌ PORT non défini");
 async function getBackupData() {
   console.log("🔄 Démarrage de la sauvegarde des données...");
-  await BackupsService.saveBackupToFile();
+  // await BackupsService.saveBackupToFile();
+  await BackupsService.restoreBackupFromFile();
   console.log("✅ Sauvegarde des données terminée.");
 }
 getBackupData();

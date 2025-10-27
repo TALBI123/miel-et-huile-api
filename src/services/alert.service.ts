@@ -30,7 +30,7 @@ export class AlertService extends EventEmitter {
 
   private constructor() {
     super();
-    this.startEscalationMonitor();
+    // this.startEscalationMonitor();
   }
   public static getInstance(): AlertService {
     if (!this.instance) this.instance = new AlertService();
