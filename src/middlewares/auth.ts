@@ -5,6 +5,8 @@ import { StatusCodes } from "http-status-codes";
 import { ROLE } from "../types/enums";
 import jwt from "jsonwebtoken";
 const blacklistService = new BlacklistService();
+
+// Middleware pour vérifier le token JWT et authentifier l'utilisateur
 export const verifyToken = (
   req: Request,
   res: Response<ApiResponse>,
@@ -35,6 +37,34 @@ export const verifyToken = (
       .json({ success: false, message: "Token invalide ou expiré" });
   }
 };
+
+// Middleware pour les routes avec authentification optionnelle
+export const optionalAuth = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.cookies?.access_token;
+  if (!token) {
+    req.user = undefined;
+    return next();
+  }
+  try {
+    if (blacklistService.isTokenBlacklisted(token)) {
+      req.user = undefined;
+      return next();
+    }
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    ) as UserTokenPayload;
+    req.user = decoded;
+  } catch (err) {
+    req.user = undefined;
+  }
+  next();
+};
+// Middleware pour vérifier si l'utilisateur est un administrateur
 export const verifyAdmin = (
   req: Request,
   res: Response,
@@ -45,7 +75,7 @@ export const verifyAdmin = (
     return res.status(StatusCodes.FORBIDDEN).json({
       success: false,
       message: "Accès refusé - Vous n'êtes pas administrateur",
-      user : req.user
+      user: req.user,
     });
   }
   next();

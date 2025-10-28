@@ -13,7 +13,7 @@ declare global {
     }
 
     interface Request {
-      user?: User;
+      user?: User | null;
       file?: File & { buffer: Buffer };
       stripeEvent?: Stripe.Event;
     }
