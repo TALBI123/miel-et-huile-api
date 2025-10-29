@@ -3,23 +3,9 @@ import { handleServerError, timeAgo } from "../utils/helpers";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
 import prisma from "../config/db";
-
-export const getAllReviews = async (req: Request, res: Response) => {
-  try {
-    const reviews = await prisma.review.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        product: { select: { id: true, title: true } },
-        user: {
-          select: { id: true, email: true, firstName: true, lastName: true },
-        },
-      },
-    });
-    res.json(reviews);
-  } catch (err) {
-    handleServerError(res, err);
-  }
-};
+import { QueryBuilderService } from "../services/queryBuilder.service";
+import { success } from "zod";
+// ---------------------- Public functions for reviews
 
 export const createReview = async (req: Request, res: Response) => {
   const { rating, title, comment } = res.locals.validated;
@@ -36,7 +22,7 @@ export const createReview = async (req: Request, res: Response) => {
         success: false,
         message: "Produit non trouvé",
       });
-      
+
     const hasOrder = await prisma.orderItem.findFirst({
       where: {
         productId: id,
@@ -72,6 +58,9 @@ export const createReview = async (req: Request, res: Response) => {
 
 export const getReviewsByProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const query = QueryBuilderService.buildAdvancedQuery("review", {
+    ...res.locals.validated,
+  });
   const existingProduct = await prisma.product.findUnique({
     where: { id },
     select: { id: true },
@@ -84,7 +73,7 @@ export const getReviewsByProduct = async (req: Request, res: Response) => {
 
   // 1️⃣ Récupérer les avis du produit
   const reviews = await prisma.review.findMany({
-    where: { productId: id },
+    where: { productId: id, isApproved: true },
     include: {
       user: {
         select: { id: true, firstName: true, lastName: true },
@@ -119,6 +108,76 @@ export const getReviewsByProduct = async (req: Request, res: Response) => {
   });
 };
 
+// ---------------------- Private functions for reviews
+
+export const getAllReviewsGlobal = async (req: Request, res: Response) => {
+  try {
+    const query = QueryBuilderService.buildAdvancedQuery("review", {
+      ...res.locals.validated,
+      include: {
+        product: { select: { id: true, title: true } },
+        user: {
+          select: { id: true, email: true, firstName: true, lastName: true },
+        },
+      },
+    });
+    const reviews = await prisma.review.findMany(query);
+    res.json(reviews);
+  } catch (err) {
+    handleServerError(res, err);
+  }
+};
+
+export const toggleReviewApproval = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const review = await prisma.review.findUnique({
+      where: { id: id },
+    });
+    if (!review) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+    const updatedReview = await prisma.review.update({
+      where: { id: id },
+      data: { isApproved: !review.isApproved },
+    });
+    res.json({
+      success: true,
+      message: `Review ${
+        updatedReview.isApproved ? "approved" : "disapproved"
+      } successfully`,
+      data: updatedReview,
+    });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+};
+export const deleteReviewGlobal = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const existingReview = await prisma.review.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existingReview)
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Review not found",
+      });
+    await prisma.review.delete({
+      where: { id },
+    });
+    res.status(StatusCodes.NO_CONTENT).json({
+      success: true,
+      message: "Review deleted successfully",
+    });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+};
 // export const approveReview = async (req: Request, res: Response) => {
 //   const { id } = req.params;
 //   const review = await reviewService.approveReview(id);

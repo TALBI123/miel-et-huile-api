@@ -21,10 +21,11 @@ type FilterOptions = {
   limit?: number;
   search?: string;
   isActive?: boolean;
+  rating ?:number;
   inStock?: boolean;
   isOnSale?: boolean;
   categoryId?: string;
-  productType: ProductTypeKeys;
+  productType?: ProductTypeKeys;
   maxPrice?: number;
   minPrice?: number;
   isNestedPrice?: boolean;
@@ -42,6 +43,7 @@ type FilterOptions = {
   paymentStatus?: AllowedOrderPaymentStatuses;
   include?: Prisma.ProductInclude;
   select?: Prisma.ProductSelect;
+  
 };
 
 export class QueryBuilderService {
@@ -229,6 +231,17 @@ export class QueryBuilderService {
           this.buildCommonFilters(options, ["isActive", "search"], "email")
         );
         break;
+      case "review":
+        // Object.assign(
+        //   where,
+        //   this.buildCommonFilters(options, ["search"], "comment")
+        // );
+
+        Object.assign(where, {
+          ...(options.rating ? { rating: options.rating } : {}),
+          
+        });
+        break;
     }
     return {
       where,
@@ -237,6 +250,7 @@ export class QueryBuilderService {
       ...(include ? { include } : {}),
       ...(select ? { select } : {}),
     } as A;
+
   }
 
   static buildFilterPrice(
