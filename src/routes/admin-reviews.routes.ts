@@ -1,10 +1,19 @@
-import { Router } from 'express';
-import * as reviewController from '../controller/review.controller';
-import { verifyToken, verifyAdmin } from '../middlewares/auth';
-import { validate } from '../middlewares/validate';
-import { reviewSchemas } from '../schema/review.schema';
+import { Router } from "express";
+import * as reviewController from "../controller/review.controller";
+import { verifyToken, verifyAdmin } from "../middlewares/auth";
+import { validate } from "../middlewares/validate";
+import { getAllReviewSchema, reviewSchemas } from "../schema/review.schema";
 
 const router = Router();
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Admin - Reviews
+ *     description: |
+ *       Interface de modération et d'administration pour la gestion complète des avis produits.
+ *       Accessible uniquement aux administrateurs avec des permissions étendues.
+ */
 
 /**
  * @swagger
@@ -52,13 +61,14 @@ const router = Router();
  *       200:
  *         description: Liste de tous les avis récupérée avec succès
  */
-router.get('/', 
-  verifyToken, 
+router.get(
+  "/",
+  verifyToken,
   verifyAdmin,
-  validate({ 
-    schema: reviewSchemas.getReviews, 
+  validate({
+    schema: getAllReviewSchema,
     key: "query",
-    skipSave: true 
+    skipSave: true,
   }),
   reviewController.getAllReviewsGlobal
 );
@@ -110,22 +120,146 @@ router.get('/',
  *       404:
  *         description: Avis non trouvé
  */
-router.patch('/:id/toggle', 
-  verifyToken, 
+
+router.patch(
+  "/:id/toggle",
+  verifyToken,
   verifyAdmin,
   reviewController.toggleReviewApproval
 );
+
 /**
- * @swagger
- * /admin/reviews/{id}:
- *   delete:
- *     summary: Supprimer un avis (action globale)
- *     tags: [Admin - Reviews]
- *     security:
- *       - bearerAuth: []
+ * /products/{productId}/reviews:
+ *   get:
+ *     summary: Récupérer tous les avis d'un produit
+ *     description: |
+ *       Récupère la liste paginée des avis approuvés pour un produit spécifique.
+ *       Accessible publiquement (pas besoin d'authentification).
+ *     tags: [Reviews]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Numéro de la page pour la pagination
+ *         example: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *         description: Nombre d'avis par page
+ *         example: 10
+ *       - in: query
+ *         name: rating
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 5
+ *         description: Filtrer par note spécifique
+ *         example: 5
+ *       - in: query
+ *         name: sortBy
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [createdAt, rating, helpful]
+ *           default: createdAt
+ *         description: Champ de tri
+ *       - in: query
+ *         name: sortOrder
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Ordre de tri
+ *     responses:
+ *       200:
+ *         description: Liste des avis récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Avis récupérés avec succès"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ReviewResponse'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     currentPage:
+ *                       type: integer
+ *                       example: 1
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 3
+ *                     totalItems:
+ *                       type: integer
+ *                       example: 25
+ *                     hasNext:
+ *                       type: boolean
+ *                       example: true
+ *                     hasPrev:
+ *                       type: boolean
+ *                       example: false
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     averageRating:
+ *                       type: number
+ *                       format: float
+ *                       example: 4.2
+ *                     totalReviews:
+ *                       type: integer
+ *                       example: 25
+ *                     ratingDistribution:
+ *                       type: object
+ *                       properties:
+ *                         "5":
+ *                           type: integer
+ *                           example: 12
+ *                         "4":
+ *                           type: integer
+ *                           example: 8
+ *                         "3":
+ *                           type: integer
+ *                           example: 3
+ *                         "2":
+ *                           type: integer
+ *                           example: 1
+ *                         "1":
+ *                           type: integer
+ *                           example: 1
+ *       400:
+ *         description: Paramètres invalides
+ *       404:
+ *         description: Produit non trouvé
  */
-router.delete('/:id', 
-  verifyToken, 
+router.delete(
+  "/:id",
+  verifyToken,
   verifyAdmin,
   reviewController.deleteReviewGlobal
 );
@@ -139,8 +273,9 @@ router.delete('/:id',
  *     security:
  *       - bearerAuth: []
  */
-// router.get('/stats', 
-//   verifyToken, 
+
+// router.get('/stats',
+//   verifyToken,
 //   verifyAdmin,
 //   reviewController.getReviewsStatsGlobal
 // );
@@ -154,8 +289,8 @@ router.delete('/:id',
 //  *     security:
 //  *       - bearerAuth: []
 //  */
-// router.patch('/bulk/approve', 
-//   verifyToken, 
+// router.patch('/bulk/approve',
+//   verifyToken,
 //   verifyAdmin,
 //   validate({
 //     schema: reviewSchemas.bulkAction,
@@ -163,8 +298,5 @@ router.delete('/:id',
 //   }),
 //   reviewController.bulkApproveReviews
 // );
-
-
-
 
 export default router;

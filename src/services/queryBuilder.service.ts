@@ -142,7 +142,6 @@ export class QueryBuilderService {
       champPrice,
       mode,
     };
-    console.log("Product Type in Query Builder: ", productType);
     switch (table) {
       case "product":
         where = {
@@ -232,14 +231,8 @@ export class QueryBuilderService {
         );
         break;
       case "review":
-        // Object.assign(
-        //   where,
-        //   this.buildCommonFilters(options, ["search"], "comment")
-        // );
-
         Object.assign(where, {
           ...(options.rating ? { rating: options.rating } : {}),
-          
         });
         break;
     }

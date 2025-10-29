@@ -1,4 +1,5 @@
 import forgetPassword from "./routes/auth/forgetPassword.routes";
+import  adminReviewsRoute  from "./routes/admin-reviews.routes";
 import verifyEmail from "./routes/auth/verifiy-email.routes";
 import { errorHandler } from "./middlewares/handleErrors";
 import googleAuth from "./routes/auth/authGoogle.routes";
@@ -46,6 +47,7 @@ app.use("/api/categorys", categoryRoute);
 app.use("/api/products", productRoute);
 app.use("/api/orders", ordersRoute);
 app.use("/api", usersRoute);
+app.use("/api/admin/reviews", adminReviewsRoute);
 
 // --- Checkout & Payment
 app.use("/api/checkout", checkout);

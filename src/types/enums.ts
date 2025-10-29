@@ -23,3 +23,8 @@ export enum Model {
   VARIANT = "variant",
   ORDER = "order",
 }
+export enum ReviewStatus {
+  APPROVED = "approved",
+  PENDING = "pending",
+  ALL = "all"
+}

@@ -50,8 +50,13 @@ export const reviewSchemas = {
           const num = Number(String(val ?? "1"));
           return clamp(num, 1, 5);
         }, z.number().int().min(1))
-        .default(1),
-      status: z.enum(["approved", "pending", "all"]).default("all"),
+        .optional(),
     })
     .merge(FilterSchema),
 };
+export const getAllReviewSchema = z
+  .object({
+    status: z.enum(["approved", "pending", "all"]).default("all"),
+  })
+  .merge(FilterSchema)
+  .merge(reviewSchemas.getReviews);

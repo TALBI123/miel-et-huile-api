@@ -1,10 +1,9 @@
-import { OrderStatus, PrismaClient } from "@prisma/client";
 import { handleServerError, timeAgo } from "../utils/helpers";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
 import prisma from "../config/db";
 import { QueryBuilderService } from "../services/queryBuilder.service";
-import { success } from "zod";
+import { ReviewStatus } from "../types/enums";
 // ---------------------- Public functions for reviews
 
 export const createReview = async (req: Request, res: Response) => {
@@ -58,9 +57,11 @@ export const createReview = async (req: Request, res: Response) => {
 
 export const getReviewsByProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const query = QueryBuilderService.buildAdvancedQuery("review", {
-    ...res.locals.validated,
-  });
+  const { limit, page } = res.locals.validated;
+  console.log(
+    res.locals.validated,
+    " res.locals.validated in getReviewsByProduct"
+  );
   const existingProduct = await prisma.product.findUnique({
     where: { id },
     select: { id: true },
@@ -71,16 +72,21 @@ export const getReviewsByProduct = async (req: Request, res: Response) => {
       message: "Produit non trouvé",
     });
 
-  // 1️⃣ Récupérer les avis du produit
-  const reviews = await prisma.review.findMany({
-    where: { productId: id, isApproved: true },
+  const query = QueryBuilderService.buildAdvancedQuery("review", {
+    ...res.locals.validated,
+    extraWhere: { productId: id },
     include: {
       user: {
         select: { id: true, firstName: true, lastName: true },
       },
     },
   });
-
+  console.log(query, " query in getReviewsByProduct");
+  // 1️⃣ Récupérer les avis du produit
+  const [reviews, reviewsCount] = await Promise.all([
+    prisma.review.findMany(query),
+    prisma.review.count({ where: query.where }),
+  ]);
   // 2️⃣ Vérifier si l'utilisateur a acheté le produit
   console.log("Checking if user has ordered the product...");
   const hasOrder =
@@ -98,13 +104,16 @@ export const getReviewsByProduct = async (req: Request, res: Response) => {
         order: true,
       },
     }));
-  console.log(hasOrder, " hasOrder in getReviewsByProduct");
-
-  console.log(hasOrder, " hasOrder in getReviewsByProduct");
   res.status(StatusCodes.OK).json({
     success: true,
     data: reviews,
     hasOrder: Boolean(hasOrder),
+    pagination: {
+      total: reviewsCount,
+      page,
+      limit,
+      lastPage: QueryBuilderService.calculateLastPage(reviewsCount, limit),
+    },
   });
 };
 
@@ -112,8 +121,17 @@ export const getReviewsByProduct = async (req: Request, res: Response) => {
 
 export const getAllReviewsGlobal = async (req: Request, res: Response) => {
   try {
+    const { limit, page, status } = res.locals.validated;
+
     const query = QueryBuilderService.buildAdvancedQuery("review", {
       ...res.locals.validated,
+      extraWhere: {
+        ...(status && status !== "all"
+          ? {
+              isApproved: status === ReviewStatus.APPROVED,
+            }
+          : {}),
+      },
       include: {
         product: { select: { id: true, title: true } },
         user: {
@@ -121,8 +139,22 @@ export const getAllReviewsGlobal = async (req: Request, res: Response) => {
         },
       },
     });
-    const reviews = await prisma.review.findMany(query);
-    res.json(reviews);
+    console.log(query, " query in getAllReviewsGlobal");
+    const [reviews, reviewsCount] = await Promise.all([
+      prisma.review.findMany(query),
+      prisma.review.count({ where: query.where }),
+    ]);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: reviews,
+      pagination: {
+        total: reviewsCount,
+        page,
+        limit,
+        lastPage: QueryBuilderService.calculateLastPage(reviewsCount, limit),
+      },
+    });
   } catch (err) {
     handleServerError(res, err);
   }
@@ -132,16 +164,17 @@ export const toggleReviewApproval = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const review = await prisma.review.findUnique({
-      where: { id: id },
+      where: { id },
+      select: { isApproved: true },
     });
-    if (!review) {
+    if (!review)
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: "Review not found",
       });
-    }
+
     const updatedReview = await prisma.review.update({
-      where: { id: id },
+      where: { id },
       data: { isApproved: !review.isApproved },
     });
     res.json({
@@ -155,6 +188,7 @@ export const toggleReviewApproval = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+
 export const deleteReviewGlobal = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
@@ -178,6 +212,7 @@ export const deleteReviewGlobal = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+
 // export const approveReview = async (req: Request, res: Response) => {
 //   const { id } = req.params;
 //   const review = await reviewService.approveReview(id);
