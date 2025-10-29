@@ -184,7 +184,14 @@ export const toggleReviewApproval = async (req: Request, res: Response) => {
       } successfully`,
       data: updatedReview,
     });
-  } catch (err) {
+  } catch (err : any) {
+    if (err.code === "P2025") {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Review not found or already deleted",
+      });
+    }
+
     handleServerError(res, err);
   }
 };

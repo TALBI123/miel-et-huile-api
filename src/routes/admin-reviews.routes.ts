@@ -280,23 +280,5 @@ router.delete(
 //   reviewController.getReviewsStatsGlobal
 // );
 
-// /**
-//  * @swagger
-//  * /admin/reviews/bulk/approve:
-//  *   patch:
-//  *     summary: Approuver plusieurs avis en lot
-//  *     tags: [Admin - Reviews]
-//  *     security:
-//  *       - bearerAuth: []
-//  */
-// router.patch('/bulk/approve',
-//   verifyToken,
-//   verifyAdmin,
-//   validate({
-//     schema: reviewSchemas.bulkAction,
-//     key: "body"
-//   }),
-//   reviewController.bulkApproveReviews
-// );
 
 export default router;
