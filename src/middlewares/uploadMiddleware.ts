@@ -5,6 +5,12 @@ import slugify from "slugify";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+
+interface MyFiles {
+  desktopImage?: Express.Multer.File[];
+  mobileImage?: Express.Multer.File[];
+}
+
 const fileFilter = (
   req: Request,
   file: Express.Multer.File,
@@ -89,6 +95,7 @@ export const uploadMemoryStorage = multer({
   fileFilter,
 }).single("image");
 
+
 export const uploadHandler = (
   req: Request,
   res: Response,
@@ -100,3 +107,33 @@ export const uploadHandler = (
       .json({ message: "Aucun fichier n’a été uploadé" });
   next();
 };
+
+export const validateBannerImages = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const files = req.files as MyFiles;
+  if (!files || (!files.desktopImage && !files.mobileImage))
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      message:
+        "Les images de la bannière sont requises (desktopImage et/ou mobileImage).",
+    });
+  if (!files?.desktopImage) {
+    return res.status(400).json({
+      success: false,
+      message: "L'image desktop est obligatoire.",
+    });
+  }
+  next();
+};
+
+// 🆕 Middleware spécialisé pour les banners (remplace les deux uploadMemoryStorage)
+export const uploadBannerMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter,
+}).fields([
+  { name: 'desktopImage', maxCount: 1 },
+  { name: 'mobileImage', maxCount: 1 }
+]);

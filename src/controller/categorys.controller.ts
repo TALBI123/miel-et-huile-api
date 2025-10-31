@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, IntCategory, UploadResult } from "../types/type";
@@ -14,8 +13,7 @@ import { ALLOWED_CATEGORY_PROPERTIES } from "../data/allowedNames";
 import { buildProductQuery, objFiltered } from "../utils/filter";
 import { EnumRelationTables, Model } from "../types/enums";
 import { CategoryWithRelations } from "types/prisma.type";
-const prisma = new PrismaClient();
-
+import prisma from "../config/db";
 // --- PUBLIC CATEGORY Controller
 export const getAllCategorys = async (
   req: Request,

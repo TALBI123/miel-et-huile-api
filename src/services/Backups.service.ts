@@ -12,7 +12,7 @@ export class BackupsService {
     "order",
     "orderItem",
   ];
-
+  private static restoringDate = "2025-10-27";
   static async getAllItems(tabName: keyof typeof prisma) {
     const data = await (prisma as any)[tabName].findMany();
     // console.log(`Backup - ${tabName}:`, data.length, 'items found');
@@ -54,11 +54,11 @@ export class BackupsService {
         }
         const filePath = path.join(
           backupDir,
-          `${table}_backup_${new Date().toISOString().split("T")[0]}.json`
+          `${table}_backup_${this.restoringDate}.json`
         );
         if (!fs.existsSync(filePath)) {
           console.log(
-            `No backup file found for table ${table} at ${filePath}, skipping...`
+            `No backup file found for table ""${table}"" at ${filePath}, skipping...`
           );
           continue;
         }

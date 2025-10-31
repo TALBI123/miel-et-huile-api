@@ -413,7 +413,7 @@ router.post(
   verifyAdmin,
   uploadDiskMiddleware,
   uploadHandler,
-  validate({ schema: createProductShema, key: "body" }),
+  validate({ schema: createProductShema }),
   createProduct
 );
 

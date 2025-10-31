@@ -3,8 +3,7 @@ import { handleServerError } from "../utils/helpers";
 
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-
-const prisma = new PrismaClient();
+import prisma from "../config/db";
 
 // Middleware pour authentifier les requêtes protégées
 export const getCurrentUser = async (req: Request, res: Response) => {
@@ -14,10 +13,8 @@ export const getCurrentUser = async (req: Request, res: Response) => {
       select: { id: true, email: true, role: true }, // rôle ici
     });
     prisma.category.findMany({
-      where:{
-        
-      },
-      include:{products:true}
+      where: {},
+      include: { products: true },
     });
     console.log(req.user);
     if (!user) {

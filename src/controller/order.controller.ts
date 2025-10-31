@@ -2,9 +2,10 @@ import { OrderStatus, PrismaClient } from "@prisma/client";
 import { handleServerError, timeAgo } from "../utils/helpers";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
-import {  Model } from "../types/enums";
+import { Model } from "../types/enums";
 import { QueryBuilderService } from "../services/queryBuilder.service";
-const prisma = new PrismaClient();
+import prisma from "../config/db";
+
 export const getOrders = async (req: Request, res: Response) => {
   try {
     const query = QueryBuilderService.buildAdvancedQuery(Model.ORDER, {
@@ -16,7 +17,7 @@ export const getOrders = async (req: Request, res: Response) => {
         status: true,
         paymentStatus: true,
         user: {
-          select: {  firstName: true, lastName: true, email: true },
+          select: { firstName: true, lastName: true, email: true },
         },
         createdAt: true,
       },
@@ -181,9 +182,13 @@ export const updateOrder = async (req: Request, res: Response) => {
 };
 export const cancelOrder = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const order = await prisma.order.update({
-    where: { id },
-    data: { status: OrderStatus.CANCELLED },
-  });
-  res.json(order);
+  try {
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status: OrderStatus.CANCELLED },
+    });
+    res.json(order);
+  } catch (err) {
+    handleServerError(res, err);
+  }
 };

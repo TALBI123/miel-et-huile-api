@@ -80,10 +80,14 @@ model Product {
   variants       ProductVariant[]
   Banner         Banner[]
   ProductDetails ProductDetails?
+  PackItem       PackItem[]
 
   @@index([categoryId])
   @@index([createdAt])
   @@index([isActive])
+  @@index([categoryId, isActive, productType])
+  @@index([createdAt, isActive])
+  @@index([rating, isActive]) // Pour le tri par popularité
 }
 
 model ProductDetails {
@@ -231,6 +235,8 @@ model Review {
   @@index([userId])
   @@index([rating])
   @@index([isApproved])
+  @@index([productId, isApproved, rating]) // Filtrage avis
+  @@index([createdAt, isApproved]) // Pagination admin
 }
 
 model Promotion {
@@ -305,22 +311,100 @@ enum VerificationTokenType {
   PASSWORD_RESET
 }
 
+/// schema.prisma
+model Pack {
+  id          String   @id @default(dbgenerated("gen_random_uuid()"))
+  title       String
+  slug        String   @unique
+  description String?
+  price       Float
+  discount    Float?   @default(0.0)
+  isActive    Boolean  @default(false)
+  stock       Int      @default(0)
+  image       String?
+  publicId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // relation many-to-many avec Product (table join PackItem)
+  items PackItem[]
+
+  // relation inverse depuis Banner
+  banners Banner[]
+
+  @@index([isActive])
+  @@index([price])
+  @@index([createdAt])
+  @@index([slug, isActive])
+}
+
+model PackItem {
+  id        String @id @default(dbgenerated("gen_random_uuid()"))
+  packId    String
+  productId String
+  qty       Int    @default(1)
+  unitPrice Float
+
+  pack    Pack    @relation(fields: [packId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([packId, productId]) // évite doublons produit dans un même pack
+  @@index([packId])
+  @@index([productId])
+}
+
 model Banner {
-  id         String         @id @default(dbgenerated("gen_random_uuid()"))
-  title      String
-  text       String?
-  image      String
-  publicId   String
-  linkType   BannerLinkType @default(NONE)
-  productId  String?
-  categoryId String?
-  isActive   Boolean        @default(false)
-  startsAt   DateTime?
-  endsAt     DateTime?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  product    Product?       @relation(fields: [productId], references: [id])
-  category   Category?      @relation(fields: [categoryId], references: [id])
+  id           String         @id @default(dbgenerated("gen_random_uuid()"))
+  title        String
+  text         String?
+  buttonText   String?
+  desktopImage String
+  mobileImage  String?
+  publicId     String
+  linkType     BannerLinkType @default(NONE)
+  productId    String?
+  categoryId   String?
+  packId       String? // 🔥 nouveau champ
+  customUrl    String?
+
+  type      BannerType @default(GENERAL)
+  order     Int        @default(0)
+  isActive  Boolean    @default(false)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  product  Product?  @relation(fields: [productId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+  pack     Pack?     @relation(fields: [packId], references: [id])
+  // ✅ Exemple d'index composite utile pour les filtres combinés
+
+  // ⚙️ Index pour améliorer les performances des requêtes
+  @@index([isActive])
+  @@index([type])
+  @@index([startsAt])
+  @@index([endsAt])
+  @@index([order])
+  @@index([productId])
+  @@index([categoryId])
+  @@index([packId])
+}
+
+enum BannerLinkType {
+  NONE
+  CATEGORY
+  PRODUCT
+  PACK
+}
+
+enum BannerType {
+  GENERAL
+  PROMOTION
+  EVENT
+  ANNOUNCEMENT
+  // PARTNER
+  FLASH_SALE
 }
 
 model Alert {
@@ -444,9 +528,4 @@ model Dispute {
 enum DiscountType {
   PERCENTAGE
   FIXED
-}
-
-enum BannerLinkType {
-  NONE
-  CATEGORY
 }

@@ -7,6 +7,7 @@ import loginRegister from "./routes/auth/auth.routes";
 import categoryRoute from "./routes/categorys.routes";
 import webhookRoutes from "./routes/webhook.routes";
 import productRoute from "./routes/product.routes";
+import bannerRoutes from "./routes/banner.routes"
 import checkout from "./routes/checkout.routes";
 import { setupSwagger } from "./config/swagger";
 import ordersRoute from "./routes/order.routes";
@@ -43,11 +44,12 @@ app.use("/api/auth", loginRegister);
 app.use("/api/auth", forgetPassword);
 
 // ---- API
+app.use("/api/admin/reviews", adminReviewsRoute);
 app.use("/api/categorys", categoryRoute);
 app.use("/api/products", productRoute);
+app.use("/api/banners", bannerRoutes);
 app.use("/api/orders", ordersRoute);
 app.use("/api", usersRoute);
-app.use("/api/admin/reviews", adminReviewsRoute);
 
 // --- Checkout & Payment
 app.use("/api/checkout", checkout);
