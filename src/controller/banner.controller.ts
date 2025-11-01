@@ -5,6 +5,7 @@ import { allWithErrors, AllWithErrorsError } from "../utils/errors";
 import { UploadResult } from "../types/type";
 import { Request, Response } from "express";
 import {
+  compressLargeImage,
   deleteFromCloudinary,
   uploadBufferToCloudinary,
 } from "../services/upload.service";
@@ -33,12 +34,9 @@ export const getAllBanners = async (req: Request, res: Response) => {
 //  ----------------Admin Controllers
 
 export const createBanner = async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
-    const imagesInfo: UploadImageResult[] = [];
     const funcs: Promise<UploadImageResult>[] = [];
-    // const newBanner = await prisma.banner.create({
-    //   data: req.body,
-    // });
     const { title, type, linkType } = req.body;
     const existingBanner = await prisma.banner.findFirst({
       where: {
@@ -55,16 +53,13 @@ export const createBanner = async (req: Request, res: Response) => {
       });
     // const buffer
     console.log((req.files as MyFiles)?.desktopImage?.[0].buffer);
+    console.log("avant uploader en cloudinary...");
     const bufferDestopImage = (req.files as MyFiles)?.desktopImage?.[0].buffer;
     if (bufferDestopImage) {
-      // const UploadResult = await uploadBufferToCloudinary<"desktopImage">(
-      //   bufferDestopImage,
-      //   "banners",
-      //   "desktopImage"
-      // ); imagesInfo.push(UploadResult);
+      const compressedBuffer = await compressLargeImage(bufferDestopImage);
       funcs.push(
         uploadBufferToCloudinary<"desktopImage">(
-          bufferDestopImage,
+          compressedBuffer,
           "banners",
           "desktopImage",
           "desktopPublicId"
@@ -73,22 +68,24 @@ export const createBanner = async (req: Request, res: Response) => {
     }
     const bufferMobileImage = (req.files as MyFiles)?.mobileImage?.[0].buffer;
     if (bufferMobileImage) {
-      // const UploadResult = await uploadBufferToCloudinary<"mobileImage">(
-      //   bufferMobileImage,
-      //   "banners",
-      //   "mobileImage"
-      // );
-      // imagesInfo.push(UploadResult);
+      const compressedBuffer = await compressLargeImage(bufferMobileImage);
+
       funcs.push(
         uploadBufferToCloudinary<"mobileImage">(
-          bufferMobileImage,
+          compressedBuffer,
           "banners",
           "mobileImage",
           "mobilePublicId"
         )
       );
     }
+    console.log(
+      `Temps avant upload vers Cloudinary: ${Date.now() - startTime}ms`
+    );
+
+    console.time("Upload vers Cloudinary");
     const allPromices = await allWithErrors(funcs);
+    console.timeEnd("Upload vers Cloudinary\n -------\n");
     const obj: Record<string, string> = {};
     allPromices.forEach((uploadResult: UploadImageResult) => {
       const { derivedIdKey, public_id, ...rest } = uploadResult;
@@ -101,9 +98,13 @@ export const createBanner = async (req: Request, res: Response) => {
       ...res.locals.validated,
       ...obj,
     };
+    // console.log(filteredObj, " filteredObj");
+    console.time("Sauvegarde en base");
     const newBanner = await prisma.banner.create({
       data: filteredObj,
     });
+    console.timeEnd("Sauvegarde en base");
+    console.log(`Temps total: ${Date.now() - startTime}ms`);
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: "Bannière créée avec succès",

@@ -129,68 +129,27 @@ router.patch(
 );
 
 /**
- * /products/{productId}/reviews:
- *   get:
- *     summary: Récupérer tous les avis d'un produit
+ * @swagger
+ * /admin/reviews/{id}:
+ *   delete:
+ *     summary: Supprimer un avis (Admin uniquement)
  *     description: |
- *       Récupère la liste paginée des avis approuvés pour un produit spécifique.
- *       Accessible publiquement (pas besoin d'authentification).
- *     tags: [Reviews]
+ *       Supprime définitivement un avis spécifique de la base de données.
+ *       Accessible uniquement aux administrateurs.
+ *     tags: [Admin - Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: productId
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: ID du produit
+ *         description: ID de l'avis à supprimer
  *         example: "507f1f77bcf86cd799439011"
- *       - in: query
- *         name: page
- *         required: false
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Numéro de la page pour la pagination
- *         example: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 50
- *           default: 10
- *         description: Nombre d'avis par page
- *         example: 10
- *       - in: query
- *         name: rating
- *         required: false
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 5
- *         description: Filtrer par note spécifique
- *         example: 5
- *       - in: query
- *         name: sortBy
- *         required: false
- *         schema:
- *           type: string
- *           enum: [createdAt, rating, helpful]
- *           default: createdAt
- *         description: Champ de tri
- *       - in: query
- *         name: sortOrder
- *         required: false
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
- *         description: Ordre de tri
  *     responses:
  *       200:
- *         description: Liste des avis récupérée avec succès
+ *         description: Avis supprimé avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -201,61 +160,24 @@ router.patch(
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Avis récupérés avec succès"
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/ReviewResponse'
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     currentPage:
- *                       type: integer
- *                       example: 1
- *                     totalPages:
- *                       type: integer
- *                       example: 3
- *                     totalItems:
- *                       type: integer
- *                       example: 25
- *                     hasNext:
- *                       type: boolean
- *                       example: true
- *                     hasPrev:
- *                       type: boolean
- *                       example: false
- *                 summary:
- *                   type: object
- *                   properties:
- *                     averageRating:
- *                       type: number
- *                       format: float
- *                       example: 4.2
- *                     totalReviews:
- *                       type: integer
- *                       example: 25
- *                     ratingDistribution:
- *                       type: object
- *                       properties:
- *                         "5":
- *                           type: integer
- *                           example: 12
- *                         "4":
- *                           type: integer
- *                           example: 8
- *                         "3":
- *                           type: integer
- *                           example: 3
- *                         "2":
- *                           type: integer
- *                           example: 1
- *                         "1":
- *                           type: integer
- *                           example: 1
- *       400:
- *         description: Paramètres invalides
+ *                   example: "Avis supprimé avec succès"
  *       404:
- *         description: Produit non trouvé
+ *         description: Avis non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Avis non trouvé"
+ *       401:
+ *         description: Non autorisé - Token manquant ou invalide
+ *       403:
+ *         description: Accès refusé - Droits administrateur requis
  */
 router.delete(
   "/:id",
@@ -264,15 +186,7 @@ router.delete(
   reviewController.deleteReviewGlobal
 );
 
-/**
- * @swagger
- * /admin/reviews/stats:
- *   get:
- *     summary: Statistiques globales des avis
- *     tags: [Admin - Reviews]
- *     security:
- *       - bearerAuth: []
- */
+
 
 // router.get('/stats',
 //   verifyToken,

@@ -1,5 +1,6 @@
 import { UploadResult } from "../types/type";
 import cloudinary from "../config/cloudinary";
+import sharp from 'sharp';
 import fs from "fs";
 // Upload image to cloudinary from buffer
 export const uploadBufferToCloudinary = <T extends string = "secure_url">(
@@ -10,7 +11,18 @@ export const uploadBufferToCloudinary = <T extends string = "secure_url">(
 ): Promise<UploadResult<T>> =>
   new Promise((res, rej) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder },
+      {
+        folder,
+        // resource_type: "image",
+        // // 🔧 Ajoutez ces configurations pour optimiser
+        // timeout: 30000, // 30 secondes max
+        // quality: "auto:good",
+        // fetch_format: "auto",
+        // format: "webp", // Conversion automatique
+        // transformation: [
+        //   { width: 1920, height: 1080, crop: "limit", quality: 80 },
+        // ],
+      },
       (err, result) => {
         if (err) return rej(err);
         if (!result?.secure_url) return rej(new Error("upload est echoue"));
@@ -24,7 +36,24 @@ export const uploadBufferToCloudinary = <T extends string = "secure_url">(
     );
     stream.end(buffer);
   });
+export const compressLargeImage = async (buffer: Buffer): Promise<Buffer> => {
+  const sizeInMB = buffer.length / 1024 / 1024;
 
+  if (sizeInMB > 4) {
+    // > 10MB
+    console.log(`🗜️ Compression nécessaire: ${sizeInMB.toFixed(2)}MB`);
+
+    return await sharp(buffer)
+      .resize(1920, 1080, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 70 })
+      .toBuffer();
+  }
+
+  return buffer;
+};
 export const deleteFromCloudinary = (publicId: string): Promise<void> =>
   new Promise((res, rej) => {
     cloudinary.uploader.destroy(publicId, (err, result) => {
