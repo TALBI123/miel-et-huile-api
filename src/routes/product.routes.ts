@@ -303,6 +303,15 @@ router.get(
  *       - Upload les images sur Cloudinary (maximum 4 images).
  *       - Enregistre le produit et ses images dans la base de données.
  *       - **Téléchargez jusqu'à 4 images maximum**
+ *       
+ *       **Paramètres supplémentaires :**
+ *       - `origin` : Origine du produit (ex: "Maroc", "France"). Champ optionnel.
+ *       - `productType` : Type de produit, valeurs possibles : 
+ *         - `HONEY` : Miel
+ *         - `CLOTHING` : Vêtements
+ *         - `DATES` : Dattes
+ *         - Valeur par défaut : `HONEY`
+ *         
  *     tags:
  *       - Produits
  *     requestBody:
@@ -331,6 +340,18 @@ router.get(
  *                   type: string
  *                   format: binary
  *                   description: "Téléchargez jusqu'à 4 images maximum"
+ *               origin:
+ *                 type: string
+ *                 description: "Origine du produit (ex: Maroc, France). Optionnel."
+ *                 example: "Maroc"
+ *               productType:
+ *                 type: string
+ *                 description: "Type de produit. Valeurs possibles : HONEY (Miel), CLOTHING (Vêtements), DATES (Dattes). Défaut : HONEY"
+ *                 enum:
+ *                   - HONEY
+ *                   - CLOTHING
+ *                   - DATES
+ *                 example: "HONEY"
  *             required:
  *               - title
  *               - categoryId
@@ -365,6 +386,12 @@ router.get(
  *                       type: string
  *                     subDescription:
  *                       type: string
+ *                     origin:
+ *                       type: string
+ *                       example: "Maroc"
+ *                     productType:
+ *                       type: string
+ *                       example: "HONEY"
  *                     images:
  *                       type: array
  *                       items:

@@ -1,6 +1,7 @@
 import { MyFiles } from "../middlewares/uploadMiddleware";
 import { handleServerError } from "../utils/helpers";
 import { StatusCodes } from "http-status-codes";
+import { allWithErrors, AllWithErrorsError } from "../utils/errors";
 import { UploadResult } from "../types/type";
 import { Request, Response } from "express";
 import {
@@ -8,6 +9,9 @@ import {
   uploadBufferToCloudinary,
 } from "../services/upload.service";
 import prisma from "../config/db";
+type UploadImageResult =
+  | UploadResult<"desktopImage">
+  | UploadResult<"mobileImage">;
 export const getAllBanners = async (req: Request, res: Response) => {
   try {
     const banners = await prisma.banner.findMany({
@@ -29,12 +33,9 @@ export const getAllBanners = async (req: Request, res: Response) => {
 //  ----------------Admin Controllers
 
 export const createBanner = async (req: Request, res: Response) => {
-  const imagesInfo: (
-    | UploadResult<"desktopImage">
-    | UploadResult<"mobileImage">
-  )[] = [];
-  const buffers: Buffer[] = [];
   try {
+    const imagesInfo: UploadImageResult[] = [];
+    const funcs: Promise<UploadImageResult>[] = [];
     // const newBanner = await prisma.banner.create({
     //   data: req.body,
     // });
@@ -56,38 +57,67 @@ export const createBanner = async (req: Request, res: Response) => {
     console.log((req.files as MyFiles)?.desktopImage?.[0].buffer);
     const bufferDestopImage = (req.files as MyFiles)?.desktopImage?.[0].buffer;
     if (bufferDestopImage) {
-      const UploadResult = await uploadBufferToCloudinary<"desktopImage">(
-        bufferDestopImage,
-        "banners",
-        "desktopImage"
+      // const UploadResult = await uploadBufferToCloudinary<"desktopImage">(
+      //   bufferDestopImage,
+      //   "banners",
+      //   "desktopImage"
+      // ); imagesInfo.push(UploadResult);
+      funcs.push(
+        uploadBufferToCloudinary<"desktopImage">(
+          bufferDestopImage,
+          "banners",
+          "desktopImage",
+          "desktopPublicId"
+        )
       );
-      imagesInfo.push(UploadResult);
     }
     const bufferMobileImage = (req.files as MyFiles)?.mobileImage?.[0].buffer;
     if (bufferMobileImage) {
-      const UploadResult = await uploadBufferToCloudinary<"mobileImage">(
-        bufferMobileImage,
-        "banners",
-        "mobileImage"
+      // const UploadResult = await uploadBufferToCloudinary<"mobileImage">(
+      //   bufferMobileImage,
+      //   "banners",
+      //   "mobileImage"
+      // );
+      // imagesInfo.push(UploadResult);
+      funcs.push(
+        uploadBufferToCloudinary<"mobileImage">(
+          bufferMobileImage,
+          "banners",
+          "mobileImage",
+          "mobilePublicId"
+        )
       );
-      imagesInfo.push(UploadResult);
     }
-    console.log(imagesInfo, res.locals.validated);
+    const allPromices = await allWithErrors(funcs);
+    const obj: Record<string, string> = {};
+    allPromices.forEach((uploadResult: UploadImageResult) => {
+      const { derivedIdKey, public_id, ...rest } = uploadResult;
+      Object.assign(obj, {
+        [derivedIdKey ?? "public_id"]: public_id,
+        ...rest,
+      });
+    });
+    const filteredObj = {
+      ...res.locals.validated,
+      ...obj,
+    };
+    const newBanner = await prisma.banner.create({
+      data: filteredObj,
+    });
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: "Bannière créée avec succès",
+      newBanner,
       //   data: newBanner,
     });
-  } catch (err) {
-    console.error("Erreur pendant l’upload :", err);
-
+  } catch (err: unknown) {
+    const e = err as AllWithErrorsError<UploadImageResult>;
+    console.error("Erreur pendant l’upload :", e);
     // 🧹 Optionnel : supprimer les images déjà uploadées avant l’échec
-
-    if (Array.isArray(imagesInfo) && imagesInfo.length) {
+    if (Array.isArray(e.fulfilled) && e.fulfilled.length)
       await Promise.allSettled(
-        imagesInfo.map((img) => deleteFromCloudinary(img.public_id))
+        e.fulfilled.map((img) => deleteFromCloudinary(img.public_id))
       );
-    }
 
     handleServerError(res, err);
   }

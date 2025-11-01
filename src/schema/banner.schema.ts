@@ -26,18 +26,25 @@ const validationUUID = z.uuid("L'ID doit être un UUID valide").optional();
 //   .refine((data) => {
 //     console.log(data, " data in bannerSchema refine");
 //   });
-
+const sanitizeBannerData = (data: any) => {
+  // ✨ Nettoyage automatique : si linkType = NONE → supprimer buttonText
+  if (data.linkType === BannerLinkType.NONE) {
+    const { buttonText, ...rest } = data;
+    return rest;
+  }
+  return data;
+};
 export const bannerBaseSchema = z.object({
   text: z
     .string({ message: "Le texte de la bannière est requis" })
     .min(1, "Le texte de la bannière ne peut pas être vide"),
   title: z
-    .string()
-    .min(1, "Le titre de la bannière ne peut pas être vide")
-    .optional(),
+    .string({ message: "Le titre de la bannière est requis" })
+    .min(1, "Le titre de la bannière ne peut pas être vide"),
   buttonText: z
-    .string({ message: "Le texte du bouton est requis" })
-    .min(1, "Le texte du bouton ne peut pas être vide"),
+    .string()
+    .min(1, "Le texte du bouton ne peut pas être vide")
+    .optional(),
   linkType: z
     .enum(BANNER_LINK_TYPE, {
       message: `Le type de lien doit être ${BANNER_LINK_TYPE.join(" ou ")}`,
@@ -63,72 +70,72 @@ export const createBannerSchema = bannerBaseSchema
       .optional(),
   })
   .superRefine((data, ctx) => {
+    function addError(path: string, message: string) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [path],
+        message,
+      });
+    }
     // Vérification des IDs selon linkType
     switch (data.linkType) {
       case BannerLinkType.CATEGORY:
         if (!data.categoryId)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["categoryId"],
-            message: "categoryId est requis pour ce type de lien",
-          });
+          addError("categoryId", "categoryId est requis pour ce type de lien");
+        if (!data.buttonText || !data.buttonText.trim().length)
+          addError("buttonText", "buttonText est requis pour ce type de lien");
         break;
       case BannerLinkType.PRODUCT:
         if (!data.productId)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["productId"],
-            message: "productId est requis pour ce type de lien",
-          });
+          addError("productId", "productId est requis pour ce type de lien");
+        if (!data.buttonText || !data.buttonText.trim().length)
+          addError("buttonText", "buttonText est requis pour ce type de lien");
         break;
       case BannerLinkType.PACK:
         if (!data.packId)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["packId"],
-            message: "packId est requis pour ce type de lien",
-          });
+          addError("packId", "packId est requis pour ce type de lien");
+        if (!data.buttonText || !data.buttonText.trim().length)
+          addError("buttonText", "buttonText est requis pour ce type de lien");
         break;
     }
 
     // Vérification des dates
-    if (data.startAt && data.endAt && data.startAt >= data.endAt) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["endAt"],
-        message: "La date de fin doit être postérieure à la date de début",
-      });
-    }
-  });
+    if (data.startAt && data.endAt && data.startAt >= data.endAt)
+      addError(
+        "endAt",
+        "La date de fin doit être postérieure à la date de début"
+      );
+  })
+  .transform(sanitizeBannerData);
 export const bannerUpdateSchema = bannerBaseSchema
   .partial()
   .superRefine((data, ctx) => {
+    function addError(path: string, message: string) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [path],
+        message,
+      });
+    }
     // Vérifie l'ID uniquement si linkType est fourni
     if (data.linkType) {
       switch (data.linkType) {
         case BannerLinkType.CATEGORY:
           if (!data.categoryId)
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              path: ["categoryId"],
-              message: "categoryId est requis pour ce type de lien",
-            });
+            addError(
+              "categoryId",
+              "categoryId est requis pour ce type de lien"
+            );
+
           break;
         case BannerLinkType.PRODUCT:
           if (!data.productId)
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              path: ["productId"],
-              message: "productId est requis pour ce type de lien",
-            });
+            addError("productId", "productId est requis pour ce type de lien");
+
           break;
         case BannerLinkType.PACK:
           if (!data.packId)
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              path: ["packId"],
-              message: "packId est requis pour ce type de lien",
-            });
+            addError("packId", "packId est requis pour ce type de lien");
           break;
       }
     }
@@ -141,4 +148,5 @@ export const bannerUpdateSchema = bannerBaseSchema
     //     message: "La date de fin doit être postérieure à la date de début",
     //   });
     // }
-  });
+  })
+  .transform(sanitizeBannerData);

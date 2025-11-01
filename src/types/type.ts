@@ -37,17 +37,16 @@ export interface UserTokenPayload {
   role: Role;
   email: string;
 }
-type NoUnion<T> = [T] extends [infer U]
-  ? [U] extends [T]
-    ? T
-    : never
-  : never;
+type NoUnion<T> = [T] extends [infer U] ? ([U] extends [T] ? T : never) : never;
 
-export type UploadResult < T extends string = "secure_url"> = {
+export type UploadResult<
+  T extends string = "secure_url"
+> = {
   [K in NoUnion<T>]: string;
 } & {
   public_id: string;
-}
+  derivedIdKey?: string;
+};
 export interface IntCategory {
   name: string;
   description?: string | null;

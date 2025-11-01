@@ -5,7 +5,8 @@ import fs from "fs";
 export const uploadBufferToCloudinary = <T extends string = "secure_url">(
   buffer: Buffer,
   folder: string,
-  key?: T
+  keyImageUrl?: T,
+  keyPublicId?: string
 ): Promise<UploadResult<T>> =>
   new Promise((res, rej) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -14,8 +15,9 @@ export const uploadBufferToCloudinary = <T extends string = "secure_url">(
         if (err) return rej(err);
         if (!result?.secure_url) return rej(new Error("upload est echoue"));
         const Response = {
-          [key ?? "secure_url"]: result.secure_url,
+          [keyImageUrl ?? "secure_url"]: result.secure_url,
           public_id: result.public_id,
+          derivedIdKey: keyPublicId,
         } as UploadResult<T>;
         res(Response);
       }
