@@ -6,7 +6,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-interface MyFiles {
+export interface MyFiles {
   desktopImage?: Express.Multer.File[];
   mobileImage?: Express.Multer.File[];
 }

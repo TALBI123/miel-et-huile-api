@@ -2,17 +2,22 @@ import { UploadResult } from "../types/type";
 import cloudinary from "../config/cloudinary";
 import fs from "fs";
 // Upload image to cloudinary from buffer
-export const uploadBufferToCloudinary = (
+export const uploadBufferToCloudinary = <T extends string = "secure_url">(
   buffer: Buffer,
-  folder: string
-): Promise<UploadResult> =>
+  folder: string,
+  key?: T
+): Promise<UploadResult<T>> =>
   new Promise((res, rej) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder },
       (err, result) => {
         if (err) return rej(err);
         if (!result?.secure_url) return rej(new Error("upload est echoue"));
-        res(result);
+        const Response = {
+          [key ?? "secure_url"]: result.secure_url,
+          public_id: result.public_id,
+        } as UploadResult<T>;
+        res(Response);
       }
     );
     stream.end(buffer);
@@ -71,6 +76,6 @@ export const deletePathToCloudinary = async (
     .map((r) => ({ id: r.publicId, error: r.error }));
   return {
     success,
-    failed
+    failed,
   };
 };

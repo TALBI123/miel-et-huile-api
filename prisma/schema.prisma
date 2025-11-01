@@ -359,7 +359,9 @@ model Banner {
   text         String?
   buttonText   String?
   desktopImage String
+  desktopPublicId String
   mobileImage  String?
+  mobilePublicId String?
   publicId     String
   linkType     BannerLinkType @default(NONE)
   productId    String?
