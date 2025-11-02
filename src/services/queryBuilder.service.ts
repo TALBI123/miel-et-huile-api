@@ -235,6 +235,12 @@ export class QueryBuilderService {
           ...(options.rating ? { rating: options.rating } : {}),
         });
         break;
+        case "banner":
+          Object.assign(
+            where,
+            this.buildCommonFilters(options, ["isActive", "search"], "title"),
+            
+          );
     }
     return {
       where,

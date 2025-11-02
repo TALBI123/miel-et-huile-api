@@ -404,7 +404,6 @@ enum BannerType {
   PROMOTION
   EVENT
   ANNOUNCEMENT
-  // PARTNER
   FLASH_SALE
 }
 

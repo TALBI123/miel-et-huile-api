@@ -1,7 +1,8 @@
+import { QueryBuilderService } from "../services/queryBuilder.service";
+import { allWithErrors, AllWithErrorsError } from "../utils/errors";
 import { MyFiles } from "../middlewares/uploadMiddleware";
 import { handleServerError } from "../utils/helpers";
 import { StatusCodes } from "http-status-codes";
-import { allWithErrors, AllWithErrorsError } from "../utils/errors";
 import { UploadResult } from "../types/type";
 import { Request, Response } from "express";
 import {
@@ -13,17 +14,27 @@ import prisma from "../config/db";
 import { objFiltered } from "../utils/filter";
 import { BannerLinkType } from "@prisma/client";
 import { isEmptyObject } from "../utils/object";
+
 type UploadImageResult =
   | UploadResult<"desktopImage">
   | UploadResult<"mobileImage">;
+
+//  ----------------Public Controllers
 export const getAllBanners = async (req: Request, res: Response) => {
   try {
+    const query = QueryBuilderService.buildAdvancedQuery("banner", {...res.locals.validated});
     const banners = await prisma.banner.findMany({
       where: {},
       include: {
         product: true,
       },
     });
+    if (!banners.length) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Aucune bannière trouvée",
+      });
+    }
 
     res.status(StatusCodes.OK).json({
       success: true,
