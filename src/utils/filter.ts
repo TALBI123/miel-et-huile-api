@@ -134,15 +134,16 @@ export const buildProductQuery = (options: ProductFilterOptions) => {
 };
 
 export const objFiltered = <T extends Record<string, any>, K extends keyof T>(
-  oldObj: T,
-  newObj: Partial<T>
+oldObj: T,
+newObj: Partial<T>
 ): Partial<T> => {
-  let filteredObj: Partial<T> = {};
-  for (const [key, value] of Object.entries(newObj)) {
-    // problem oldObj[key as K] && value !== oldObj[key as K] en cas oldObj[key as K] peux boolean ca casse le competement attendu
-    if (value !== oldObj[key as K]) filteredObj[key as K] = value;
-  }
-  return filteredObj;
+let filteredObj: Partial<T> = {};
+const entries = Object.entries(newObj);
+for (const [key, value] of entries) {
+  // problem oldObj[key as K] && value !== oldObj[key as K] en cas oldObj[key as K] peux boolean ca casse le competement attendu
+  if  (oldObj[key as K] !== undefined && value !== oldObj[key as K]) filteredObj[key as K] = value;
+}
+return filteredObj;
 };
 
 export const getAllowedPropertiesForProductType = (

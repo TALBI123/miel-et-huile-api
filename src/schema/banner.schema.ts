@@ -1,31 +1,8 @@
-import { ValidationId } from "./validation.shema";
+import { booleanFromStringSchema, ValidationId } from "./validation.shema";
 import { BannerLinkType, BannerType } from "@prisma/client";
 import { BANNER_LINK_TYPE, BANNER_TYPE } from "../data/constants";
 import { z } from "zod";
 const validationUUID = z.uuid("L'ID doit être un UUID valide").optional();
-// export const bannerSchema = z
-//   .object({
-//     text: z
-//       .string({ message: "Le texte de la bannière est requis" })
-//       .min(1, "Le texte de la bannière ne peut pas être vide"),
-//     title: z
-//       .string()
-//       .min(1, "Le titre de la bannière ne peut pas être vide")
-//       .optional(),
-//     buttonText: z
-//       .string({ message: "Le texte du bouton est requis" })
-//       .min(1, "Le texte du bouton ne peut pas être vide"),
-//     linkType: z.enum(["INTERNAL", "EXTERNAL"], {
-//       message: "Le type de lien doit être 'INTERNAL' ou 'EXTERNAL'",
-//     }),
-//     productId: validationUUID,
-//     categoryId: validationUUID,
-//     packId: validationUUID,
-//     isActive: z.boolean().default(false),
-//   })
-//   .refine((data) => {
-//     console.log(data, " data in bannerSchema refine");
-//   });
 const sanitizeBannerData = (data: any) => {
   // ✨ Nettoyage automatique : si linkType = NONE → supprimer buttonText
   if (data.linkType === BannerLinkType.NONE) {
@@ -58,7 +35,7 @@ export const bannerBaseSchema = z.object({
   categoryId: validationUUID.optional(),
   productId: validationUUID.optional(),
   packId: validationUUID.optional(),
-  isActive: z.boolean().default(false),
+  isActive: booleanFromStringSchema,
 });
 export const createBannerSchema = bannerBaseSchema
   .extend({
@@ -106,7 +83,23 @@ export const createBannerSchema = bannerBaseSchema
         "La date de fin doit être postérieure à la date de début"
       );
   })
-  .transform(sanitizeBannerData);
+  .transform(sanitizeBannerData)
+  .transform((data) => {
+    // Vérification des IDs selon linkType
+    const { productId, packId, categoryId, ...rest } = data;
+    switch (data.linkType) {
+      case BannerLinkType.CATEGORY:
+        Object.assign(rest, { categoryId });
+        break;
+      case BannerLinkType.PRODUCT:
+        Object.assign(rest, { productId });
+        break;
+      case BannerLinkType.PACK:
+        Object.assign(rest, { packId });
+        break;
+    }
+    return rest;
+  });
 export const bannerUpdateSchema = bannerBaseSchema
   .partial()
   .superRefine((data, ctx) => {
@@ -149,4 +142,28 @@ export const bannerUpdateSchema = bannerBaseSchema
     //   });
     // }
   })
-  .transform(sanitizeBannerData);
+  .transform(sanitizeBannerData)
+  .transform((data) => {
+    // Vérification des IDs selon linkType
+    const { productId, packId, categoryId, ...rest } = data;
+    // 🔥 Reset tous les IDs par défaut
+    const result = {
+      ...rest,
+      productId: null,
+      categoryId: null,
+      packId: null,
+    };
+
+    switch (data.linkType) {
+      case BannerLinkType.CATEGORY:
+        result.categoryId = categoryId;
+        break;
+      case BannerLinkType.PRODUCT:
+        result.productId = productId;
+        break;
+      case BannerLinkType.PACK:
+        result.packId = packId;
+        break;
+    }
+    return result;
+  });

@@ -5,7 +5,6 @@ import {  bannerUpdateSchema, createBannerSchema } from "../schema/banner.schema
 import { validate } from "../middlewares/validate";
 import {
   uploadBannerMiddleware,
-  uploadMemoryStorage,
   validateBannerImages,
 } from "../middlewares/uploadMiddleware";
 import { Router } from "express";
@@ -24,18 +23,18 @@ router.post(
 );
 
 router.patch(
-  "/",
+  "/:id",
   verifyToken,
   verifyAdmin,
   uploadBannerMiddleware,
-  validateBannerImages,
+  // validateBannerImages,
   validate({ schema: ValidationId, key: "params" }),
   validate({ schema: bannerUpdateSchema, skipSave: true }),
   bannerController.updateBanner
 );
 
 router.delete(
-  "/",
+  "/:id",
   verifyToken,
   verifyAdmin,
   validate({ schema: ValidationId, key: "params" }),
