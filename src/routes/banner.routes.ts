@@ -2,6 +2,7 @@ import * as bannerController from "../controller/banner.controller";
 import { verifyToken, verifyAdmin } from "../middlewares/auth";
 import { ValidationId } from "../schema/validation.shema";
 import {
+  bannerQuerySchema,
   bannerUpdateSchema,
   createBannerSchema,
 } from "../schema/banner.schema";
@@ -21,7 +22,11 @@ const router = Router();
  *       Cette section permet de **créer**, **mettre à jour**, **supprimer** et **récupérer** les bannières utilisées pour les campagnes marketing ou les promotions de produits.
  */
 
-router.get("/", bannerController.getAllBanners);
+router.get(
+  "/",
+  validate({ schema: bannerQuerySchema, key: "query", skipSave: true }),
+  bannerController.getAllBanners
+);
 /**
  * @swagger
  * /banners:
@@ -430,13 +435,13 @@ router.patch(
  *   delete:
  *     summary: Supprimer une bannière
  *     description: |
- *       Cette route permet de **supprimer une bannière** existante ainsi que ses images associées sur **Cloudinary**.  
- *       
- *       - Vérifie d’abord si la bannière existe.  
- *       - Supprime la bannière de la base de données.  
- *       - Supprime ensuite les images liées (`desktopImage`, `mobileImage`) de Cloudinary si elles existent.  
- *       - Renvoie un message de confirmation après la suppression.  
- *       
+ *       Cette route permet de **supprimer une bannière** existante ainsi que ses images associées sur **Cloudinary**.
+ *
+ *       - Vérifie d’abord si la bannière existe.
+ *       - Supprime la bannière de la base de données.
+ *       - Supprime ensuite les images liées (`desktopImage`, `mobileImage`) de Cloudinary si elles existent.
+ *       - Renvoie un message de confirmation après la suppression.
+ *
  *       ⚠️ **Note :** La suppression est définitive et ne peut pas être annulée.
  *     tags:
  *       - Bannières

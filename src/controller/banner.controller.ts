@@ -22,13 +22,21 @@ type UploadImageResult =
 //  ----------------Public Controllers
 export const getAllBanners = async (req: Request, res: Response) => {
   try {
-    const query = QueryBuilderService.buildAdvancedQuery("banner", {...res.locals.validated});
-    const banners = await prisma.banner.findMany({
-      where: {},
-      include: {
-        product: true,
-      },
+    const { page, limit } = res.locals.validated;
+    const { type, linkType, ...rest } = res.locals.validated;
+    const query = QueryBuilderService.buildAdvancedQuery("banner", {
+      ...res.locals.validated,
+      extraWhere: {
+        ...(type ? { type } : {}),
+        ...(linkType ? { linkType } : {}),
+      }
     });
+
+    const [banners, total] = await Promise.all([
+      prisma.banner.findMany(query),
+      prisma.banner.count({ where: query.where }),
+    ]);
+
     if (!banners.length) {
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
@@ -39,6 +47,12 @@ export const getAllBanners = async (req: Request, res: Response) => {
     res.status(StatusCodes.OK).json({
       success: true,
       data: banners,
+      pagination: {
+        page,
+        limit,
+        total,
+        lastPage: QueryBuilderService.calculateLastPage(total, limit),
+      },
     });
   } catch (err) {
     handleServerError(res, err);

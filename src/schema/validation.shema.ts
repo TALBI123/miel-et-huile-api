@@ -1,4 +1,4 @@
-import { booleanFromString, optionalPriceSchema } from "./utils";
+import { booleanFromString, optionalPriceSchema, sanitizeDateRange } from "./utils";
 import { ALLOWED_ORDER_STATUSES } from "../data/allowedNames";
 import { clamp } from "../utils/mathUtils";
 import { z } from "zod";
@@ -114,15 +114,7 @@ export const queryOrderSchema = z
     message: "Le prix minimum ne peut pas être supérieur au prix maximum",
   })
   .merge(dateFilterSchema)
-  .refine((data) => {
-    console.log("Date de début:", data.startDate);
-    console.log("Date de fin:", data.endDate);
-    console.log("Data : ", data);
-    return data.startDate && data.endDate && data.startDate > data.endDate
-      ? { startDate: undefined, endDate: undefined }
-      : data;
-    // return true;
-  });
+  .transform(sanitizeDateRange);
 // --- SHEMAS VALIDATION ID
 export const ValidationId = z.object({
   id: z

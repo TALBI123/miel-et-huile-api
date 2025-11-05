@@ -1,6 +1,11 @@
-import { booleanFromStringSchema, ValidationId } from "./validation.shema";
-import { BannerLinkType, BannerType } from "@prisma/client";
 import { BANNER_LINK_TYPE, BANNER_TYPE } from "../data/constants";
+import { BannerLinkType, BannerType } from "@prisma/client";
+import { defaultEnum, sanitizeDateRange } from "./utils";
+import {
+  booleanFromStringSchema,
+  dateFilterSchema,
+  FilterSchema,
+} from "./validation.shema";
 import { z } from "zod";
 const validationUUID = z.uuid("L'ID doit être un UUID valide").optional();
 const sanitizeBannerData = (data: any) => {
@@ -11,6 +16,32 @@ const sanitizeBannerData = (data: any) => {
   }
   return data;
 };
+
+export const normalizeBannerLinkData = (data: any) => {
+  const { productId, packId, categoryId, ...rest } = data;
+
+  const result = {
+    ...rest,
+    productId: null,
+    categoryId: null,
+    packId: null,
+  };
+
+  switch (data.linkType) {
+    case BannerLinkType.CATEGORY:
+      result.categoryId = categoryId;
+      break;
+    case BannerLinkType.PRODUCT:
+      result.productId = productId;
+      break;
+    case BannerLinkType.PACK:
+      result.packId = packId;
+      break;
+  }
+
+  return result;
+};
+
 export const bannerBaseSchema = z.object({
   text: z
     .string({ message: "Le texte de la bannière est requis" })
@@ -37,6 +68,7 @@ export const bannerBaseSchema = z.object({
   packId: validationUUID.optional(),
   isActive: booleanFromStringSchema,
 });
+
 export const createBannerSchema = bannerBaseSchema
   .extend({
     startAt: z
@@ -84,22 +116,7 @@ export const createBannerSchema = bannerBaseSchema
       );
   })
   .transform(sanitizeBannerData)
-  .transform((data) => {
-    // Vérification des IDs selon linkType
-    const { productId, packId, categoryId, ...rest } = data;
-    switch (data.linkType) {
-      case BannerLinkType.CATEGORY:
-        Object.assign(rest, { categoryId });
-        break;
-      case BannerLinkType.PRODUCT:
-        Object.assign(rest, { productId });
-        break;
-      case BannerLinkType.PACK:
-        Object.assign(rest, { packId });
-        break;
-    }
-    return rest;
-  });
+  .transform(normalizeBannerLinkData);
 export const bannerUpdateSchema = bannerBaseSchema
   .partial()
   .superRefine((data, ctx) => {
@@ -143,27 +160,17 @@ export const bannerUpdateSchema = bannerBaseSchema
     // }
   })
   .transform(sanitizeBannerData)
-  .transform((data) => {
-    // Vérification des IDs selon linkType
-    const { productId, packId, categoryId, ...rest } = data;
-    // 🔥 Reset tous les IDs par défaut
-    const result = {
-      ...rest,
-      productId: null,
-      categoryId: null,
-      packId: null,
-    };
+  .transform(normalizeBannerLinkData);
 
-    switch (data.linkType) {
-      case BannerLinkType.CATEGORY:
-        result.categoryId = categoryId;
-        break;
-      case BannerLinkType.PRODUCT:
-        result.productId = productId;
-        break;
-      case BannerLinkType.PACK:
-        result.packId = packId;
-        break;
-    }
-    return result;
-  });
+export const bannerQuerySchema = z
+  .object({
+    isActive: booleanFromStringSchema.optional(),
+    type: z.string().optional().transform(defaultEnum(BANNER_TYPE, "GENERAL")),
+    linkType: z
+      .string()
+      .optional()
+      .transform(defaultEnum(BANNER_LINK_TYPE, "NONE")),
+  })
+  .merge(dateFilterSchema)
+  .merge(FilterSchema)
+  .transform(sanitizeDateRange);

@@ -141,3 +141,23 @@ export const booleanFromString = (message: string) =>
       message,
     })
   );
+
+// 
+export const sanitizeDateRange  = (data : any ) => {
+    console.log("Date de début:", data.startDate);
+    console.log("Date de fin:", data.endDate);
+    console.log("Data : ", data);
+    return data.startDate && data.endDate && data.startDate > data.endDate
+      ? { startDate: undefined, endDate: undefined }
+      : data;
+    // return true;
+  }
+  export const defaultEnum  = < T extends readonly string[] >(arr : T,defaultValue : T[number]) => {
+    return (val : unknown) : T[number] => {
+      if (val === undefined) return undefined as unknown as T[number];
+      if (typeof val === "string" && arr.includes(val as T[number])) {
+        return val as T[number];
+      }
+      return defaultValue;
+    };
+  }
