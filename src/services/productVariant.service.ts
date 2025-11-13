@@ -6,9 +6,8 @@ import {
 } from "@prisma/client";
 import { ProductWithCategory } from "../types/prisma.type";
 import { AllowedTypeSizes, AllowedTypeUnits } from "../data/allowedNames";
-import crypto from "crypto";
-import { string } from "zod";
 import { generateSlug } from "../utils/helpers";
+import crypto from "crypto";
 interface GetExistingProductParams {
   key?: "title";
   id: string;

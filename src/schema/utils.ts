@@ -1,8 +1,16 @@
-import { ALLOWED_SIZE, ALLOWED_UNITS } from "data/allowedNames";
+import { ALLOWED_SIZE, ALLOWED_UNITS } from "../data/allowedNames";
+import {parsePhoneNumberFromString } from "libphonenumber-js"; 
 import { FieldOptions } from "../types/type";
 import { z, ZodType } from "zod";
 
 // ----------------- UTILITIES SCHEMAS
+
+// ----- PHONE SCHEMA
+export const phoneSchema = z.string().optional().refine(val => {
+    if(!val) return true;
+    const phoneNumber = parsePhoneNumberFromString(val);
+    return phoneNumber?.isValid() || false;
+  },{message:"Numéro de téléphone invalide"})
 // ----- PRICE SCHEMA
 export const optionalPriceSchema = (message: string) =>
   z.string().regex(/^\d+$/, { message }).transform(Number).optional();
