@@ -2,6 +2,43 @@ import { ALLOWED_FILTERING_TABLES } from "../data/allowedNames";
 import prisma from "../config/db";
 import path from "path";
 import fs from "fs";
+
+interface OldOrder {
+  id: string;
+  userId: string;
+  totalAmount: number;
+  status: string;
+  paymentStatus: string;
+  createdAt: string;
+  updatedAt: string;
+  stripePaymentIntentId: string | null;
+  stripeSessionId: string | null;
+  paymentMethod: string;
+  notes: string | null;
+}
+
+interface NewOrder extends OldOrder {
+  // 🔹 Informations de livraison
+  shippingAddress: string | null;
+  shippingCity: string | null;
+  shippingCountry: string | null;
+  shippingZipCode: string | null;
+
+  // 🔹 Méthode et contact de livraison
+  shippingPhone: string | null;
+  shippingMethod: string | null;
+  shippingProvider: string | null;
+
+  // 🔹 Suivi et tracking
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+
+  // 🔹 Intégration Packlink
+  packlinkShipmentId: string | null;
+}
+
 export class BackupsService {
   private static ALLTABLES: string[] = [
     "user",
@@ -79,5 +116,58 @@ export class BackupsService {
     } catch (err) {
       console.log("Error during backup restoration:", err);
     }
+  }
+  static  migrateOrderBackup() {
+    const backupPath = path.join(
+      __dirname,
+      `../../backups/order_backup_${this.restoringDate}.json`
+    );
+    const outputPath = path.join(
+      __dirname,
+      `../../backups/order_backup_migrated_${this.restoringDate}.json`
+    );
+    if (!fs.existsSync(backupPath)) {
+      console.log("Backup file not found at", backupPath);
+      return;
+    }
+   try{
+     const fileData = fs.readFileSync(backupPath, "utf-8");
+    const oldOrders: OldOrder[] = JSON.parse(fileData);
+    const newOrders: NewOrder[] = oldOrders.map((order, index) => {
+      const isConfirmedOrder =
+        order.status === "CONFIRMED" && order.paymentStatus === "PAID";
+      return {
+        ...order,
+        shippingAddress: isConfirmedOrder
+          ? `123 Rue Example ${index + 1}`
+          : null,
+        shippingCity: isConfirmedOrder ? "Paris" : null,
+        shippingCountry: isConfirmedOrder ? "FR" : null,
+        shippingZipCode: isConfirmedOrder ? "75001" : null,
+        shippingPhone: isConfirmedOrder ? "+33123456789" : null,
+        shippingMethod: isConfirmedOrder ? "Standard" : null,
+        shippingProvider: isConfirmedOrder ? "La Poste" : null,
+        trackingNumber: isConfirmedOrder ? `LX${Date.now()}${index}FR` : null,
+        trackingUrl: isConfirmedOrder
+          ? `https://www.laposte.fr/outils/suivre-vos-envois?code=LX${Date.now()}${index}FR`
+          : null,
+        shippedAt: isConfirmedOrder
+          ? new Date(Date.now() + 3600000).toISOString()
+          : null, // +1 heure
+        deliveredAt: isConfirmedOrder
+          ? new Date(Date.now() + 86400000 * 2).toISOString()
+          : null, // +2 jours
+        packlinkShipmentId: null,
+      };
+    });
+    // sauvegarde du nouveau fichier
+    fs.writeFileSync(backupPath, JSON.stringify(newOrders, null, 2));
+    console.log("✅ Migration terminée avec succès !");
+    console.log(`📁 Fichier migré sauvé : ${backupPath}`);
+    console.log(`📊 ${newOrders.length} commandes migrées`);
+
+  }catch(err){
+    console.log("Error during order migration:", err);
+   }
   }
 }

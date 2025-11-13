@@ -1,13 +1,16 @@
+import { PacklinkServiceTest } from "./services/packlink.service";
 import forgetPassword from "./routes/auth/forgetPassword.routes";
-import  adminReviewsRoute  from "./routes/admin-reviews.routes";
+import adminReviewsRoute from "./routes/admin-reviews.routes";
 import verifyEmail from "./routes/auth/verifiy-email.routes";
+
 import { errorHandler } from "./middlewares/handleErrors";
 import googleAuth from "./routes/auth/authGoogle.routes";
 import loginRegister from "./routes/auth/auth.routes";
 import categoryRoute from "./routes/categorys.routes";
+import shippingRoutes from "./routes/shipping.routes";
 import webhookRoutes from "./routes/webhook.routes";
 import productRoute from "./routes/product.routes";
-import bannerRoutes from "./routes/banner.routes"
+import bannerRoutes from "./routes/banner.routes";
 import checkout from "./routes/checkout.routes";
 import { setupSwagger } from "./config/swagger";
 import ordersRoute from "./routes/order.routes";
@@ -15,8 +18,6 @@ import usersRoute from "./routes/user.routes";
 import cookieParser from "cookie-parser";
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { PacklinkService } from "./services/packlink.service";
-import { BackupsService } from "./services/Backups.service";
 
 const app = express();
 
@@ -54,6 +55,9 @@ app.use("/api", usersRoute);
 // --- Checkout & Payment
 app.use("/api/checkout", checkout);
 
+// --- Shipping
+app.use("/api/shipping", shippingRoutes);
+
 // ---- Error Handler
 app.use(errorHandler);
 // Swagger Documentation
@@ -72,31 +76,31 @@ app.get("/auth/google/debug", (req: Request, res: Response) => {
     domain: process.env.DOMAIN,
   });
 });
-console.log("🔍 Vérification des variables d'environnement Google OAuth:");
-console.log(
-  " - GOOGLE_CLIENT_SECRET:",
-  process.env.GOOGLE_CLIENT_SECRET ? "✅ Défini" : "❌ Manquant"
-);
-console.log(
-  " - STRIPE_SECRET_KEY:",
-  process.env.STRIPE_SECRET_KEY ? "✅ Défini" : "❌ Manquant"
-);
-console.log(
-  " - STRIPE_PUBLIC_KEY:",
-  process.env.STRIPE_PUBLIC_KEY ? "✅ Défini" : "❌ Manquant"
-);
-console.log(process.env.PORT || "❌ PORT non défini");
-async function getBackupData() {
-  console.log("🔄 Démarrage de la sauvegarde des données...");
-  // await BackupsService.saveBackupToFile();
-  await BackupsService.restoreBackupFromFile();
-  console.log("✅ Sauvegarde des données terminée.");
+if (process.env.NODE_ENV !== "production") {
+  console.log("🔍 Vérification des variables d'environnement Google OAuth:");
+  console.log(
+    " - GOOGLE_CLIENT_SECRET:",
+    process.env.GOOGLE_CLIENT_SECRET ? "✅ Défini" : "❌ Manquant"
+  );
+  console.log(
+    " - STRIPE_SECRET_KEY:",
+    process.env.STRIPE_SECRET_KEY ? "✅ Défini" : "❌ Manquant"
+  );
+  console.log(
+    " - STRIPE_PUBLIC_KEY:",
+    process.env.STRIPE_PUBLIC_KEY ? "✅ Défini" : "❌ Manquant"
+  );
+  console.log(process.env.PORT || "❌ PORT non défini");
 }
-getBackupData();
+
+// Test Backup Service
+
+// Test Packlink Service
+
 // async function runPacklink() {
 //   try {
 //     console.log("🧪 Test Packlink...");
-//     const result = await PacklinkService.testPacklink();
+//     const result = await PacklinkServiceTest.testPacklink();
 //     console.log("✅ Résultat:", result);
 //   } catch (error) {
 //     console.error("❌ Erreur:", error);
@@ -104,52 +108,59 @@ getBackupData();
 // }
 
 // runPacklink()
-export default app;
 
-// app.get("/", async (req, res) => {
-//   res.json({
-//     message: "Server is running updated",
-//     env: process.env.NODE_ENV || "❌ NODE_ENV non défini",
+//  Test SendCloud Service
 
-//     allEnv: Object.keys(process.env)
-//       .filter((k) =>
-//         [
-//           "GOOGLE_CLIENT_ID",
-//           "GOOGLE_CLIENT_SECRET",
-//           "GOOGLE_CALLBACK_URL",
-//         ].includes(k)
-//       )
-//       .reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {}),
-//   });
-// });
-// Création dynamique du .env en production
-// if (process.env.NODE_ENV === "production" && !fs.existsSync(".env")) {
+// (async () => {
+//   const sendcloud = SendCloudService.getInstance();
 //   try {
-//     const envContent = `
-// NODE_ENV=production
-// PORT=${process.env.PORT || 4000}
-// EMAIL_USER=${process.env.EMAIL_USER || ""}
-// EMAIL_PASS=${process.env.EMAIL_PASS || ""}
-// JWT_SECRET=${process.env.JWT_SECRET || "json_web_token_jwt"}
-// JWT_EXPIRES_IN=${process.env.JWT_EXPIRES_IN || "1h"}
-// DATABASE_URL=${process.env.DATABASE_URL || ""}
-// DIRECT_URL=${process.env.DIRECT_URL || ""}
-// SALT_ROUND=${process.env.SALT_ROUND || "11"}
-// FRONTEND_URL=${process.env.FRONTEND_URL || "http://localhost:5173"}
-// CLOUDINARY_CLOUD_NAME=${process.env.CLOUDINARY_CLOUD_NAME || ""}
-// CLOUDINARY_API_KEY=${process.env.CLOUDINARY_API_KEY || ""}
-// CLOUDINARY_API_SECRET=${process.env.CLOUDINARY_API_SECRET || ""}
-// GOOGLE_CLIENT_ID=${process.env.GOOGLE_CLIENT_ID || ""}
-// GOOGLE_CLIENT_SECRET=${process.env.GOOGLE_CLIENT_SECRET || ""}
-// CLIENT_URL=${process.env.CLIENT_URL || "http://localhost:5473"}
-// SENDGRID_API_KEY=${process.env.SENDGRID_API_KEY || ""}
-// BERVE_API_KEY=${process.env.BERVE_API_KEY || ""}
-// REDIS_URL=${process.env.REDIS_URL || ""}
-//     `.trim();
+//     // 🔹 Étape 1 : Récupérer les transporteurs
+//     const methods = await sendcloud.getShippingMethods();
+//     // console.log("Méthodes disponibles:", methods);
 
-//     fs.writeFileSync(".env", envContent);
-//     console.log("✅ Fichier .env créé dynamiquement pour la production");
-//   } catch (error) {
-//     console.error("❌ Erreur lors de la création du .env:", error);
+//     // // 🔹 Étape 2 : Simuler les tarifs disponibles
+//     // const rates = await sendcloud.getShippingMethods({
+//     //   from_country: "FR",
+//     //   to_country: "NL",
+//     //   weight: 1.2,
+//     // });
+//     // console.table(rates);
+
+//     // 🔹 Étape 3 : Créer un colis (exemple de commande)
+//     console.log("Creating parcel...", methods);
+//     const rates = await sendcloud.getShippingRates({
+//       cart: {
+//         items: [
+//           {
+//             id: "PROD_001",
+//             quantity: 1,
+//             weight: 1.2,
+//             dimensions: { length: 30, width: 25, height: 15 },
+//           },
+//         ],
+//         total_weight: 1.2,
+//         total_value: 45.99,
+//       },
+//       destination: {
+//         country: "FR",
+//         postal_code: "69001",
+//         city: "Lyon",
+//       },
+//     });
+//     console.log("Shipping Rates:", rates);
+//     // const parcel = await sendcloud.createParcel({
+//     //   name: "Jean Dupont",
+//     //   address: "12 rue de Paris",
+//     //   city: "Lyon",
+//     //   postal_code: "69000",
+//     //   country: "FR",
+//     //   weight: 1.3,
+//     //   shipping_method_id: methods[0].id, // Ex: DHL Express
+//     // });
+//     // console.log("Colis créé:", parcel);
+//   } catch (err) {
+//     console.error("❌ Error initializing SendCloudService:", err);
 //   }
-// }
+// })();
+
+export default app;

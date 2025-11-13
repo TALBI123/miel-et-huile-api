@@ -1,9 +1,10 @@
-import { PrismaClient } from "@prisma/client";
 import { handleServerError } from "../utils/helpers";
-
-import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
+import { PrismaClient } from "@prisma/client";
+import { objFiltered } from "../utils/filter";
+import { Request, Response } from "express";
 import prisma from "../config/db";
+import { isEmptyObject } from "../utils/object";
 
 // Middleware pour authentifier les requêtes protégées
 export const getCurrentUser = async (req: Request, res: Response) => {
@@ -72,6 +73,8 @@ export const getProffile = async (req: Request, res: Response) => {
     handleServerError(res, err);
   }
 };
+
+//  Récupère tous les utilisateurs (accessible uniquement aux admins)
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const data = await prisma.user.findMany();
@@ -81,6 +84,46 @@ export const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
+// Met à jour les informations de l'utilisateur actuel
+export const updateCurrentUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.user!;
+    const existsUser = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        phoneNumber: true,
+        firstName: true,
+        lastName: true,
+        city: true,
+        country: true,
+        address: true,
+        postalCode: true,
+      },
+    });
+    if (!existsUser)
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: "Utilisateur non trouvé",
+      });
+
+    const filteredData = objFiltered(existsUser, res.locals.validated);
+    if (isEmptyObject(filteredData))
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Aucune donnée valide à mettre à jour",
+      });
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: filteredData,
+    });
+    res.status(200).json({ message: "User updated successfully", user });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+};
+
+// Supprimer l'utilisateur actuel
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const data = await prisma.user.delete({

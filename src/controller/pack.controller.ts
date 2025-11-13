@@ -1,9 +1,8 @@
-import { OrderStatus, PrismaClient } from "@prisma/client";
+import { QueryBuilderService } from "../services/queryBuilder.service";
 import { handleServerError, timeAgo } from "../utils/helpers";
+import { OrderStatus, PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
-import { Model } from "../types/enums";
-import { QueryBuilderService } from "../services/queryBuilder.service";
 import prisma from "../config/db";
 
 export const getAllPacks = async (req: Request, res: Response) => {
@@ -16,7 +15,7 @@ export const getAllPacks = async (req: Request, res: Response) => {
             data:packs
         });
     }catch(err){
-        handleServerError(res,err):
+        handleServerError(res,err);
     }
 }
 export const createPack = async (req: Request, res: Response) => {
@@ -31,14 +30,14 @@ export const updatePack = async(req : Request,res: Response) => {
         const { id } = req.params;
         const { name, description, price } = req.body;
 
-        const updatedPack = await prisma.pack.update({
-            where: { id: Number(id) },
-            data: { name, description, price }
-        });
+        // const updatedPack = await prisma.pack.update({
+        //     where: { id: Number(id) },
+        //     data: { name, description, price }
+        // });
 
         res.status(StatusCodes.OK).json({
             success: true,
-            data: updatedPack
+            // data: updatedPack
         });
     }catch(err){
         handleServerError(res,err)

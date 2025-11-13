@@ -40,11 +40,6 @@ model User {
   @@index([isVerified])
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model Category {
   id          String    @id @default(dbgenerated("gen_random_uuid()"))
   name        String    @unique
@@ -71,7 +66,7 @@ model Product {
   rating         Float?           @default(0)
   subDescription String           @default("")
   isActive       Boolean          @default(false)
-  origin         String? // "Maroc", "Algérie", etc.
+  origin         String?
   productType    ProductType      @default(HONEY)
   category       Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   review         Review[]
@@ -87,14 +82,14 @@ model Product {
   @@index([isActive])
   @@index([categoryId, isActive, productType])
   @@index([createdAt, isActive])
-  @@index([rating, isActive]) // Pour le tri par popularité
+  @@index([rating, isActive])
 }
 
 model ProductDetails {
   id             String  @id @default(cuid())
   productId      String  @unique
-  product        Product @relation(fields: [productId], references: [id])
   jsonAttributes Json?
+  product        Product @relation(fields: [productId], references: [id])
 }
 
 model ProductImage {
@@ -108,37 +103,28 @@ model ProductImage {
 }
 
 model ProductVariant {
-  id            String @id @default(dbgenerated("gen_random_uuid()"))
-  price         Float
-  discountPrice Float? @default(0)
-
-  discountPercentage Int?     @default(0)
-  isOnSale           Boolean? @default(false)
-  stock              Int      @default(0)
+  id                 String        @id @default(dbgenerated("gen_random_uuid()"))
+  price              Float
+  discountPrice      Float?        @default(0)
+  discountPercentage Int?          @default(0)
+  isOnSale           Boolean?      @default(false)
+  stock              Int           @default(0)
   productId          String
-  isActive           Boolean  @default(true)
+  isActive           Boolean       @default(true)
   unit               String?
   amount             Float?
-  size               String?
-
-  // 🆕 NOUVEAU : Attributs spécifiques miel/dattes
-  name      String
-  sku       String      @unique
-  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  OrderItem OrderItem[]
+  name               String
+  sku                String        @unique
+  size               ClothingSize?
+  product            Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  OrderItem          OrderItem[]
 
   @@unique([amount, productId])
   @@unique([size, productId])
   @@index([productId])
   @@index([isActive])
   @@index([isOnSale])
-  @@index([sku]) // 🆕 Index SKU
-}
-
-enum ProductType {
-  HONEY // Miel
-  CLOTHING // Vêtements
-  DATES // Dattes
+  @@index([sku])
 }
 
 model Order {
@@ -153,6 +139,18 @@ model Order {
   stripeSessionId       String?        @unique
   paymentMethod         PaymentMethod? @default(CARD)
   notes                 String?
+  deliveredAt           DateTime?
+  packlinkShipmentId    String?        @unique
+  shippedAt             DateTime?
+  shippingAddress       String?
+  shippingCity          String?
+  shippingCountry       String?
+  shippingMethod        String?
+  shippingPhone         String?
+  shippingProvider      String?
+  shippingZipCode       String?
+  trackingNumber        String?        @unique
+  trackingUrl           String?
   user                  User           @relation(fields: [userId], references: [id])
   items                 OrderItem[]
   Dispute               Dispute[]
@@ -162,43 +160,9 @@ model Order {
   @@index([createdAt])
   @@index([paymentStatus])
   @@index([stripeSessionId])
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  CONFIRMED
-  SHIPPED
-  DELIVERED
-  ON_HOLD
-  CANCELLED
-  REFUNDED
-  RESOLVED
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
-  PROCESSING
-  REQUIRES_ACTION
-  DISPUTED
-  EXPIRED
-}
-
-enum PaymentMethod {
-  CARD
-  PAYPAL
-  APPLE_PAY
-  GOOGLE_PAY
-  BANCONTACT
-  IDEAL
-  SOFORT
-  SEPA_DEBIT
-  GIROPAY
-  KLARNA
-  AFTERPAY
+  @@index([packlinkShipmentId])
+  @@index([shippingCountry])
+  @@index([trackingNumber])
 }
 
 model OrderItem {
@@ -235,8 +199,8 @@ model Review {
   @@index([userId])
   @@index([rating])
   @@index([isApproved])
-  @@index([productId, isApproved, rating]) // Filtrage avis
-  @@index([createdAt, isApproved]) // Pagination admin
+  @@index([productId, isApproved, rating])
+  @@index([createdAt, isApproved])
 }
 
 model Promotion {
@@ -306,31 +270,22 @@ model VerificationTokens {
   @@index([userId, type])
 }
 
-enum VerificationTokenType {
-  EMAIL_VERIFICATION
-  PASSWORD_RESET
-}
-
 /// schema.prisma
 model Pack {
-  id          String   @id @default(dbgenerated("gen_random_uuid()"))
+  id          String     @id @default(dbgenerated("gen_random_uuid()"))
   title       String
-  slug        String   @unique
+  slug        String     @unique
   description String?
   price       Float
-  discount    Float?   @default(0.0)
-  isActive    Boolean  @default(false)
-  stock       Int      @default(0)
+  discount    Float?     @default(0.0)
+  isActive    Boolean    @default(false)
+  stock       Int        @default(0)
   image       String?
   publicId    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // relation many-to-many avec Product (table join PackItem)
-  items PackItem[]
-
-  // relation inverse depuis Banner
-  banners Banner[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       PackItem[]
+  banners     Banner[]
 
   @@index([isActive])
   @@index([price])
@@ -339,49 +294,44 @@ model Pack {
 }
 
 model PackItem {
-  id        String @id @default(dbgenerated("gen_random_uuid()"))
+  id        String  @id @default(dbgenerated("gen_random_uuid()"))
   packId    String
   productId String
-  qty       Int    @default(1)
+  qty       Int     @default(1)
   unitPrice Float
+  pack      Pack    @relation(fields: [packId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 
-  pack    Pack    @relation(fields: [packId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-
-  @@unique([packId, productId]) // évite doublons produit dans un même pack
+  @@unique([packId, productId])
   @@index([packId])
   @@index([productId])
 }
 
 model Banner {
-  id           String         @id @default(dbgenerated("gen_random_uuid()"))
-  title        String
-  text         String?
-  buttonText   String?
-  desktopImage String
+  id              String         @id @default(dbgenerated("gen_random_uuid()"))
+  title           String
+  text            String?
+  linkType        BannerLinkType @default(NONE)
+  productId       String?
+  categoryId      String?
+  isActive        Boolean        @default(false)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  customUrl       String?
+  desktopImage    String
+  mobileImage     String?
+  order           Int            @default(0)
+  packId          String?
+  type            BannerType     @default(GENERAL)
+  buttonText      String?
   desktopPublicId String
-  mobileImage  String?
-  mobilePublicId String?
-  linkType     BannerLinkType @default(NONE)
-  productId    String?
-  categoryId   String?
-  packId       String? // 🔥 nouveau champ
-  customUrl    String?
+  mobilePublicId  String?
+  product         Product?       @relation(fields: [productId], references: [id])
+  category        Category?      @relation(fields: [categoryId], references: [id])
+  pack            Pack?          @relation(fields: [packId], references: [id])
 
-  type      BannerType @default(GENERAL)
-  order     Int        @default(0)
-  isActive  Boolean    @default(false)
-  startsAt  DateTime?
-  endsAt    DateTime?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  product  Product?  @relation(fields: [productId], references: [id])
-  category Category? @relation(fields: [categoryId], references: [id])
-  pack     Pack?     @relation(fields: [packId], references: [id])
-  // ✅ Exemple d'index composite utile pour les filtres combinés
-
-  // ⚙️ Index pour améliorer les performances des requêtes
   @@index([isActive])
   @@index([type])
   @@index([startsAt])
@@ -390,6 +340,119 @@ model Banner {
   @@index([productId])
   @@index([categoryId])
   @@index([packId])
+}
+
+model Alert {
+  id               String        @id @default(dbgenerated("gen_random_uuid()"))
+  type             AlertType
+  message          String
+  entityType       String
+  entityId         String?
+  severity         AlertSeverity @default(INFO)
+  severityRank     Int
+  resolved         Boolean       @default(false)
+  occurrences      Int           @default(1)
+  lastOccurrenceAt DateTime?     @default(now())
+  deduplicationKey String?
+  slaDeadline      DateTime?
+  createdAt        DateTime      @default(now())
+  resolvedAt       DateTime?
+  status           AlertStatus   @default(ACTIVE)
+  tags             AlertTag[]    @default([])
+  lastAction       String?
+  lastActionAt     DateTime?
+  lastNotes        String?
+
+  @@index([status])
+  @@index([severity])
+  @@index([entityType, entityId])
+  @@index([deduplicationKey])
+}
+
+model Dispute {
+  id              String    @id @default(cuid())
+  stripeId        String?   @unique
+  orderId         String
+  userId          String
+  status          String
+  stripeStatus    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  autoSubmitted   Boolean   @default(false)
+  pdfProofUrl     String?
+  deliveryProof   String?
+  customerEmail   String?
+  productDesc     String?
+  additionalNotes String?
+  logs            Json?
+  order           Order     @relation(fields: [orderId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@index([stripeStatus])
+  @@index([createdAt])
+  @@index([reviewedBy])
+  @@index([customerEmail])
+  @@index([orderId, userId])
+  @@index([status, stripeStatus])
+  @@index([createdAt, status])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ProductType {
+  HONEY
+  CLOTHING
+  DATES
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  ON_HOLD
+  CANCELLED
+  REFUNDED
+  RESOLVED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PROCESSING
+  REQUIRES_ACTION
+  DISPUTED
+  EXPIRED
+}
+
+enum PaymentMethod {
+  CARD
+  PAYPAL
+  APPLE_PAY
+  GOOGLE_PAY
+  BANCONTACT
+  IDEAL
+  SOFORT
+  SEPA_DEBIT
+  GIROPAY
+  KLARNA
+  AFTERPAY
+}
+
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
 }
 
 enum BannerLinkType {
@@ -407,73 +470,32 @@ enum BannerType {
   FLASH_SALE
 }
 
-model Alert {
-  id               String        @id @default(dbgenerated("gen_random_uuid()"))
-  type             AlertType
-  message          String
-  entityType       String // ex: "ORDER", "CATEGORY", "PRODUCT"
-  entityId         String?
-  severity         AlertSeverity @default(INFO)
-  severityRank     Int // pour faciliter le tri par sévérité
-  resolved         Boolean       @default(false)
-  occurrences      Int           @default(1)
-  lastOccurrenceAt DateTime?     @default(now()) // date de la dernière occurrence
-  deduplicationKey String? // clé pour éviter doublons
-  slaDeadline      DateTime?
-  createdAt        DateTime      @default(now())
-  resolvedAt       DateTime?
-  status           AlertStatus   @default(ACTIVE)
-  tags             AlertTag[]    @default([])
-
-  // Mini log interne
-  lastAction   String? // CREATED, UPDATED, ESCALATED, RESOLVED
-  lastActionAt DateTime? // date du dernier changement
-  lastNotes    String? // courte note ou explication
-
-  @@index([status])
-  @@index([severity])
-  @@index([entityType, entityId])
-  @@index([deduplicationKey])
-}
-
 enum AlertTag {
-  // Litiges
   DISPUTE_WON
   DISPUTE_LOST
-
-  // Produits
   LOW_STOCK
   OUT_OF_STOCK
-
-  // Sécurité / serveur
   SECURITY_BREACH_ATTEMPT
   SLA_24H
-
-  // Priorité / notifications
   URGENT
   NOTIFY_ADMIN
 }
 
 enum AlertType {
-  // Litiges / paiements
   DISPUTE_CREATED
   DISPUTE_UPDATED
   DISPUTE_CLOSED
   DISPUTE_ERROR
   PAYMENT_FAILED
-
-  // Inventaire / produits
   STOCK_ISSUE
-
-  // Système / serveur / sécurité
   SYSTEM_ERROR
   SERVER_ERROR
 }
 
 enum AlertStatus {
-  ACTIVE // L’alerte est en cours
-  RESOLVED // L’alerte a été traitée
-  ESCALATED // Escalade déclenchée (SLA dépassé)
+  ACTIVE
+  RESOLVED
+  ESCALATED
 }
 
 enum AlertSeverity {
@@ -483,49 +505,15 @@ enum AlertSeverity {
   URGENT
 }
 
-model Dispute {
-  id       String  @id @default(cuid())
-  stripeId String? @unique // chaque litige Stripe est unique
-  orderId  String
-  order    Order   @relation(fields: [orderId], references: [id])
-  userId   String
-  user     User    @relation(fields: [userId], references: [id])
-
-  // --- État du litige ---
-  status       String // "pending", "under_review", "submitted", "won", "lost"
-  stripeStatus String? // statut Stripe (needs_response, under_review, won, lost)
-
-  // --- Gestion interne ---
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  reviewedBy    String? // Admin qui a validé le dossier
-  reviewedAt    DateTime?
-  autoSubmitted Boolean   @default(false)
-
-  // --- Preuves ---
-  pdfProofUrl     String? // lien vers le PDF généré
-  deliveryProof   String? // URL capture de livraison ou autre
-  customerEmail   String?
-  productDesc     String?
-  additionalNotes String?
-
-  // --- Logs / audit ---
-  logs Json?
-
-  // === Indexes ===
-  @@index([orderId])
-  @@index([userId])
-  @@index([status])
-  @@index([stripeStatus])
-  @@index([createdAt])
-  @@index([reviewedBy])
-  @@index([customerEmail])
-  @@index([orderId, userId])
-  @@index([status, stripeStatus])
-  @@index([createdAt, status])
-}
-
 enum DiscountType {
   PERCENTAGE
   FIXED
+}
+
+enum ClothingSize {
+  S
+  M
+  L
+  XL
+  XXL
 }
