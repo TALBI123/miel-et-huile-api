@@ -9,7 +9,7 @@ import {
   verifySendGridConnection,
 } from "./services/emailService.service";
 import { PrismaClient } from "@prisma/client";
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // if (fs.existsSync(".env") && process.env.NODE_ENV !== "production") {
 //   config();
@@ -65,7 +65,7 @@ app.get('/',async(req: Request, res: Response) => {
   });
 })
 const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
-app.listen(Number(4000), HOST, () => {
+app.listen(Number(PORT), HOST, () => {
   console.log(process.env.NODE_ENV || "❌ NODE_ENV non défini");
   console.log('hi brooooooooooooooooooooo')
   console.log(`✅ Server running on http://${HOST}:${PORT}`);
