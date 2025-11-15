@@ -1,3 +1,4 @@
+import { CartItemSchema } from "./checkout.schema";
 import { phoneSchema } from "./utils";
 import { z } from "zod";
 
@@ -39,22 +40,11 @@ export const CalculateShippingSchema = z.object({
  * Schéma pour obtenir les options de livraison
  */
 export const ShippingOptionsSchema = z.object({
-  country: z
-    .string()
-    .length(2, "Le code pays doit être au format ISO 2 lettres (ex: FR)")
-    .toUpperCase(),
-  weight: z.number().positive("Le poids doit être positif"),
-  address: ShippingAddressSchema.optional(),
-  packages: z
-    .array(
-      z.object({
-        weight: z.number().positive(),
-        width: z.number().positive().optional(),
-        height: z.number().positive().optional(),
-        length: z.number().positive().optional(),
-      })
-    )
-    .optional(),
+  items: z
+    .array(CartItemSchema)
+    .min(1, { message: "Le panier doit contenir au moins un article" }),
+  // adresse de livraison obligatoire
+  shippingAddress: ShippingAddressSchema,
 });
 
 /**
