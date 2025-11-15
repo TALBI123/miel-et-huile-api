@@ -1,0 +1,15 @@
+declare module 'express' {
+    export interface Request {
+        // Add any custom properties you need
+    }
+    
+    export interface Response {
+        // Add any custom properties you need
+    }
+
+    export interface NextFunction {
+        // Add any custom properties you need
+    }
+
+    export const Router: () => any;
+}
