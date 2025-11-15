@@ -3,6 +3,7 @@
 import { verifyStripeWebhook } from "../middlewares/webhookAuth";
 import { stripeWebhook } from "../controller/webhook.controller";
 import express from "express";
+import type{ Request, Response } from "express";
 const router = express.Router();
 
 router.post(
@@ -13,7 +14,7 @@ router.post(
 );
 
 // Route de santé
-router.get("/health", (req, res) => {
+router.get("/health", (req : Request, res : Response) => {
   res.json({
     status: "active",
     service: "stripe-webhook",
