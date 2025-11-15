@@ -2,8 +2,8 @@
 // import { verifyStripeWebhook } from "../middleware/webhookAuth";
 import { verifyStripeWebhook } from "../middlewares/webhookAuth";
 import { stripeWebhook } from "../controller/webhook.controller";
-import express from "express";
-import type{ Request, Response } from "express";
+import express, { Request, Response } from "express";
+
 const router = express.Router();
 
 router.post(
@@ -14,11 +14,12 @@ router.post(
 );
 
 // Route de santé
-router.get("/health", (req : Request, res : Response) => {
+router.get("/health", (req: Request, res: Response) => {
   res.json({
     status: "active",
     service: "stripe-webhook",
     timestamp: new Date().toISOString(),
   });
 });
+
 export default router;
