@@ -1,11 +1,17 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { cache } from "../config/cache";
 import crypto from "crypto";
+interface DecodedToken {
+  exp?: number;
+  jti?: string;
+  [key: string]: any;
+}
+
 
 export class BlacklistService {
   addToBlacklist(token: string) {
     try {
-      const decoded = jwt.decode(token) as JwtPayload;
+      const decoded = jwt.decode(token) as DecodedToken | null;
       if (!decoded || typeof decoded !== "object") {
         console.log("Invalid token format");
         return;
@@ -40,7 +46,7 @@ export class BlacklistService {
   }
   isTokenBlacklisted(token: string) {
     try {
-      const decoded = jwt.decode(token) as JwtPayload;
+      const decoded = jwt.decode(token) as DecodedToken | null;
       if (!decoded) return false;
       let cacheKey: string;
       if (decoded.jti && typeof decoded.jti === "string")

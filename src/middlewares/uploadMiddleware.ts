@@ -14,7 +14,7 @@ export interface MyFiles {
 const fileFilter = (
   req: Request,
   file: Express.Multer.File,
-  cb: multer.FileFilterCallback
+  cb: (error: Error | null, acceptFile?: boolean) => void
 ) => {
   const ext = path.extname(file.originalname).toLowerCase();
   if (
@@ -31,14 +31,15 @@ const fileFilter = (
       )
     );
 };
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (req: any, file: any, cb: any) => {
     const uploadPath = path.join(__dirname, "../../uploads/tmp");
     if (!fs.existsSync(uploadPath))
       fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
-  filename: (req, file, cb) => {
+  filename: (req: any, file: any, cb: any) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname); // .png
     const name = path.basename(file.originalname, ext);
@@ -95,16 +96,15 @@ export const uploadMemoryStorage = multer({
   fileFilter,
 }).single("image");
 
-
 export const uploadHandler = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.file && (!req.files || req.files?.length === 0))
+  if (!req.file && (!req.files || (req.files as any)?.length === 0))
     return res
       .status(StatusCodes.BAD_REQUEST)
-      .json({ message: "Aucun fichier n’a été uploadé" });
+      .json({ message: "Aucun fichier n'a été uploadé" });
   next();
 };
 
