@@ -1,8 +1,5 @@
-import * as Express from "express";
-import { UserTokenPayload } from "./type";
 import { Role } from "@prisma/client";
 import Stripe from "stripe";
-import { File } from "multer";
 
 declare global {
   namespace Express {
@@ -14,8 +11,11 @@ declare global {
 
     interface Request {
       user?: User | null;
-      file?: File & { buffer: Buffer };
+      file?: Express.Multer.File & { buffer: Buffer };
+      files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
       stripeEvent?: Stripe.Event;
     }
   }
 }
+
+export {};
