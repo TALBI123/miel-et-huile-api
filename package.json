@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node ./dist/server.js",
     "start:dev": "nodemon ./src/server.ts",
-    "build": "tsc --build"
+    "build": "tsc --build",
+     "test": "jest --passWithNoTests"
   },
   "author": "Mohamed",
   "license": "ISC",
@@ -61,8 +62,13 @@
     "zod": "^4.1.9"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.2.0",
     "nodemon": "^3.0.2",
-    "prisma": "^6.15.0"
+    "prisma": "^6.15.0",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.5"
   },
   "engines": {
     "node": ">=18.0.0"
