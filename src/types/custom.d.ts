@@ -1,0 +1,9 @@
+declare module "cookie-parser";
+declare module "cors";
+declare module "jsonwebtoken";
+declare module "passport";
+declare module "passport-google-oauth20";
+declare module "swagger-jsdoc";
+declare module "swagger-ui-express";
+declare module "multer";
+declare module "ejs";
