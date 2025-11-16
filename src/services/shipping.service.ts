@@ -11,6 +11,7 @@ interface ShippingAddress {
   email?: string;
 }
 
+
 interface ShippingOption {
   provider: "ShippingZone" | "Packlink";
   method: string;
@@ -29,7 +30,10 @@ interface Package {
 
 export class ShippingService {
   // Calcule le coût de livraison selon la zone géographique
-  static async calculateShippingCost(country: string, weight: number): Promise<number> {
+  static async calculateShippingCost(
+    country: string,
+    weight: number
+  ): Promise<number> {
     try {
       // Chercher la zone de livraison active pour le pays
       const shippingZone = await prisma.shippingZone.findFirst({
@@ -42,11 +46,13 @@ export class ShippingService {
       });
 
       if (!shippingZone) {
-        throw new Error(`Pas de zone de livraison disponible pour le pays: ${country}`);
+        throw new Error(
+          `Pas de zone de livraison disponible pour le pays: ${country}`
+        );
       }
 
       // Prix fixe par zone pour le moment, à améliorer avec calcul au poids
-      return shippingZone.price;
+      return 4;
     } catch (error: any) {
       console.error("Erreur calcul shipping cost:", error.message);
       throw error;
@@ -60,9 +66,9 @@ export class ShippingService {
         where: {
           isActive: true,
         },
-        orderBy: {
-          price: "asc",
-        },
+        // orderBy: {
+        //   price: "asc",
+        // },
       });
 
       return zones;
@@ -75,7 +81,7 @@ export class ShippingService {
   // Valide les champs requis d'une adresse de livraison
   static validateShippingAddress(address: ShippingAddress): boolean {
     const required = ["address", "city", "country", "zipCode"];
-    
+
     for (const field of required) {
       if (!address[field as keyof ShippingAddress]) {
         throw new Error(`Champ requis manquant: ${field}`);
@@ -84,7 +90,9 @@ export class ShippingService {
 
     // Format ISO requis
     if (address.country.length !== 2) {
-      throw new Error("Le code pays doit être au format ISO 2 lettres (ex: FR, DE, ES)");
+      throw new Error(
+        "Le code pays doit être au format ISO 2 lettres (ex: FR, DE, ES)"
+      );
     }
 
     return true;
@@ -162,7 +170,7 @@ export class ShippingService {
       };
 
       // Format packages pour l'API
-      const packlinkPackages = packages.map(pkg => ({
+      const packlinkPackages = packages.map((pkg) => ({
         weight: pkg.weight,
         width: pkg.width || 10,
         height: pkg.height || 10,
@@ -179,7 +187,7 @@ export class ShippingService {
       // Récup des services dispo
       if (draft.id) {
         const services = await PacklinkService.getShippingRates(draft.id);
-        
+
         // Mapping vers notre format
         return services.map((service: any) => ({
           provider: "Packlink" as const,
@@ -257,13 +265,15 @@ export class ShippingService {
           const packlinkTracking = await PacklinkService.getTrackingStatus(
             order.packlinkShipmentId
           );
-          
+
           return {
             ...order,
             liveTracking: packlinkTracking,
           };
         } catch (error) {
-          console.warn("Impossible de récupérer le tracking Packlink en temps réel");
+          console.warn(
+            "Impossible de récupérer le tracking Packlink en temps réel"
+          );
         }
       }
 
@@ -273,7 +283,13 @@ export class ShippingService {
       throw error;
     }
   }
+  
 
+  static async createShipmentLabel() {
+    try {
+      // Logic to create a shipment label
+    } catch (err) {}
+  }
   // Sélectionne l'option la moins chère parmi les disponibles
   static selectBestRate(rates: ShippingOption[]): ShippingOption {
     if (rates.length === 0) {
@@ -285,4 +301,3 @@ export class ShippingService {
     return sortedByPrice[0];
   }
 }
-
