@@ -235,16 +235,51 @@ model Testimonial {
 }
 
 model ShippingZone {
-  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  id        String         @id @default(dbgenerated("gen_random_uuid()"))
   name      String
   countries String[]
   price     Float
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  rates     ShippingRate[]
 
   @@index([createdAt])
   @@index([isActive])
+}
+
+model ShippingMethod {
+  id          String   @id @default(dbgenerated("gen_random_uuid()"))
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rates ShippingRate[]
+}
+
+model ShippingRate {
+  id         String  @id @default(dbgenerated("gen_random_uuid()"))
+  zoneId     String
+  methodId   String
+  carrier    String?
+  basePrice  Float
+  pricePerKg Float?
+  minWeight  Float?
+  maxWeight  Float?
+  fixedPrice Float?
+  currency   String  @default("EUR")
+
+  // 🔥 Délais migrés ici
+  estimatedMinDays Int?
+  estimatedMaxDays Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  zone   ShippingZone   @relation(fields: [zoneId], references: [id])
+  method ShippingMethod @relation(fields: [methodId], references: [id])
 }
 
 model NewsletterSubscription {
