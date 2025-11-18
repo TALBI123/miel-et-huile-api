@@ -58,10 +58,13 @@ export class ShippingService {
 
       // Prix fixe par zone pour le moment, à améliorer avec calcul au poids
       return shippingRates.map((rate) => ({
+        id : rate.id,
         provider: "ShippingZone",
+        carrier : rate.carrier,
         method: rate.method.name,
-        price: rate.fixedPrice ?? rate.basePrice + rate.pricePerKg! * weight,
         delivery_time: `${rate.estimatedMinDays} - ${rate.estimatedMaxDays} jours`,
+        min_max:`${rate.minWeight}kg - ${rate.maxWeight}kg`,
+        price: rate.fixedPrice ?? rate.basePrice + rate.pricePerKg! * weight,
         // currency: "EUR",
       }));
     } catch (error: any) {

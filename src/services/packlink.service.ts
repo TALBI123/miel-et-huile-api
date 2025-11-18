@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Address } from "../types/shipping";
+import { SHIPPING_EU_COUNTRIES } from "../data/shippingZones";
 
 interface CartItem {
   title: string;
@@ -29,7 +30,7 @@ export class PacklinkService {
   /**
    * 🚚 Version alternative pour créer un devis
    */
-  static async createShipmentDraft(to: any, packages: any[]) {
+  static async createShipmentDraft(to: Address, packages: any[]) {
     try {
       // Structure de données simplifiée
       const shipmentData = {
@@ -104,44 +105,69 @@ export class PacklinkService {
         message: error.message,
         url: error.config?.url,
       });
-      return this.mockGetShippingRates(shipmentId);
+      const countryIndex = Math.floor(
+        Math.random() * SHIPPING_EU_COUNTRIES.length
+      );
+
+      const country = SHIPPING_EU_COUNTRIES[countryIndex];
+      const totalWeight = Math.floor(Math.random() * 4 + 1);
+      return this.mockGetShippingRates(
+        "mock_shipment_id",
+        country,
+        totalWeight
+      );
       // throw error;
     }
   }
+  /**
+   * 📏 Package unique optimisé
+   */
+  private static createSinglePackage(
+    cartItems: CartItem[],
+    totalWeight: number
+  ) {
+    // Calcul  des dimensions
+    const totalVolume = cartItems.reduce((sum, item) => {
+      const itemVolume =
+        (item.width || 15) * (item.width || 10) * (item.height || 5);
+      return sum + itemVolume * item.quantity;
+    }, 0);
 
+    // Approximation cubique pour les dimensions finales
+    const side = Math.ceil(Math.cbrt(totalVolume));
+    
+    return [
+      {
+        width: Math.min(side, 60), // Limite transporteur
+        height: Math.min(side, 60),
+        length: Math.min(side, 120),
+        weight: totalWeight,
+      },
+    ];
+  }
   /**
    * 🛒 Processus complet : obtenir les options de livraison pour un panier
    */
-  static async getShippingOptions(
-    to: Address,
-    cartItems: CartItem[]
-  ) {
+  static async getShippingOptions(to: Address, cartItems: CartItem[]) {
+    // 1. Calculer le poids total et les dimensions
+    const totalWeight = cartItems.reduce(
+      (sum, item) => sum + item.weight * item.quantity,
+      0
+    );
     try {
-      // 1. Calculer le poids total et les dimensions
-      const totalWeight = cartItems.reduce(
-        (sum, item) => sum + item.weight * item.quantity,
-        0
-      );
-
       // 2. Créer un package combiné
-      const packages = [
-        {
-          width: Math.max(...cartItems.map((item) => item.width || 10)),
-          height: Math.max(...cartItems.map((item) => item.height || 5)),
-          length: Math.max(...cartItems.map((item) => item.length || 15)),
-          weight: totalWeight,
-        },
-      ];
+      const packages = this.createSinglePackage(cartItems, totalWeight);
 
       // 3. Essayer de créer un devis RÉEL
       let draft;
       try {
-        draft = await this.createShipmentDraft( to, packages);
+        draft = await this.createShipmentDraft(to, packages);
         console.log("✅ Draft créé (RÉEL):", draft.id);
       } catch (draftError) {
         console.warn("⚠️ Création draft échouée, utilisation MOCK complet");
         // Retourner un mock complet avec un ID fictif
-        return this.getFullMockShippingOptions().services;
+        return this.getFullMockShippingOptions(to.country, totalWeight)
+          .services;
       }
 
       // 4. Récupérer les tarifs (avec fallback automatique)
@@ -154,7 +180,7 @@ export class PacklinkService {
       }.services;
     } catch (error: any) {
       console.error("❌ Erreur complète, retour MOCK:", error.message);
-      return this.getFullMockShippingOptions().services;
+      return this.getFullMockShippingOptions(to.country, totalWeight).services;
     }
   }
   /**
@@ -250,50 +276,80 @@ export class PacklinkService {
       );
     }
   }
+
+  /**
+   * 🎭 Mock enrichi avec logique métier
+   */
+  private static calculateBasePrice(
+    weight: number,
+    isInternational: boolean,
+    isEU: boolean
+  ): number {
+    const minPrice = parseFloat(process.env.SHIPPING_MINIMUM_PRICE! || "4.5");
+
+    let basePrice = parseFloat(process.env.SHIPPING_BASE_PRICE_FR! || "5.0");
+
+    if (isInternational) basePrice += isEU ? 3.5 : 8.5;
+
+    // Ajustements par poids
+    const extraKgPrice = parseFloat(
+      process.env.SHIPPING_EXTRA_KG_PRICE || "2.30"
+    );
+    if (weight > 2) basePrice += (weight - 2) * extraKgPrice;
+    return Math.max(basePrice, minPrice);
+  }
   // Mock simple pour getShippingRates
-  private static mockGetShippingRates(shipmentId: string) {
+  private static mockGetShippingRates(
+    shipmentId: string,
+    country: string,
+    weight: number
+  ) {
     console.log("🎭 MOCK - Récupération tarifs PackLink pour:", shipmentId);
 
     // Services réalistes basés sur la destination
-    const isInternational = Math.random() > 0.7;
-    const basePrice = isInternational ? 15 : 6;
+
+    const homeCountry = process.env.SHIPPING_HOME_COUNTRY;
+    const isInternational = country !== homeCountry; // Pays de l'expéditeur
+    const isEu = SHIPPING_EU_COUNTRIES.includes(country);
+    // Calcul de prix basé sur la réalité
+    const basePrice = this.calculateBasePrice(weight, isInternational, isEu);
 
     return {
       services: [
         {
           id: "mock_service_express",
+          provider: "packlink",
           carrier: "DHL",
-          service: "DHL Express",
+          method: "DHL Express",
           delivery_time: isInternational ? "2-4 jours" : "1-2 jours",
           price: basePrice + 8.95,
-          // currency: "EUR",
           // features: ["tracking", "insurance", "signature_required", "express"],
         },
         {
           id: "mock_service_standard",
+          provider: "packlink",
           carrier: "Colissimo",
-          service: "Standard",
+          method: "Standard",
           delivery_time: isInternational ? "5-8 jours" : "3-5 jours",
           price: basePrice + 2.5,
-          // currency: "EUR",
           // features: ["tracking", "drop_off_points"],
         },
         {
           id: "mock_service_economy",
+          provider: "packlink",
           carrier: "Chronopost",
           service: "Standard",
           delivery_time: isInternational ? "7-10 jours" : "4-6 jours",
           price: basePrice + 1.0,
-          // currency: "EUR",
           // features: ["tracking", "economy"],
         },
         {
           id: "mock_service_premium",
+          provider: "packlink",
           carrier: "UPS",
-          service: "Express",
+          method: "Express",
           delivery_time: isInternational ? "1-3 jours" : "1 jour",
           price: basePrice + 12.95,
-          // currency: "EUR",
           // features: [
           //   "tracking",
           //   "insurance",
@@ -306,8 +362,12 @@ export class PacklinkService {
     };
   }
   // Mock complet pour getShippingOptions
-  private static getFullMockShippingOptions() {
-    const mockRates = this.mockGetShippingRates("mock_shipment_id");
+  private static getFullMockShippingOptions(country: string, weight: number) {
+    const mockRates = this.mockGetShippingRates(
+      "mock_shipment_id",
+      country,
+      weight
+    );
 
     return {
       shipmentId: `mock_${Date.now()}`,
@@ -648,10 +708,7 @@ export class PacklinkServiceTest extends PacklinkService {
       ];
 
       try {
-        const result = await this.createShipmentDraft(
-          testTo,
-          testPackages
-        );
+        const result = await this.createShipmentDraft(testTo, testPackages);
         console.log("✅ Création de devis réussie");
         return result;
       } catch (error) {

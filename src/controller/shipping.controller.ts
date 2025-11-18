@@ -58,6 +58,7 @@ export const calculateShipping = async (req: Request, res: Response) => {
 // POST /api/shipping/options - Options de livraison complètes
 export const getShippingOptions = async (req: Request, res: Response) => {
   const { items, shippingAddress } = res.locals.validated;
+  // console.log("Getting shipping options for address:", shippingAddress);
   try {
     const options = await ProductValidationService.validateItems(items);
     if (!options.success) {
@@ -79,6 +80,7 @@ export const getShippingOptions = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       data: [...calculatedOptions, ...shippingOptions],
+      totalWeight: options.data.summary?.totalWeight!
     });
   } catch (err: any) {
     handleServerError(res, err);

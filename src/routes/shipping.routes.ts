@@ -536,7 +536,7 @@ router.post(
  */
 router.post(
   "/options",
-  validate({ schema: ShippingOptionsSchema }),
+  validate({ schema: ShippingOptionsSchema,skipSave: true }),
   getShippingOptions
 );
 

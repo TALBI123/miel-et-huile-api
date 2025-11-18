@@ -11,6 +11,7 @@ export class ProductValidationService {
     [ClothingSize.XL]: 0.26,
     [ClothingSize.XXL]: 0.3,
   };
+  static readonly MAX_TOTAL_WEIGHT_KG = 25;
   static async validateItems(items: OrderItem[]) {
     // console.log("Validating items:", items);
     if (!items || items.length === 0)
@@ -30,6 +31,7 @@ export class ProductValidationService {
     );
     let invalidItems = [];
     let totalWeight = 0;
+    // console.log(items,products)
     for (const item of items) {
       const variant = variantMap.get(item.variantId);
       if (!variant) {
@@ -66,11 +68,29 @@ export class ProductValidationService {
       const isClouthing = variant.product.productType === ProductType.CLOTHING;
       let weight = 0;
       if (isClouthing)
+        weight = this.PRODUCT_BASE_WEIGHT_CLOTHING[variant.size!] || 0;
+      else
         weight =
           variant.unit === "g" ? variant.amount! / 1000 : variant.amount!;
-      else weight = this.PRODUCT_BASE_WEIGHT_CLOTHING[variant.size!] || 0;
+      console.log(
+        `Item weight for variant ${variant.id}:`,
+        weight,
+        " unit : ",
+        variant.unit,
+        " amount : ",
+        variant.amount,
+        variant.amount! / 1000
+      );
       totalWeight += weight * item.quantity;
     }
+
+    if (totalWeight > this.MAX_TOTAL_WEIGHT_KG)
+      return {
+        success: false,
+        message: `Poids total trop élevé: ${totalWeight}kg (max: ${this.MAX_TOTAL_WEIGHT_KG}kg)`,
+        data: { invalidItems },
+      };
+
     if (invalidItems.length > 0) {
       return {
         success: false,

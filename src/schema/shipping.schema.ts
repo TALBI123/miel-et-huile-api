@@ -12,9 +12,10 @@ export const ShippingAddressSchema = z.object({
     .string()
     .length(2, "Le code pays doit être au format ISO 2 lettres (ex: FR)")
     .toUpperCase(),
-  zipCode: z.string().min(3, "Le code postal doit contenir au moins 3 caractères"),
-  phone: phoneSchema,
-  name: z.string().optional(),
+  postalCode: z.string().min(3, "Le code postal doit contenir au moins 3 caractères"),
+  phoneNumber: phoneSchema,
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   email: z.string().email("Email invalide").optional(),
 });
 
