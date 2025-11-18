@@ -11,12 +11,11 @@ interface ShippingAddress {
   email?: string;
 }
 
-
 interface ShippingOption {
   provider: "ShippingZone" | "Packlink";
   method: string;
   price: number;
-  estimatedDays?: number;
+  delivery_time?: string;
   serviceId?: string;
   shipmentId?: string;
 }
@@ -33,26 +32,38 @@ export class ShippingService {
   static async calculateShippingCost(
     country: string,
     weight: number
-  ): Promise<number> {
+  ): Promise<ShippingOption[]> {
     try {
       // Chercher la zone de livraison active pour le pays
-      const shippingZone = await prisma.shippingZone.findFirst({
+      const shippingRates = await prisma.shippingRate.findMany({
         where: {
-          countries: {
-            has: country,
+          minWeight: { lte: weight },
+          maxWeight: { gte: weight },
+          method: {
+            isActive: true,
           },
-          isActive: true,
+        },
+        include: {
+          method: true,
+          zone: true,
         },
       });
+      console.log("Shipping zones found:");
 
-      if (!shippingZone) {
+      if (!shippingRates.length) {
         throw new Error(
           `Pas de zone de livraison disponible pour le pays: ${country}`
         );
       }
 
       // Prix fixe par zone pour le moment, à améliorer avec calcul au poids
-      return 4;
+      return shippingRates.map((rate) => ({
+        provider: "ShippingZone",
+        method: rate.method.name,
+        price: rate.fixedPrice ?? rate.basePrice + rate.pricePerKg! * weight,
+        delivery_time: `${rate.estimatedMinDays} - ${rate.estimatedMaxDays} jours`,
+        // currency: "EUR",
+      }));
     } catch (error: any) {
       console.error("Erreur calcul shipping cost:", error.message);
       throw error;
@@ -66,9 +77,6 @@ export class ShippingService {
         where: {
           isActive: true,
         },
-        // orderBy: {
-        //   price: "asc",
-        // },
       });
 
       return zones;
@@ -111,12 +119,7 @@ export class ShippingService {
       // Ajout des options ShippingZone (disponibles par défaut)
       try {
         const zonePrice = await this.calculateShippingCost(country, weight);
-        options.push({
-          provider: "ShippingZone",
-          method: "Standard",
-          price: zonePrice,
-          estimatedDays: 5,
-        });
+        options.push(...zonePrice);
       } catch (error: any) {
         console.warn("ShippingZone non disponible:", error.message);
       }
@@ -149,15 +152,15 @@ export class ShippingService {
   ): Promise<ShippingOption[]> {
     try {
       // Config expéditeur depuis env
-      const fromAddress = {
-        name: process.env.PACKLINK_SENDER_NAME || "Miel Eco",
-        address: process.env.PACKLINK_SENDER_ADDRESS || "",
-        city: process.env.PACKLINK_SENDER_CITY || "",
-        postal_code: process.env.PACKLINK_SENDER_ZIP || "",
-        country: process.env.PACKLINK_SENDER_COUNTRY || "FR",
-        email: process.env.PACKLINK_SENDER_EMAIL || "",
-        phone: process.env.PACKLINK_SENDER_PHONE || "",
-      };
+      // const fromAddress = {
+      //   name: process.env.PACKLINK_SENDER_NAME || "Miel Eco",
+      //   address: process.env.PACKLINK_SENDER_ADDRESS || "",
+      //   city: process.env.PACKLINK_SENDER_CITY || "",
+      //   postal_code: process.env.PACKLINK_SENDER_ZIP || "",
+      //   country: process.env.PACKLINK_SENDER_COUNTRY || "FR",
+      //   email: process.env.PACKLINK_SENDER_EMAIL || "",
+      //   phone: process.env.PACKLINK_SENDER_PHONE || "",
+      // };
 
       const toPacklinkAddress = {
         name: toAddress.name || "Client",
@@ -179,7 +182,6 @@ export class ShippingService {
 
       // Création du devis
       const draft = await PacklinkService.createShipmentDraft(
-        fromAddress,
         toPacklinkAddress,
         packlinkPackages
       );
@@ -283,13 +285,7 @@ export class ShippingService {
       throw error;
     }
   }
-  
 
-  static async createShipmentLabel() {
-    try {
-      // Logic to create a shipment label
-    } catch (err) {}
-  }
   // Sélectionne l'option la moins chère parmi les disponibles
   static selectBestRate(rates: ShippingOption[]): ShippingOption {
     if (rates.length === 0) {

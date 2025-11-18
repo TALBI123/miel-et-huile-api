@@ -1,14 +1,5 @@
 import axios from "axios";
-
-interface Address {
-  name: string;
-  address: string;
-  postal_code: string;
-  city: string;
-  country: string;
-  email: string;
-  phone?: string;
-}
+import { Address } from "../types/shipping";
 
 interface CartItem {
   title: string;
@@ -38,18 +29,18 @@ export class PacklinkService {
   /**
    * 🚚 Version alternative pour créer un devis
    */
-  static async createShipmentDraft(from: any, to: any, packages: any[]) {
+  static async createShipmentDraft(to: any, packages: any[]) {
     try {
       // Structure de données simplifiée
       const shipmentData = {
         from: {
-          name: from.name || "Expéditeur",
-          address: from.address,
-          city: from.city,
-          zip: from.postal_code,
-          country: from.country,
-          email: from.email,
-          phone: from.phone || "",
+          name: process.env.PACKLINK_SENDER_NAME,
+          address: process.env.PACKLINK_SENDER_ADDRESS,
+          city: process.env.PACKLINK_SENDER_CITY,
+          zip: process.env.PACKLINK_SENDER_ZIP,
+          country: process.env.PACKLINK_SENDER_COUNTRY,
+          email: process.env.PACKLINK_SENDER_EMAIL,
+          phone: process.env.PACKLINK_SENDER_PHONE,
         },
         to: {
           name: to.name || "Destinataire",
@@ -122,7 +113,6 @@ export class PacklinkService {
    * 🛒 Processus complet : obtenir les options de livraison pour un panier
    */
   static async getShippingOptions(
-    from: Address,
     to: Address,
     cartItems: CartItem[]
   ) {
@@ -146,12 +136,12 @@ export class PacklinkService {
       // 3. Essayer de créer un devis RÉEL
       let draft;
       try {
-        draft = await this.createShipmentDraft(from, to, packages);
+        draft = await this.createShipmentDraft( to, packages);
         console.log("✅ Draft créé (RÉEL):", draft.id);
       } catch (draftError) {
         console.warn("⚠️ Création draft échouée, utilisation MOCK complet");
         // Retourner un mock complet avec un ID fictif
-        return this.getFullMockShippingOptions(from, to, packages);
+        return this.getFullMockShippingOptions().services;
       }
 
       // 4. Récupérer les tarifs (avec fallback automatique)
@@ -161,12 +151,10 @@ export class PacklinkService {
         shipmentId: draft.id,
         services: rates.services || rates,
         _source: "real", // Indiquer la source des données
-      };
+      }.services;
     } catch (error: any) {
       console.error("❌ Erreur complète, retour MOCK:", error.message);
-      return this.getFullMockShippingOptions(from, to, [
-        { weight: 1, width: 10, height: 5, length: 15 },
-      ]);
+      return this.getFullMockShippingOptions().services;
     }
   }
   /**
@@ -276,53 +264,49 @@ export class PacklinkService {
           id: "mock_service_express",
           carrier: "DHL",
           service: "DHL Express",
-          delivery_time: isInternational ? "2-4 days" : "1-2 days",
+          delivery_time: isInternational ? "2-4 jours" : "1-2 jours",
           price: basePrice + 8.95,
-          currency: "EUR",
-          features: ["tracking", "insurance", "signature_required", "express"],
+          // currency: "EUR",
+          // features: ["tracking", "insurance", "signature_required", "express"],
         },
         {
           id: "mock_service_standard",
           carrier: "Colissimo",
-          service: "Colissimo Standard",
-          delivery_time: isInternational ? "5-8 days" : "3-5 days",
+          service: "Standard",
+          delivery_time: isInternational ? "5-8 jours" : "3-5 jours",
           price: basePrice + 2.5,
-          currency: "EUR",
-          features: ["tracking", "drop_off_points"],
+          // currency: "EUR",
+          // features: ["tracking", "drop_off_points"],
         },
         {
           id: "mock_service_economy",
           carrier: "Chronopost",
-          service: "Chronopost Economy",
-          delivery_time: isInternational ? "7-10 days" : "4-6 days",
+          service: "Standard",
+          delivery_time: isInternational ? "7-10 jours" : "4-6 jours",
           price: basePrice + 1.0,
-          currency: "EUR",
-          features: ["tracking", "economy"],
+          // currency: "EUR",
+          // features: ["tracking", "economy"],
         },
         {
           id: "mock_service_premium",
           carrier: "UPS",
-          service: "UPS Express Saver",
-          delivery_time: isInternational ? "1-3 days" : "1 day",
+          service: "Express",
+          delivery_time: isInternational ? "1-3 jours" : "1 jour",
           price: basePrice + 12.95,
-          currency: "EUR",
-          features: [
-            "tracking",
-            "insurance",
-            "express",
-            "premium",
-            "signature_required",
-          ],
+          // currency: "EUR",
+          // features: [
+          //   "tracking",
+          //   "insurance",
+          //   "express",
+          //   "premium",
+          //   "signature_required",
+          // ],
         },
       ],
     };
   }
   // Mock complet pour getShippingOptions
-  private static getFullMockShippingOptions(
-    from: Address,
-    to: Address,
-    packages: any[]
-  ) {
+  private static getFullMockShippingOptions() {
     const mockRates = this.mockGetShippingRates("mock_shipment_id");
 
     return {
@@ -665,7 +649,6 @@ export class PacklinkServiceTest extends PacklinkService {
 
       try {
         const result = await this.createShipmentDraft(
-          testFrom,
           testTo,
           testPackages
         );
