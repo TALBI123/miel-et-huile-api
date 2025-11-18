@@ -10,6 +10,7 @@ export const googleCallback = (req: Request, res: Response) => {
   try {
     const googleUser = req.user;
     console.log("Google User:", googleUser);
+    console.log("Callback function called :");
     if (!googleUser) return res.redirect(`${process.env.FRONTEND_URL}`);
     const token = jwt.sign(googleUser, process.env.JWT_SECRET as string, {
       expiresIn: "24h",

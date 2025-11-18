@@ -135,7 +135,7 @@ export class PacklinkService {
 
     // Approximation cubique pour les dimensions finales
     const side = Math.ceil(Math.cbrt(totalVolume));
-    
+
     return [
       {
         width: Math.min(side, 60), // Limite transporteur
@@ -144,6 +144,51 @@ export class PacklinkService {
         weight: totalWeight,
       },
     ];
+  }
+
+  /**
+   * 📦 Packages multiples par poids
+   */
+  private static createMultiplePackages(cartItems: CartItem[]) {
+    const maxWeightPerPackage = 20; // Limite transporteur
+    const packages = [];
+    let currentWeight = 0;
+    let currentItems = [];
+
+    for (const item of cartItems) {
+      const itemTotalWeight = item.weight * item.quantity;
+      if (
+        currentWeight + itemTotalWeight > maxWeightPerPackage &&
+        currentItems.length
+      ) {
+        packages.push(currentItems);
+        currentItems = [];
+        currentWeight = 0;
+      }
+      currentItems.push(item);
+      currentWeight += itemTotalWeight;
+    }
+    if (currentItems.length) packages.push(currentItems);
+
+    return packages;
+  }
+    /**
+   * 🧮 Calcul intelligent des packages
+   */
+  private static calculatePackages(cartItems: CartItem[], totalWeight: number) {
+    
+     // Option 1: Un seul package optimisé
+    if (totalWeight <= 2) {
+      return this.createSinglePackage(cartItems,totalWeight);
+    }
+    
+    // Option 2: Packages séparés par poids
+    if (totalWeight > 10) {
+      return this.createMultiplePackages(cartItems);
+    }
+    
+    // // Option 3: Package standard
+    // return this.createStandardPackage(cartItems);
   }
   /**
    * 🛒 Processus complet : obtenir les options de livraison pour un panier

@@ -273,7 +273,7 @@ model ShippingRate {
   // 🔥 Délais migrés ici
   estimatedMinDays Int?
   estimatedMaxDays Int?
-
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

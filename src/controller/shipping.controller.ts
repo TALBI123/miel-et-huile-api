@@ -68,19 +68,21 @@ export const getShippingOptions = async (req: Request, res: Response) => {
         data: options.data,
       });
     }
-    const shippingOptions = await PacklinkService.getShippingOptions(
-      shippingAddress,
-      items
-    );
+    let shippingOptions = [];
     const calculatedOptions = await ShippingService.calculateShippingCost(
       shippingAddress.country,
       options.data.summary?.totalWeight!
     );
+    if (!calculatedOptions.length)
+      shippingOptions = await PacklinkService.getShippingOptions(
+        shippingAddress,
+        items
+      );
 
     return res.status(200).json({
       success: true,
       data: [...calculatedOptions, ...shippingOptions],
-      totalWeight: options.data.summary?.totalWeight!
+      totalWeight: options.data.summary?.totalWeight!,
     });
   } catch (err: any) {
     handleServerError(res, err);
