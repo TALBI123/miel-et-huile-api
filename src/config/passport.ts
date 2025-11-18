@@ -47,7 +47,6 @@ console.log(
   "🎯 Backend URL:",
   process.env.BACKEND_URL + "/api/auth/google/callback"
 );
-
 const getCallbackURL = () => {
   if (process.env.NODE_ENV === "development") {
     return process.env.LOCAL_URL + "/api/auth/google/callback";
@@ -63,6 +62,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL: getCallbackURL(),
+      scope:["profile","email"]
     },
     async (
       accessToken: string,
