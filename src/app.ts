@@ -76,7 +76,7 @@ app.get("/auth/google/debug", (req: Request, res: Response) => {
     domain: process.env.DOMAIN,
   });
 });
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV === "production") {
   console.log("🔍 Vérification des variables d'environnement Google OAuth:");
   console.log(
     " - GOOGLE_CLIENT_SECRET:",

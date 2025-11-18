@@ -67,7 +67,19 @@ export const getShippingOptions = async (req: Request, res: Response) => {
         data: options.data,
       });
     }
-    
+    const shippingOptions = await PacklinkService.getShippingOptions(
+      shippingAddress,
+      items
+    );
+    const calculatedOptions = await ShippingService.calculateShippingCost(
+      shippingAddress.country,
+      options.data.summary?.totalWeight!
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: [...calculatedOptions, ...shippingOptions],
+    });
   } catch (err: any) {
     handleServerError(res, err);
   }
@@ -85,7 +97,7 @@ export const getPacklinkQuote = async (req: Request, res: Response) => {
       });
     }
 
-    const draft = await PacklinkService.createShipmentDraft(from, to, packages);
+    const draft = await PacklinkService.createShipmentDraft(to, packages);
 
     if (!draft.id) {
       return res.status(500).json({

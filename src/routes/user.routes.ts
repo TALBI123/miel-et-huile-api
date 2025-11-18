@@ -8,6 +8,8 @@ import {
   getProffile,
   updateCurrentUser,
 } from "../controller/user.controller";
+import { validate } from "../middlewares/validate";
+import {  userSchema } from "../schema/user.schema";
 
 const router = Router();
 /**
@@ -172,9 +174,8 @@ router.get("/users", verifyToken, verifyAdmin, getAllUsers);
  *                   example: "Erreur interne du serveur"
  */
 
-
 router.get("/users/me", verifyToken, getProffile);
-/**git commit -m' 
+/**git commit -m'
  * @openapi
  * /me:
  *   get:
@@ -211,11 +212,11 @@ router.get("/me", verifyToken, getCurrentUser);
  *     summary: Modifie les informations personnelles de l'utilisateur connecté
  *     description: |
  *       Permet à un utilisateur authentifié de mettre à jour ses informations personnelles.
- *       
+ *
  *       **Champs modifiables :**
  *       - Informations personnelles : prénom, nom, téléphone
  *       - Adresse complète : adresse, ville, code postal, pays
- *       
+ *
  *       **Règles importantes :**
  *       - Tous les champs sont optionnels (seuls les champs fournis seront mis à jour)
  *       - L'email et le rôle ne peuvent pas être modifiés via cette route
@@ -241,7 +242,7 @@ router.get("/me", verifyToken, getCurrentUser);
  *                 pattern: "^[a-zA-ZÀ-ÿ\\s\\-']+$"
  *                 description: |
  *                   **Prénom de l'utilisateur**
- *                   
+ *
  *                   Règles de validation :
  *                   - Entre 2 et 50 caractères
  *                   - Lettres uniquement (accents autorisés)
@@ -255,7 +256,7 @@ router.get("/me", verifyToken, getCurrentUser);
  *                 pattern: "^[a-zA-ZÀ-ÿ\\s\\-']+$"
  *                 description: |
  *                   **Nom de famille de l'utilisateur**
- *                   
+ *
  *                   Règles de validation :
  *                   - Entre 2 et 50 caractères
  *                   - Lettres uniquement (accents autorisés)
@@ -268,7 +269,7 @@ router.get("/me", verifyToken, getCurrentUser);
  *                 nullable: true
  *                 description: |
  *                   **Numéro de téléphone au format international**
- *                   
+ *
  *                   Règles de validation :
  *                   - Format international recommandé (+XXX...)
  *                   - Entre 9 et 15 chiffres après le code pays
@@ -283,7 +284,7 @@ router.get("/me", verifyToken, getCurrentUser);
  *                 nullable: true
  *                 description: |
  *                   **Adresse complète de résidence**
- *                   
+ *
  *                   Règles de validation :
  *                   - Entre 5 et 200 caractères
  *                   - Doit inclure le numéro et le nom de rue
@@ -299,7 +300,7 @@ router.get("/me", verifyToken, getCurrentUser);
  *                 nullable: true
  *                 description: |
  *                   **Ville de résidence**
- *                   
+ *
  *                   Règles de validation :
  *                   - Entre 2 et 100 caractères
  *                   - Lettres uniquement (accents autorisés)
@@ -313,7 +314,7 @@ router.get("/me", verifyToken, getCurrentUser);
  *                 nullable: true
  *                 description: |
  *                   **Code postal à 5 chiffres**
- *                   
+ *
  *                   Règles de validation :
  *                   - Exactement 5 chiffres
  *                   - Format marocain standard
@@ -328,7 +329,7 @@ router.get("/me", verifyToken, getCurrentUser);
  *                 nullable: true
  *                 description: |
  *                   **Pays de résidence**
- *                   
+ *
  *                   Règles de validation :
  *                   - Entre 2 et 100 caractères
  *                   - Lettres uniquement (accents autorisés)
@@ -518,7 +519,12 @@ router.get("/me", verifyToken, getCurrentUser);
  *               success: false
  *               message: "Erreur lors de la mise à jour du profil"
  */
-router.patch("/users/me", verifyToken, updateCurrentUser);
+router.patch(
+  "/users/me",
+  validate({ schema: userSchema.partial(), skipSave: true }),
+  verifyToken,
+  updateCurrentUser
+);
 
 /**
  * @swagger
