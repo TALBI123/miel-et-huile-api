@@ -20,7 +20,7 @@ export const googleCallback = (req: Request, res: Response) => {
     // Configeration du cookie
     res.cookie("access_token", token, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "none",
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     });
